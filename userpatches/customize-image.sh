@@ -19,7 +19,7 @@ apt-get install -y --no-install-recommends \
     network-manager vim htop zip unzip tar xz-utils \
     python3-pip python3-setuptools gpsd gpsd-clients \
     libxml2-utils gsettings-desktop-schemas \
-    cockpit cockpit-networkmanager
+    network-manager-gnome tint2
 
 # Eliminar brltty (causa conflictos con dispositivos serial/USB de astronomía)
 apt-get purge -y brltty || true
@@ -81,15 +81,29 @@ fi
 # ----------------------------------------------------------------------------
 # 3. Entorno Headless (Xvfb + x11vnc + noVNC)
 # ----------------------------------------------------------------------------
-echo "Configurando entorno Headless Virtual con Estética..."
+echo "Configurando entorno Headless Virtual con Estética y Gestión de Red..."
 apt-get install -y \
     xvfb x11vnc fluxbox \
     websockify novnc \
-    feh conky-all
+    feh conky-all lxterminal
 
 # Crear directorio para noVNC si no existe
 mkdir -p /opt/novnc
 cp -r /usr/share/novnc/* /opt/novnc/ || true
+
+# Configurar Fluxbox para que lance nm-applet y tint2 automáticamente
+mkdir -p /home/OPI5_Astro/.fluxbox
+cat <<EOF > /home/OPI5_Astro/.fluxbox/startup
+#!/bin/sh
+# Lanzar applet de red (nm-applet)
+nm-applet &
+# Lanzar barra de tareas ligera
+tint2 &
+# Iniciar Fluxbox
+exec fluxbox
+EOF
+chmod +x /home/OPI5_Astro/.fluxbox/startup
+chown -R OPI5_Astro:OPI5_Astro /home/OPI5_Astro/.fluxbox
 
 # ----------------------------------------------------------------------------
 # 4. Syncthing

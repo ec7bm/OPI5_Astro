@@ -17,27 +17,23 @@ El sistema creará automáticamente una red Wi-Fi si no detecta una conocida:
 
 Conecta tu móvil o PC a esta red `OPI5_Astro`.
 
-### 3. Acceso Remoto y Gestión
-Tienes varias formas de controlar el sistema:
+### 3. Acceso al Escritorio Remoto
+Abre tu navegador y ve a: **`http://10.0.0.1:6080`**
 
-*   **Gestión Web de Red y Sistema (Cockpit)**: Abre `http://10.0.0.1:9090` en tu navegador.
-    *   **Usuario**: `OPI5_Astro`
-    *   **Password**: `password`
-    *   *Desde aquí puedes cambiar el Wi-Fi, monitorizar la CPU y ver logs de forma visual.*
+Verás el escritorio completo con:
+*   Fondo astronómico de la Vía Láctea.
+*   Widget de monitorización (Conky) en la esquina superior derecha.
+*   **Barra de tareas** en la parte inferior con el **icono de red** (dos flechas o señal Wi-Fi).
 
-*   **Escritorio Remoto vía Navegador (noVNC)**: Abre `http://10.0.0.1:6080`. Verás el escritorio con el fondo astronómico y el widget de monitorización.
+### 4. Conectarte a tu Wi-Fi de Casa (Desde el Escritorio)
+**Desde el escritorio remoto (noVNC)**:
+1.  Haz clic en el **icono de red** de la barra de tareas (abajo).
+2.  Se abrirá un menú con todas las redes Wi-Fi disponibles.
+3.  Selecciona tu red Wi-Fi de casa.
+4.  Introduce la contraseña y pulsa **Conectar**.
+5.  La Orange Pi se conectará a tu red y el hotspot `OPI5_Astro` desaparecerá.
 
-*   **Terminal (SSH)**:
-    *   **Comando**: `ssh OPI5_Astro@10.0.0.1` (Password: `password`)
-
-### 4. Configurar tu Wi-Fi de Casa
-Para que la Orange Pi se conecte a tu internet local y deje de crear el hotspot:
-1.  Entra en el panel de **Cockpit** (`http://10.0.0.1:9090`).
-2.  Ve a la sección **"Networking"** (Redes).
-3.  Busca tu red Wi-Fi local, pon la clave y conéctate.
-4.  Reinicia el sistema desde el mismo panel de Cockpit.
-
-*También puedes seguir usando `sudo nmtui` por terminal si lo prefieres.*
+**Alternativa por SSH**: También puedes usar `ssh OPI5_Astro@10.0.0.1` (password: `password`) y ejecutar `sudo nmtui`.
 
 Al reiniciar, la Orange Pi se conectará a tu Wi-Fi y el hotspot desaparecerá.
 
