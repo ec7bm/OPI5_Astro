@@ -17,22 +17,27 @@ El sistema creará automáticamente una red Wi-Fi si no detecta una conocida:
 
 Conecta tu móvil o PC a esta red `OPI5_Astro`.
 
-### 3. Acceso Remoto
-Tienes tres formas de controlar el sistema:
+### 3. Acceso Remoto y Gestión
+Tienes varias formas de controlar el sistema:
 
-*   **Navegador Web (noVNC)**: Abre `http://10.0.0.1:6080` en tu navegador. Verás el escritorio con el fondo astronómico y el widget de monitorización.
-*   **Escritorio Remoto (VNC)**: Usa cualquier cliente VNC (como VNC Viewer) apuntando a `10.0.0.1:5900` (sin contraseña).
+*   **Gestión Web de Red y Sistema (Cockpit)**: Abre `http://10.0.0.1:9090` en tu navegador.
+    *   **Usuario**: `OPI5_Astro`
+    *   **Password**: `password`
+    *   *Desde aquí puedes cambiar el Wi-Fi, monitorizar la CPU y ver logs de forma visual.*
+
+*   **Escritorio Remoto vía Navegador (noVNC)**: Abre `http://10.0.0.1:6080`. Verás el escritorio con el fondo astronómico y el widget de monitorización.
+
 *   **Terminal (SSH)**:
-    *   **Usuario**: `armbian` (o el que hayas configurado en el build)
-    *   **Comando**: `ssh armbian@10.0.0.1`
+    *   **Comando**: `ssh OPI5_Astro@10.0.0.1` (Password: `password`)
 
 ### 4. Configurar tu Wi-Fi de Casa
 Para que la Orange Pi se conecte a tu internet local y deje de crear el hotspot:
-1.  Entra por SSH o abre una terminal en el escritorio remoto.
-2.  Escribe: `sudo nmtui`
-3.  Selecciona **"Activate a connection"**.
-4.  Busca tu red Wi-Fi, pon la clave y acepta.
-5.  Reinicia el sistema: `sudo reboot`
+1.  Entra en el panel de **Cockpit** (`http://10.0.0.1:9090`).
+2.  Ve a la sección **"Networking"** (Redes).
+3.  Busca tu red Wi-Fi local, pon la clave y conéctate.
+4.  Reinicia el sistema desde el mismo panel de Cockpit.
+
+*También puedes seguir usando `sudo nmtui` por terminal si lo prefieres.*
 
 Al reiniciar, la Orange Pi se conectará a tu Wi-Fi y el hotspot desaparecerá.
 

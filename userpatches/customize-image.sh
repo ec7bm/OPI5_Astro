@@ -18,7 +18,8 @@ apt-get install -y --no-install-recommends \
     git build-essential wget curl software-properties-common \
     network-manager vim htop zip unzip tar xz-utils \
     python3-pip python3-setuptools gpsd gpsd-clients \
-    libxml2-utils gsettings-desktop-schemas
+    libxml2-utils gsettings-desktop-schemas \
+    cockpit cockpit-networkmanager
 
 # Eliminar brltty (causa conflictos con dispositivos serial/USB de astronomía)
 apt-get purge -y brltty || true
@@ -140,7 +141,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=armbian
+User=OPI5_Astro
 Environment=DISPLAY=:1
 ExecStartPre=-/usr/bin/rm -f /tmp/.X1-lock
 ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; feh --bg-fill /usr/share/backgrounds/astro-wallpaper.jpg; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900 & sleep 5; conky -c /etc/conky/conky.conf"
@@ -185,12 +186,24 @@ systemctl enable gpsd
 # ----------------------------------------------------------------------------
 echo "Aplicando ajustes finales de AstroPi..."
 
-# 1. Configurar grupos para el usuario 'armbian' (acceso a monturas/cámaras serie)
-usermod -a -G dialout armbian
-usermod -a -G tty armbian
-usermod -a -G video armbian
+# 1. Crear y configurar usuario OPI5_Astro
+echo "Configurando usuario OPI5_Astro..."
+if ! id "OPI5_Astro" &>/dev/null; then
+    useradd -m -s /bin/bash OPI5_Astro
+    echo "OPI5_Astro:password" | chpasswd
+    # Darle permisos de sudo
+    usermod -aG sudo OPI5_Astro
+fi
 
-# 2. Desactivar auto-montaje de cámaras (evita que el sistema bloquee la cámara antes que Ekos)
+# 2. Configurar grupos para el usuario (acceso a monturas/cámaras serie)
+usermod -a -G dialout OPI5_Astro
+usermod -a -G tty OPI5_Astro
+usermod -a -G video OPI5_Astro
+
+# 3. Eliminar usuario 'armbian' si existe para evitar confusiones (opcional, lo mantenemos por si acaso)
+# userdel -r armbian || true
+
+# 4. Desactivar auto-montaje de cámaras
 # Intentamos para MATE/GNOME schemes
 dbus-run-session gsettings set org.mate.media-handling automount false || true
 
@@ -221,7 +234,7 @@ nmcli con up Hotspot >> \$LOG 2>&1
 hostnamectl set-hostname astro-opi
 
 # 3. Marcar como completado y desactivar servicio
-echo "Primer arranque completado." >> \$LOG
+echo "Primer arranque completado de OPI5_Astro." >> \$LOG
 systemctl disable astro-first-boot.service
 EOF
 
@@ -243,5 +256,16 @@ WantedBy=multi-user.target
 EOF
 
 systemctl enable astro-first-boot.service
+
+# Asegurar que Cockpit no pida autenticación pesada para red (opcional, permite mayor control web)
+mkdir -p /etc/polkit-1/localauthority/50-local.d/
+cat <<EOF > /etc/polkit-1/localauthority/50-local.d/allow-cockpit-network.pkla
+[Allow Cockpit to manage network]
+Identity=unix-user:OPI5_Astro
+Action=org.freedesktop.NetworkManager.*
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+EOF
 
 echo "=== Personalización finalizada correctamente ==="
