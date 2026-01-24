@@ -11,11 +11,11 @@ Conecta la Orange Pi a la alimentación. No necesitas monitor ni teclado. El sis
 
 ### 2. Conexión al Hotspot
 El sistema creará automáticamente una red Wi-Fi si no detecta una conocida:
-*   **SSID (Nombre)**: `RPI`
+*   **SSID (Nombre)**: `OPI5_Astro`
 *   **Password**: `password`
 *   **IP del Sistema**: `10.0.0.1`
 
-Conecta tu móvil o PC a esta red `RPI`.
+Conecta tu móvil o PC a esta red `OPI5_Astro`.
 
 ### 3. Acceso Remoto
 Tienes tres formas de controlar el sistema:

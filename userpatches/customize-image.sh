@@ -102,7 +102,7 @@ interface-name=wlan0
 
 [wifi]
 mode=ap
-ssid=RPI
+ssid=OPI5_Astro
 
 [wifi-security]
 key-mgmt=wpa-psk
