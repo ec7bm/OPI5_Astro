@@ -17,11 +17,11 @@ if ! command -v gh &> /dev/null; then
     exit 1
 fi
 
-# 2. Buscar la imagen más reciente
-IMAGE=$(ls -t ${ARMBIAN_OUT}/*.img.xz 2>/dev/null | head -n 1)
+# 2. Buscar la imagen más reciente (buscamos .img.xz primero, luego .img)
+IMAGE=$(ls -t ${ARMBIAN_OUT}/*.img.xz ${ARMBIAN_OUT}/*.img 2>/dev/null | head -n 1)
 
 if [ -z "$IMAGE" ]; then
-    echo "Error: No se encontró ninguna imagen .img.xz en ${ARMBIAN_OUT}"
+    echo "Error: No se encontró ninguna imagen (.img o .img.xz) en ${ARMBIAN_OUT}"
     exit 1
 fi
 

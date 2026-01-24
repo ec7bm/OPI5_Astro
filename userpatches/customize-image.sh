@@ -185,7 +185,7 @@ Type=simple
 User=OPI5_Astro
 Environment=DISPLAY=:1
 ExecStartPre=-/usr/bin/rm -f /tmp/.X1-lock
-ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; feh --bg-fill /usr/share/backgrounds/astro-wallpaper.jpg; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900 & sleep 5; conky -c /etc/conky/conky.conf"
+ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; feh --bg-fill /usr/share/backgrounds/astro-nebula-1.jpg; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900 & sleep 5; conky -c /etc/conky/conky.conf"
 Restart=always
 
 [Install]

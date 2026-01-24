@@ -41,6 +41,7 @@ cd "$ARMBIAN_DIR"
     BUILD_DESKTOP=no \
     KERNEL_CONFIGURE=no \
     EXPERT=yes \
+    COMPRESS_OUTPUTIMAGE=sha,gpg,xz \
     "$@"
 
 echo "=== Proceso completado ==="
