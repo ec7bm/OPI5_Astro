@@ -45,3 +45,9 @@ cd "$ARMBIAN_DIR"
 
 echo "=== Proceso completado ==="
 echo "La imagen resultante debería estar en ${ARMBIAN_DIR}/output/images/"
+
+# Sugerencia para subir a GitHub
+echo ""
+echo "Para subir la imagen a GitHub Releases, ejecuta:"
+echo "chmod +x scripts/upload-release.sh"
+echo "./scripts/upload-release.sh"
