@@ -17,7 +17,16 @@ apt-get update
 apt-get install -y --no-install-recommends \
     git build-essential wget curl software-properties-common \
     network-manager vim htop zip unzip tar xz-utils \
-    python3-pip python3-setuptools
+    python3-pip python3-setuptools gpsd gpsd-clients \
+    libxml2-utils gsettings-desktop-schemas
+
+# Eliminar brltty (causa conflictos con dispositivos serial/USB de astronomía)
+apt-get purge -y brltty || true
+
+# Eliminar cloud-init para acelerar el arranque (como sugiere el Makefile)
+echo "Acelerando arranque: eliminando cloud-init..."
+apt-get purge -y cloud-init
+rm -rf /etc/cloud/ /var/lib/cloud/
 
 # Añadir PPAs de Astronomía de forma MANUAL (más fiable en chroot)
 echo "Configurando repositorios PPA manualmente..."
@@ -38,24 +47,25 @@ echo "deb [signed-by=/etc/apt/trusted.gpg.d/phd2.gpg] https://ppa.launchpadconte
 # Forzar actualización de listas
 apt-get update -y
 
-# ----------------------------------------------------------------------------
 # 2. Instalación de Software Astronómico
 # ----------------------------------------------------------------------------
 echo "Instalando Stack Astronómico..."
-apt-get install -y \
-    indi-full kstars-bleeding phd2
 
-# Instalar ASTAP (Astrometry)
-# Intentamos bajar la versión ARM64. Si el link falla, avisamos pero no rompemos el build.
-echo "Instalando ASTAP..."
-ASTAP_URL="https://www.hnsky.org/astap_arm64.deb"
-wget --spider "$ASTAP_URL" 2>/dev/null
-if [ $? -eq 0 ]; then
-    wget "$ASTAP_URL" -O /tmp/astap.deb
-    apt-get install -y /tmp/astap.deb
-    rm /tmp/astap.deb
+apt-get install -y \
+    indi-full kstars-bleeding phd2 phdlogview \
+    astrometry.net astrometry-data-tycho2 sextractor
+
+# Instalar ASTAP (Astrometry) y Base de Datos D50
+echo "Instalando ASTAP y base de datos de estrellas..."
+# Nota: Usamos mirrors de SourceForge para mayor fiabilidad
+wget https://master.dl.sourceforge.net/project/astap-program/star_databases/d50_star_database.deb -O /tmp/d50.deb || true
+wget https://versaweb.dl.sourceforge.net/project/astap-program/linux_installer/astap_arm64.deb -O /tmp/astap.deb || true
+
+if [ -f /tmp/astap.deb ]; then
+    apt-get install -y /tmp/astap.deb /tmp/d50.deb || true
+    rm /tmp/astap.deb /tmp/d50.deb
 else
-    echo "ADVERTENCIA: No se pudo descargar ASTAP desde el link oficial. Saltando..."
+    echo "ERROR: No se pudo descargar ASTAP. Saltando..."
 fi
 
 # Instalar AstroDMx Capture (ARM64)
@@ -168,9 +178,31 @@ EOF
 # Habilitar servicios
 systemctl enable astro-headless
 systemctl enable astro-network
+systemctl enable gpsd
 
 # ----------------------------------------------------------------------------
-# 7. Script de Primer Arranque (First Boot)
+# 7. Ajustes Finales (Grupos, Swap, Auto-mount)
+# ----------------------------------------------------------------------------
+echo "Aplicando ajustes finales de AstroPi..."
+
+# 1. Configurar grupos para el usuario 'armbian' (acceso a monturas/cámaras serie)
+usermod -a -G dialout armbian
+usermod -a -G tty armbian
+usermod -a -G video armbian
+
+# 2. Desactivar auto-montaje de cámaras (evita que el sistema bloquee la cámara antes que Ekos)
+# Intentamos para MATE/GNOME schemes
+dbus-run-session gsettings set org.mate.media-handling automount false || true
+
+# 3. Crear archivo SWAP de 2GB (Mejora estabilidad con mucha carga de imágenes)
+echo "Creando archivo SWAP..."
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+
+# ----------------------------------------------------------------------------
+# 8. Script de Primer Arranque (First Boot)
 # ----------------------------------------------------------------------------
 echo "Configurando script de primer arranque..."
 cat <<EOF > /usr/local/bin/astro-first-boot.sh

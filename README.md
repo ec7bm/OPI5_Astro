@@ -40,12 +40,30 @@ Al reiniciar, la Orange Pi se conectará a tu Wi-Fi y el hotspot desaparecerá.
 
 ## 🛠️ Stack de Software Incluido
 *   **INDI Server**: Drivers de monturas y cámaras.
-*   **KStars / Ekos**: Suite de control astronómico.
-*   **PHD2**: Autoguiado profesional.
+*   **KStars / Ekos**: Suite de control astronómico principal.
+*   **PHD2 / PHDLogViewer**: Autoguiado profesional y visor de logs.
 *   **AstroDMx Capture**: Captura planetaria y de cielo profundo.
-*   **ASTAP**: Plate solver ultra rápido.
+*   **ASTAP**: Plate solver ultra rápido con base de datos D50 incluida.
 *   **Syncthing**: Sincronización automática de tus fotos con tu PC.
+*   **GPSD**: Monitorización de satélites para sincronizar hora/ubicación vía GPS USB.
 *   **Widget Conky**: Monitorización en tiempo real de temperatura y red.
+
+---
+
+## 💡 Guía de Uso de Servicios
+
+### Cómo iniciar INDI Server manualmente
+Si prefieres no usar Ekos para lanzar los drivers, puedes hacerlo por terminal:
+```bash
+# Ejemplo para una montura OnStep y una cámara ASI
+indiserver -v indi_lx200_OnStep indi_asi_ccd
+```
+
+### Solución de Problemas (FAQ)
+*   **Acceso a puertos serie**: El usuario `armbian` ya pertenece al grupo `dialout`. Si usas otro usuario, añádelo con `sudo usermod -a -G dialout $USER`.
+*   **Cámaras DSLR**: Se ha desactivado el auto-montaje de discos para evitar que el sistema bloquee tu cámara antes de que INDI pueda usarla.
+*   **Rendimiento**: El sistema ha sido optimizado eliminando `cloud-init`, lo que reduce el tiempo de arranque drásticamente.
+*   **Estabilidad**: Se ha creado un archivo SWAP de 2GB para evitar cuelgues durante procesos pesados de apilado o captura.
 
 ---
 
