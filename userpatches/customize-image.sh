@@ -57,17 +57,21 @@ apt-get install -y \
     astrometry.net astrometry-data-tycho2 sextractor
 
 # Instalar ASTAP (Astrometry) y Base de Datos D50
-echo "Instalando ASTAP y base de datos de estrellas..."
-# Nota: Usamos mirrors de SourceForge para mayor fiabilidad
-wget https://master.dl.sourceforge.net/project/astap-program/star_databases/d50_star_database.deb -O /tmp/d50.deb || true
-wget https://versaweb.dl.sourceforge.net/project/astap-program/linux_installer/astap_arm64.deb -O /tmp/astap.deb || true
+# Nota: ASTAP es opcional. Si los links fallan, el build continuará sin él.
+echo "Intentando instalar ASTAP..."
+set +e  # Desactivar salida en error temporalmente
+wget --timeout=30 --tries=2 https://master.dl.sourceforge.net/project/astap-program/star_databases/d50_star_database.deb -O /tmp/d50.deb 2>/dev/null
+wget --timeout=30 --tries=2 https://versaweb.dl.sourceforge.net/project/astap-program/linux_installer/astap_arm64.deb -O /tmp/astap.deb 2>/dev/null
 
-if [ -f /tmp/astap.deb ]; then
-    apt-get install -y /tmp/astap.deb /tmp/d50.deb || true
-    rm /tmp/astap.deb /tmp/d50.deb
+if [ -f /tmp/astap.deb ] && [ -s /tmp/astap.deb ]; then
+    echo "ASTAP descargado correctamente. Instalando..."
+    apt-get install -y /tmp/astap.deb /tmp/d50.deb 2>/dev/null || echo "Advertencia: Error al instalar ASTAP, continuando..."
+    rm -f /tmp/astap.deb /tmp/d50.deb
 else
-    echo "ERROR: No se pudo descargar ASTAP. Saltando..."
+    echo "ADVERTENCIA: No se pudo descargar ASTAP. Continuando sin él..."
+    rm -f /tmp/astap.deb /tmp/d50.deb
 fi
+set -e  # Reactivar salida en error
 
 # Instalar AstroDMx Capture (ARM64)
 # Nota: El enlace puede variar según la versión. Se descarga la versión genérica de 64 bits para ARM.
