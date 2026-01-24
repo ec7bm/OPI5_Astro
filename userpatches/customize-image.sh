@@ -74,13 +74,20 @@ fi
 set -e  # Reactivar salida en error
 
 # Instalar AstroDMx Capture (ARM64)
-# Nota: El enlace puede variar según la versión. Se descarga la versión genérica de 64 bits para ARM.
-echo "Instalando AstroDMx Capture..."
-wget https://www.astrodmx-capture.org.uk/downloads/astrodmx-capture_2.11.2_arm64.deb -O /tmp/astrodmx.deb || true
-if [ -f /tmp/astrodmx.deb ]; then
-    apt-get install -y /tmp/astrodmx.deb
-    rm /tmp/astrodmx.deb
+# Nota: AstroDMx es opcional. Si el link falla, el build continuará sin él.
+echo "Intentando instalar AstroDMx Capture..."
+set +e  # Desactivar salida en error temporalmente
+wget --timeout=30 --tries=2 https://www.astrodmx-capture.org.uk/downloads/astrodmx-capture_2.11.2_arm64.deb -O /tmp/astrodmx.deb 2>/dev/null
+
+if [ -f /tmp/astrodmx.deb ] && [ -s /tmp/astrodmx.deb ]; then
+    echo "AstroDMx descargado correctamente. Instalando..."
+    apt-get install -y /tmp/astrodmx.deb 2>/dev/null || echo "Advertencia: Error al instalar AstroDMx, continuando..."
+    rm -f /tmp/astrodmx.deb
+else
+    echo "ADVERTENCIA: No se pudo descargar AstroDMx. Continuando sin él..."
+    rm -f /tmp/astrodmx.deb
 fi
+set -e  # Reactivar salida en error
 
 # ----------------------------------------------------------------------------
 # 3. Entorno Headless (Xvfb + x11vnc + noVNC)
