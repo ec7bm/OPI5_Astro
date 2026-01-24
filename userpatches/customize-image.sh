@@ -22,14 +22,17 @@ apt-get install -y --no-install-recommends \
 # Añadir PPAs de Astronomía de forma MANUAL (más fiable en chroot)
 echo "Configurando repositorios PPA manualmente..."
 
+# Asegurar que el directorio de llaves existe
+mkdir -p /etc/apt/trusted.gpg.d/
+
 # 1. PPA de Jas Mutlaq (INDI & KStars)
-# Llave: F81D4F8C16975C8882D7B38333E72D44A5F2E962
-gpg --no-default-keyring --keyring /etc/apt/trusted.gpg.d/mutlaqja.gpg --keyserver keyserver.ubuntu.com --recv-keys F81D4F8C16975C8882D7B38333E72D44A5F2E962
+echo "Obteniendo llave PPA Mutlaqja..."
+wget -qO - "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xF81D4F8C16975C8882D7B38333E72D44A5F2E962" | gpg --dearmor > /etc/apt/trusted.gpg.d/mutlaqja.gpg
 echo "deb [signed-by=/etc/apt/trusted.gpg.d/mutlaqja.gpg] https://ppa.launchpadcontent.net/mutlaqja/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/mutlaqja.list
 
 # 2. PPA de PHD2
-# Llave: DAE27FFB13432BED41181735E3DBD5D75CFABF12
-gpg --no-default-keyring --keyring /etc/apt/trusted.gpg.d/phd2.gpg --keyserver keyserver.ubuntu.com --recv-keys DAE27FFB13432BED41181735E3DBD5D75CFABF12
+echo "Obteniendo llave PPA PHD2..."
+wget -qO - "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xDAE27FFB13432BED41181735E3DBD5D75CFABF12" | gpg --dearmor > /etc/apt/trusted.gpg.d/phd2.gpg
 echo "deb [signed-by=/etc/apt/trusted.gpg.d/phd2.gpg] https://ppa.launchpadcontent.net/pch/phd2/ubuntu jammy main" > /etc/apt/sources.list.d/phd2.list
 
 # Forzar actualización de listas
@@ -61,10 +64,11 @@ fi
 # ----------------------------------------------------------------------------
 # 3. Entorno Headless (Xvfb + x11vnc + noVNC)
 # ----------------------------------------------------------------------------
-echo "Configurando entorno Headless Virtual..."
+echo "Configurando entorno Headless Virtual con Estética..."
 apt-get install -y \
     xvfb x11vnc fluxbox \
-    websockify novnc
+    websockify novnc \
+    feh conky-all
 
 # Crear directorio para noVNC si no existe
 mkdir -p /opt/novnc
@@ -123,7 +127,7 @@ Type=simple
 User=armbian
 Environment=DISPLAY=:1
 ExecStartPre=-/usr/bin/rm -f /tmp/.X1-lock
-ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900"
+ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; feh --bg-fill /usr/share/backgrounds/astro-wallpaper.jpg; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900 & sleep 5; conky -c /etc/conky/conky.conf"
 Restart=always
 
 [Install]
