@@ -1,0 +1,14 @@
+# Armbian Build Engine
+armbian-build/
+
+# Logs and outputs
+output/
+userpatches/temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.swp
+*~
