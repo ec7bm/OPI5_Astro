@@ -19,14 +19,20 @@ apt-get install -y --no-install-recommends \
     network-manager vim htop zip unzip tar xz-utils \
     python3-pip python3-setuptools
 
-# Añadir PPAs de Astronomía de forma manual para asegurar el registro en el chroot
-echo "Configurando repositorios PPA..."
-# PPA de Jas Mutlaq (INDI & KStars)
-add-apt-repository -y ppa:mutlaqja/ppa
-# PPA de PHD2
-add-apt-repository -y ppa:pch/phd2
+# Añadir PPAs de Astronomía de forma MANUAL (más fiable en chroot)
+echo "Configurando repositorios PPA manualmente..."
 
-# Forzar actualización de listas tras añadir PPAs
+# 1. PPA de Jas Mutlaq (INDI & KStars)
+# Llave: F81D4F8C16975C8882D7B38333E72D44A5F2E962
+gpg --no-default-keyring --keyring /etc/apt/trusted.gpg.d/mutlaqja.gpg --keyserver keyserver.ubuntu.com --recv-keys F81D4F8C16975C8882D7B38333E72D44A5F2E962
+echo "deb [signed-by=/etc/apt/trusted.gpg.d/mutlaqja.gpg] https://ppa.launchpadcontent.net/mutlaqja/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/mutlaqja.list
+
+# 2. PPA de PHD2
+# Llave: DAE27FFB13432BED41181735E3DBD5D75CFABF12
+gpg --no-default-keyring --keyring /etc/apt/trusted.gpg.d/phd2.gpg --keyserver keyserver.ubuntu.com --recv-keys DAE27FFB13432BED41181735E3DBD5D75CFABF12
+echo "deb [signed-by=/etc/apt/trusted.gpg.d/phd2.gpg] https://ppa.launchpadcontent.net/pch/phd2/ubuntu jammy main" > /etc/apt/sources.list.d/phd2.list
+
+# Forzar actualización de listas
 apt-get update -y
 
 # ----------------------------------------------------------------------------
