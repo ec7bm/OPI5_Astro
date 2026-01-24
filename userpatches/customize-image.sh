@@ -48,6 +48,21 @@ echo "deb [signed-by=/etc/apt/trusted.gpg.d/phd2.gpg] https://ppa.launchpadconte
 # Forzar actualización de listas
 apt-get update -y
 
+# ----------------------------------------------------------------------------
+# 1.5. Crear usuario OPI5_Astro PRIMERO (antes de configurar servicios)
+# ----------------------------------------------------------------------------
+echo "Configurando usuario OPI5_Astro..."
+if ! id "OPI5_Astro" &>/dev/null; then
+    useradd -m -s /bin/bash OPI5_Astro
+    echo "OPI5_Astro:password" | chpasswd
+    usermod -aG sudo OPI5_Astro
+fi
+
+# Configurar grupos para acceso a hardware
+usermod -a -G dialout OPI5_Astro
+usermod -a -G tty OPI5_Astro
+usermod -a -G video OPI5_Astro
+
 # 2. Instalación de Software Astronómico
 # ----------------------------------------------------------------------------
 echo "Instalando Stack Astronómico..."
@@ -103,6 +118,7 @@ mkdir -p /opt/novnc
 cp -r /usr/share/novnc/* /opt/novnc/ || true
 
 # Configurar Fluxbox para que lance nm-applet y tint2 automáticamente
+# (El usuario OPI5_Astro ya existe en este punto)
 mkdir -p /home/OPI5_Astro/.fluxbox
 cat <<EOF > /home/OPI5_Astro/.fluxbox/startup
 #!/bin/sh
@@ -207,28 +223,11 @@ systemctl enable astro-network
 systemctl enable gpsd
 
 # ----------------------------------------------------------------------------
-# 7. Ajustes Finales (Grupos, Swap, Auto-mount)
+# 7. Ajustes Finales (Swap, Auto-mount)
 # ----------------------------------------------------------------------------
 echo "Aplicando ajustes finales de AstroPi..."
 
-# 1. Crear y configurar usuario OPI5_Astro
-echo "Configurando usuario OPI5_Astro..."
-if ! id "OPI5_Astro" &>/dev/null; then
-    useradd -m -s /bin/bash OPI5_Astro
-    echo "OPI5_Astro:password" | chpasswd
-    # Darle permisos de sudo
-    usermod -aG sudo OPI5_Astro
-fi
-
-# 2. Configurar grupos para el usuario (acceso a monturas/cámaras serie)
-usermod -a -G dialout OPI5_Astro
-usermod -a -G tty OPI5_Astro
-usermod -a -G video OPI5_Astro
-
-# 3. Eliminar usuario 'armbian' si existe para evitar confusiones (opcional, lo mantenemos por si acaso)
-# userdel -r armbian || true
-
-# 4. Desactivar auto-montaje de cámaras
+# 1. Desactivar auto-montaje de cámaras
 # Intentamos para MATE/GNOME schemes
 dbus-run-session gsettings set org.mate.media-handling automount false || true
 
