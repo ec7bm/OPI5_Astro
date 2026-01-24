@@ -1,6 +1,5 @@
-# Astro Orange Pi 5 Image Build System
-
-Sistema de construcción automatizado y reproducible para generar una imagen Linux ARM64 (basada en Armbian) optimizada para astrofotografía y control de telescopios en Orange Pi 5 / 5 Pro.
+# 🌌 Astro OPI 5 Pro (Armbian Jammy)
+Este proyecto automatiza la creación de una imagen personalizada de **Armbian** para la **Orange Pi 5 Pro**, diseñada específicamente para astrofotografía. Incluye un stack completo de software astronómico y un entorno gráfico accesible desde el navegador.
 
 ## 🚀 Guía de Inicio Rápido (Post-Flasheo)
 
