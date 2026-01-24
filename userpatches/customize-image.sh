@@ -19,10 +19,15 @@ apt-get install -y --no-install-recommends \
     network-manager vim htop zip unzip tar xz-utils \
     python3-pip python3-setuptools
 
-# Añadir PPAs de Astronomía (Ubuntu Jammy)
-add-apt-repository -y ppa:mutlaqja/ppa        # INDI & KStars
-add-apt-repository -y ppa:pch/phd2            # PHD2
-apt-get update
+# Añadir PPAs de Astronomía de forma manual para asegurar el registro en el chroot
+echo "Configurando repositorios PPA..."
+# PPA de Jas Mutlaq (INDI & KStars)
+add-apt-repository -y ppa:mutlaqja/ppa
+# PPA de PHD2
+add-apt-repository -y ppa:pch/phd2
+
+# Forzar actualización de listas tras añadir PPAs
+apt-get update -y
 
 # ----------------------------------------------------------------------------
 # 2. Instalación de Software Astronómico
