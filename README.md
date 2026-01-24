@@ -2,30 +2,56 @@
 
 Sistema de construcción automatizado y reproducible para generar una imagen Linux ARM64 (basada en Armbian) optimizada para astrofotografía y control de telescopios en Orange Pi 5 / 5 Pro.
 
-## Objetivos del Proyecto
+## 🚀 Guía de Inicio Rápido (Post-Flasheo)
 
-* **Headless por defecto**: Operación sin necesidad de monitor, teclado o ratón.
-* **Red Inteligente**: Conexión automática a Wi-Fi conocida o creación de un Hotspot (RPI) de respaldo.
-* **Acceso Remoto**: SSH, VNC y noVNC (navegador) preconfigurados.
-* **Stack Astronómico Completo**: INDI Server, KStars/Ekos, PHD2, AstroDMx, ASTAP.
-* **Sincronización Automática**: Syncthing para transferencia de capturas.
-* **Reproducible**: Basado en Armbian Build Framework con parches de usuario personalizados (`userpatches`).
+Una vez que hayas flasheado la imagen en tu tarjeta SD o eMMC, sigue estos pasos:
 
-## Estructura del Repositorio
+### 1. Primer Arranque
+Conecta la Orange Pi a la alimentación. No necesitas monitor ni teclado. El sistema tardará un par de minutos en arrancar y auto-configurarse la primera vez.
 
-* `build.sh`: Script principal para iniciar la construcción.
-* `userpatches/`: Configuraciones y hooks que Armbian usará durante el build.
-* `scripts/`: Scripts que se incluirán en la imagen final (redes, primer arranque).
-* `configs/`: Plantillas de configuración para servicios (Systemd, VNC, Syncthing).
+### 2. Conexión al Hotspot
+El sistema creará automáticamente una red Wi-Fi si no detecta una conocida:
+*   **SSID (Nombre)**: `RPI`
+*   **Password**: `password`
+*   **IP del Sistema**: `10.0.0.1`
 
-## Requisitos de Construcción
+Conecta tu móvil o PC a esta red `RPI`.
 
-* Máquina con Ubuntu 22.04 o superior (VM recomendada).
-* Acceso a Internet para descargar dependencias y paquetes.
-* Espacio en disco (~20GB mínimo).
+### 3. Acceso Remoto
+Tienes tres formas de controlar el sistema:
 
-## Cómo empezar (Próximamente)
+*   **Navegador Web (noVNC)**: Abre `http://10.0.0.1:6080` en tu navegador. Verás el escritorio con el fondo astronómico y el widget de monitorización.
+*   **Escritorio Remoto (VNC)**: Usa cualquier cliente VNC (como VNC Viewer) apuntando a `10.0.0.1:5900` (sin contraseña).
+*   **Terminal (SSH)**:
+    *   **Usuario**: `armbian` (o el que hayas configurado en el build)
+    *   **Comando**: `ssh armbian@10.0.0.1`
 
-1. Clonar este repositorio.
-2. Ejecutar `./build.sh`.
-3. Flashear la imagen resultante en `/output/images/`.
+### 4. Configurar tu Wi-Fi de Casa
+Para que la Orange Pi se conecte a tu internet local y deje de crear el hotspot:
+1.  Entra por SSH o abre una terminal en el escritorio remoto.
+2.  Escribe: `sudo nmtui`
+3.  Selecciona **"Activate a connection"**.
+4.  Busca tu red Wi-Fi, pon la clave y acepta.
+5.  Reinicia el sistema: `sudo reboot`
+
+Al reiniciar, la Orange Pi se conectará a tu Wi-Fi y el hotspot desaparecerá.
+
+---
+
+## 🛠️ Stack de Software Incluido
+*   **INDI Server**: Drivers de monturas y cámaras.
+*   **KStars / Ekos**: Suite de control astronómico.
+*   **PHD2**: Autoguiado profesional.
+*   **AstroDMx Capture**: Captura planetaria y de cielo profundo.
+*   **ASTAP**: Plate solver ultra rápido.
+*   **Syncthing**: Sincronización automática de tus fotos con tu PC.
+*   **Widget Conky**: Monitorización en tiempo real de temperatura y red.
+
+---
+
+## 🏗️ Cómo construir la imagen (Para Desarrolladores)
+
+1.  Clonar este repositorio en una VM Ubuntu: `git clone https://github.com/ec7bm/OPI5_Astro.git`
+2.  Dar permisos: `chmod +x build.sh`
+3.  Ejecutar: `sudo ./build.sh`
+4.  Subir a GitHub: `./scripts/upload-release.sh`

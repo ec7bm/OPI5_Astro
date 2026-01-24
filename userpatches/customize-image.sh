@@ -43,14 +43,20 @@ apt-get update -y
 # ----------------------------------------------------------------------------
 echo "Instalando Stack Astronómico..."
 apt-get install -y \
-    indi-full kstars-bleeding phd2 \
-    arduino arduino-core
+    indi-full kstars-bleeding phd2
 
-# Instalar ASTAP y Base de datos de estrellas (H17/H18)
-# Nota: Instalamos el binario para ARM64
-wget https://www.hnsky.org/astap_arm64.deb -O /tmp/astap.deb
-apt-get install -y /tmp/astap.deb
-rm /tmp/astap.deb
+# Instalar ASTAP (Astrometry)
+# Intentamos bajar la versión ARM64. Si el link falla, avisamos pero no rompemos el build.
+echo "Instalando ASTAP..."
+ASTAP_URL="https://www.hnsky.org/astap_arm64.deb"
+wget --spider "$ASTAP_URL" 2>/dev/null
+if [ $? -eq 0 ]; then
+    wget "$ASTAP_URL" -O /tmp/astap.deb
+    apt-get install -y /tmp/astap.deb
+    rm /tmp/astap.deb
+else
+    echo "ADVERTENCIA: No se pudo descargar ASTAP desde el link oficial. Saltando..."
+fi
 
 # Instalar AstroDMx Capture (ARM64)
 # Nota: El enlace puede variar según la versión. Se descarga la versión genérica de 64 bits para ARM.
