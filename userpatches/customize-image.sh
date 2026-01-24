@@ -61,7 +61,7 @@ apt-get install -y \
 echo "Intentando instalar ASTAP..."
 set +e  # Desactivar salida en error temporalmente
 wget --timeout=30 --tries=2 https://master.dl.sourceforge.net/project/astap-program/star_databases/d50_star_database.deb -O /tmp/d50.deb 2>/dev/null
-wget --timeout=30 --tries=2 https://versaweb.dl.sourceforge.net/project/astap-program/linux_installer/astap_arm64.deb -O /tmp/astap.deb 2>/dev/null
+wget --timeout=30 --tries=2 https://sourceforge.net/projects/astap-program/files/linux_installer/astap_aarch64.deb/download -O /tmp/astap.deb 2>/dev/null
 
 if [ -f /tmp/astap.deb ] && [ -s /tmp/astap.deb ]; then
     echo "ASTAP descargado correctamente. Instalando..."
