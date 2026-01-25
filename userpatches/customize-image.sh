@@ -19,7 +19,7 @@ apt-get install -y --no-install-recommends \
     network-manager vim htop zip unzip tar xz-utils \
     python3-pip python3-setuptools gpsd gpsd-clients \
     libxml2-utils gsettings-desktop-schemas \
-    network-manager-gnome tint2 zenity
+    network-manager-gnome tint2 zenity dnsmasq-base iptables
 
 # Eliminar brltty (causa conflictos con dispositivos serial/USB de astronomía)
 apt-get purge -y brltty || true
@@ -119,7 +119,6 @@ id=Hotspot
 uuid=$(cat /proc/sys/kernel/random/uuid)
 type=wifi
 autoconnect=false
-interface-name=wlan0
 
 [wifi]
 mode=ap
