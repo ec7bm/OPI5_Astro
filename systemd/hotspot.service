@@ -1,0 +1,11 @@
+[Unit]
+Description=OrangePi Astro Hotspot Auto-Switcher
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/hotspot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

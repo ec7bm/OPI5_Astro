@@ -1,0 +1,12 @@
+[Unit]
+Description=OrangePi Astro First Boot Setup
+After=network.target
+ConditionPathExists=!/var/log/firstboot.log
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/firstboot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
