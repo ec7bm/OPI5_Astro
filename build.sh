@@ -49,6 +49,18 @@ echo "La imagen resultante debería estar en ${ARMBIAN_DIR}/output/images/"
 
 # Sugerencia para subir a GitHub
 echo ""
-echo "Para subir la imagen a GitHub Releases, ejecuta:"
-echo "chmod +x scripts/upload-release.sh"
-echo "./scripts/upload-release.sh"
+echo "Opciones post-build:"
+echo "1. Subir a GitHub: chmod +x scripts/upload-release.sh && ./scripts/upload-release.sh"
+echo "2. Descargar localmente (Levantar servidor HTTP)"
+echo ""
+read -p "¿Deseas levantar el servidor de descarga ahora? (s/n): " choice
+if [[ "$choice" == "s" || "$choice" == "S" ]]; then
+    IMAGE_DIR="${ARMBIAN_DIR}/output/images"
+    IP_ADDR=$(hostname -I | awk '{print $1}')
+    echo "=== Servidor de descarga iniciado ==="
+    echo "Abre este enlace en tu navegador de Windows:"
+    echo "http://${IP_ADDR}:8080"
+    echo ""
+    echo "Presiona Ctrl+C para detener el servidor cuando termine la descarga."
+    cd "$IMAGE_DIR" && python3 -m http.server 8080
+fi
