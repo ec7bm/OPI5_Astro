@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Astro OPI 5 Pro - Remaster Script
+# AstroOrange Pro - Remaster Script
 # Este script toma la imagen oficial de Ubuntu Jammy Server de Orange Pi
 # y le inyecta toda nuestra personalización astronómica
 
 set -e
 
-echo "=== Astro OPI 5 Pro Remaster System ==="
+echo "=== AstroOrange Pro v2.1 Remaster System ==="
 
 # Directorios
 BASE_DIR="$(pwd)"
@@ -135,7 +135,7 @@ echo "[6/6] Comprimiendo imagen final..."
 OUTPUT_DIR="${BASE_DIR}/output"
 mkdir -p "${OUTPUT_DIR}"
 
-OUTPUT_NAME="Astro-OPI5-Pro-Ubuntu-Jammy-$(date +%Y%m%d).img"
+OUTPUT_NAME="AstroOrange-v2.1-$(date +%Y%m%d).img"
 mv "$IMAGE_FILE" "${OUTPUT_DIR}/${OUTPUT_NAME}"
 
 cd "${OUTPUT_DIR}"

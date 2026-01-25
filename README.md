@@ -1,67 +1,80 @@
-# 🌌 Astro OPI 5 Pro - Ubuntu Jammy Remaster Edition
+# 🌌 AstroOrange Pro v2.1 - Ubuntu Jammy Remaster Edition
 
-Este proyecto personaliza la **imagen oficial de Ubuntu Jammy Server de Orange Pi 5 Pro** añadiendo un stack completo de software astronómico y un asistente de instalación gráfico.
+AstroOrange is a robust, modular, and professional operating system image for **Orange Pi 5 Pro**, specifically designed for astrophotography. It is based on the official Orange Pi Ubuntu Jammy Server to guarantee maximum hardware compatibility and stability.
 
-## 🚀 Guía de Construcción (Remaster)
+---
 
-### Requisitos Previos
-- VM Ubuntu 22.04 con al menos 50GB libres
-- Imagen oficial de Ubuntu Jammy Server para Orange Pi 5 Pro
+## 🚀 Guía de Arranque y Configuración (Tutorial)
 
-### Pasos de Construcción
+### 1. Primer Inicio: Conexión al Hotspot
+Al encender tu Orange Pi por primera vez, el sistema detectará que no hay una red Wi-Fi configurada y levantará automáticamente un punto de acceso (Hotspot).
 
-1. **Descargar imagen oficial de Orange Pi**
-   - Ve a: https://drive.google.com/drive/folders/11tj_ivEBwvJx4vdNtK91YQeGOKDC4JNy
-   - Descarga la imagen de **Ubuntu Jammy Server**
-   - Colócala en `~/astro/OPI5_Astro/remaster-work/`
+- **Nombre de red (SSID)**: `AstroOrange`
+- **Contraseña**: `password`
+- **IP del Sistema**: `192.168.4.1`
 
-2. **Ejecutar el remaster**
+### 2. Acceso al Escritorio Virtual
+Una vez conectado al Wi-Fi `AstroOrange`, puedes acceder al escritorio gráfico desde cualquier dispositivo (Móvil, Tablet o Portátil) sin instalar nada:
+
+1. Abre tu navegador web.
+2. Ve a la dirección: `http://192.168.4.1:6080`
+3. Verás el escritorio de AstroOrange (Nebulosa del Velo de fondo).
+
+### 3. Configuración de Wi-Fi Real
+Para poder descargar el software astronómico, necesitas conectar la placa a internet:
+
+1. En el escritorio virtual, verás un icono de red en la barra de tareas (esquina inferior derecha).
+2. Haz clic en él y selecciona tu red Wi-Fi de casa/observatorio.
+3. Introduce tu contraseña y espera a que conecte.
+4. **IMPORTANTE**: Una vez conectado, abre la terminal en el escritorio y escribe:
    ```bash
-   cd ~/astro/OPI5_Astro
-   chmod +x remaster-orangepi.sh
-   sudo ./remaster-orangepi.sh
+   sudo reboot
    ```
 
-3. **Resultado**
-   - La imagen personalizada estará en: `output/Astro-OPI5-Pro-Ubuntu-Jammy-YYYYMMDD.img.xz`
+### 4. Segundo Inicio: El Setup Wizard
+Tras el reinicio, AstroOrange se conectará a tu Wi-Fi. Accede de nuevo vía navegador (ahora usando la nueva IP que le haya dado tu router, o sigue usando el cable ethernet si prefieres).
 
-### Limpiar Espacio
+Al entrar al escritorio, saltará automáticamente el **AstroOrange Setup Wizard** (pantalla azul).
+- Selecciona el software que quieres instalar (INDI, KStars, PHD2, ASTAP, etc.).
+- El sistema descargará e instalará todo automáticamente.
+- Al terminar, se reiniciará una última vez y ¡listo para capturar el cielo! 🌌
 
-Para limpiar archivos temporales después del build:
-```bash
-sudo rm -rf ~/astro/OPI5_Astro/remaster-work
-sudo rm -rf ~/astro/OPI5_Astro/output
-```
+---
 
-## 📦 Contenido de la Imagen
+## 🏗️ Guía de Construcción (Para Desarrolladores)
 
-La imagen incluye:
-- **Sistema Base**: Ubuntu 22.04 LTS (Jammy) oficial de Orange Pi
-- **Escritorio Remoto**: noVNC accesible desde navegador (puerto 6080)
-- **Hotspot Wi-Fi**: Red `OPI5_Astro` (password: `password`)
-- **Astro Setup Wizard**: Instalador gráfico de software astronómico
-- **Software disponible**: INDI, KStars, PHD2, ASTAP, SkyChart, AstroDMx
+Si deseas "cocinar" tu propia imagen desde una VM Linux:
 
-## 🛠️ Credenciales
+1. **Clonar el repo y actualizar**:
+   ```bash
+   cd ~/astro/OPI5_Astro
+   git pull
+   ```
 
-- **Usuario**: `orangepi` (o el que venga por defecto en la imagen oficial)
-- **Password**: El que configure Orange Pi en su imagen
-- **IP del Hotspot**: `10.0.0.1`
-- **Puerto noVNC**: `6080`
+2. **Ejecutar el Build Maestro**:
+   ```bash
+   sudo ./build.sh
+   ```
 
-## 🔧 Desarrollo
+3. **Recuperar la Imagen**:
+   Una vez termine, usa el script de servicio para bajarla a tu Windows:
+   ```bash
+   python3 scripts/serve_image.py
+   ```
 
-Este proyecto usa la imagen oficial de Orange Pi como base porque:
-- ✅ Bootloader optimizado para la placa
-- ✅ Drivers específicos del hardware
-- ✅ Compatibilidad garantizada con Orange Pi 5 Pro
+---
 
-Los scripts de personalización están en `userpatches/`:
-- `customize-image.sh`: Script principal de personalización
-- `overlay/`: Archivos que se copian a la imagen
-- `overlay/usr/local/bin/astro-wizard.sh`: Asistente de instalación
+## 🛠️ Detalles Técnicos
+- **Base**: Ubuntu 22.04 Jammy (Vendor Kernel 5.10).
+- **Escritorio**: Fluxbox (Ultra-ligero).
+- **Remoto**: noVNC (Puerto 6080) + VNC (Puerto 5900).
+- **Hostname**: `astroorange.local`
+- **Usuario**: `OPI5_Astro` (Contraseña: `password`).
 
-## 📝 Notas
+---
 
-- La imagen oficial de Orange Pi usa un bootloader específico que Armbian no replica correctamente
-- Por eso usamos la imagen oficial como base en lugar de construir desde cero con Armbian
+## 📝 Notas de Versión v2.1
+- ✨ **Rebranding**: Cambio de nombre oficial a **AstroOrange**.
+- 🛠️ **Arquitectura Modular**: Scripts separados en `/scripts` y servicios en `/systemd`.
+- 🌐 **IP Estándar**: Hotspot actualizado a `192.168.4.1`.
+- 📦 **Build Optimizado**: Compresión ligera para evitar errores de memoria en la VM.

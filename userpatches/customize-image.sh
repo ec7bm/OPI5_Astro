@@ -5,7 +5,7 @@
 
 set -e
 
-echo "=== Iniciando personalización de Astro OPI ==="
+echo "=== Iniciando personalización de AstroOrange ==="
 
 # ----------------------------------------------------------------------------
 # 1. Ajustes Básicos y Repositorios

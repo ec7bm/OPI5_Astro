@@ -1,13 +1,11 @@
-#!/bin/bash
-
-# Astro Wizard TUI - Asistente de Instalación Astronómica
+# AstroOrange TUI - Asistente de Instalación Astronómica (v2.1)
 # Se ejecuta en el segundo arranque (Fase 2) tras configurar la red
 
 set -e
 
 # Colores y variables
-TITLE="Astro OPI 5 Pro - Setup Wizard"
-BACKTITLE="Instalador de Software Astronómico v1.0"
+TITLE="AstroOrange Pro - Setup Wizard"
+BACKTITLE="Instalador de Software Astronómico v2.1"
 LOGfile="/var/log/astro-wizard.log"
 
 # Función para registrar log
@@ -24,7 +22,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Pantalla de bienvenida
-whiptail --title "$TITLE" --msgbox "¡Bienvenido a tu Astro OPI 5 Pro! 🌌🔭\n\nEste asistente te ayudará a instalar el software astronómico que necesitas.\n\nAsegúrate de estar conectado a Internet antes de continuar." 15 60
+whiptail --title "$TITLE" --msgbox "¡Bienvenido a tu AstroOrange Pro! 🌌🔭\n\nEste asistente te ayudará a instalar el software astronómico que necesitas.\n\nAsegúrate de estar conectado a Internet antes de continuar." 15 60
 
 # Menú principal de selección de software
 CHOICES=$(whiptail --title "Selección de Software" --checklist \

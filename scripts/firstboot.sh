@@ -6,8 +6,8 @@ echo "--- Iniciando First Boot Setup ---" > $LOG
 date >> $LOG
 
 # 1. Ajuste de Hostname
-hostnamectl set-hostname astro-opi
-sed -i 's/127.0.1.1.*/127.0.1.1\tastro-opi/' /etc/hosts
+hostnamectl set-hostname astroorange
+sed -i 's/127.0.1.1.*/127.0.1.1\tastroorange/' /etc/hosts
 
 # 2. Permisos de Usuario
 chown -R OPI5_Astro:OPI5_Astro /home/OPI5_Astro
