@@ -260,11 +260,7 @@ ResultInactive=yes
 ResultActive=yes
 EOF
 
-# 9. Lógica de Arranque Robusta para Orange Pi 5 Pro
-echo "Configurando rootwait y persistencia de montaje..."
-# Usar rootwait (espera infinita al hardware) en lugar de rootdelay
-# Forzar el montaje por etiqueta 'armbiantext' que es estándar en Armbian
-sed -i 's/^rootdev=.*/rootdev=LABEL=armbiantext/' /boot/armbianEnv.txt
+# 9. Añadir rootwait para espera robusta del hardware
 echo "extraargs=rootwait" >> /boot/armbianEnv.txt
 
 echo "=== Personalización finalizada correctamente ==="
