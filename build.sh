@@ -35,7 +35,7 @@ cp -rv "${BASE_DIR}/userpatches/"* "${ARMBIAN_DIR}/userpatches/"
 cd "$ARMBIAN_DIR"
 ./compile.sh \
     BOARD=orangepi5pro \
-    BRANCH=vendor \
+    BRANCH=legacy \
     RELEASE=noble \
     BUILD_MINIMAL=yes \
     BUILD_DESKTOP=no \
