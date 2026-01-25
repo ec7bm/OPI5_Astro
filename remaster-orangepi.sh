@@ -56,6 +56,27 @@ if [[ "$IMAGE_FILE" == *.xz ]]; then
     IMAGE_FILE="${IMAGE_FILE%.xz}"
 fi
 
+# 2.5. Expandir la imagen para tener espacio
+echo "[2.5/6] Expandiendo imagen en 3GB..."
+dd if=/dev/zero bs=1G count=3 >> "$IMAGE_FILE"
+# Buscar el dispositivo loop libre
+LOOP_DEVICE=$(sudo losetup -f)
+# Asociar imagen al loop device
+sudo losetup "$LOOP_DEVICE" "$IMAGE_FILE"
+# Leer la tabla de particiones
+sudo partprobe "$LOOP_DEVICE"
+# Expandir la partición root (la última, usualmente la 2)
+# Usamos growpart (parte de cloud-guest-utils)
+if ! command -v growpart &> /dev/null; then
+    sudo apt-get update && sudo apt-get install -y cloud-guest-utils
+fi
+sudo growpart "$LOOP_DEVICE" 2
+# Verificar y redimensionar el sistema de archivos (e2fsck + resize2fs)
+sudo e2fsck -f -y "${LOOP_DEVICE}p2"
+sudo resize2fs "${LOOP_DEVICE}p2"
+# Liberar loop para volver a montarlo limpiamente después
+sudo losetup -d "$LOOP_DEVICE"
+
 # 3. Montar la imagen
 echo "[3/6] Montando imagen..."
 LOOP_DEVICE=$(sudo losetup -f)
