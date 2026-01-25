@@ -260,4 +260,7 @@ ResultInactive=yes
 ResultActive=yes
 EOF
 
+# 9. Añadir retardo de arranque (rootdelay) para mayor estabilidad de montaje
+echo "extraargs=rootdelay=15" >> /boot/armbianEnv.txt
+
 echo "=== Personalización finalizada correctamente ==="
