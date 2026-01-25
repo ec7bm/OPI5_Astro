@@ -58,7 +58,8 @@ fi
 
 # 2.5. Expandir la imagen para tener espacio
 echo "[2.5/6] Expandiendo imagen en 3GB..."
-dd if=/dev/zero bs=1G count=3 >> "$IMAGE_FILE"
+# Usar truncate en lugar de dd para evitar depencias de /dev/zero
+truncate -s +3G "$IMAGE_FILE"
 # Buscar el dispositivo loop libre
 LOOP_DEVICE=$(sudo losetup -f)
 # Asociar imagen al loop device
