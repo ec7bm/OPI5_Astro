@@ -110,96 +110,11 @@ chown -R OPI5_Astro:OPI5_Astro /home/OPI5_Astro/.fluxbox /home/OPI5_Astro/.first
 echo "Instalando binario de Syncthing..."
 apt-get install -y syncthing
 
-# ----------------------------------------------------------------------------
-# 5. Configuración de Red (NetworkManager Hotspot)
-# ----------------------------------------------------------------------------
-# Crearemos un script de gestión de red que NM invocará o será un servicio.
-# Por ahora pre-configuramos el Hotspot por defecto.
-
-cat <<EOF > /etc/NetworkManager/system-connections/Hotspot.nmconnection
-[connection]
-id=Hotspot
-uuid=$(cat /proc/sys/kernel/random/uuid)
-type=wifi
-autoconnect=false
-
-[wifi]
-mode=ap
-ssid=OrangePi-Astro
-band=bg
-
-[wifi-security]
-key-mgmt=wpa-psk
-psk=password
-
-[ipv4]
-method=shared
-address1=192.168.4.1/24
-
-[ipv6]
-addr-gen-mode=stable-privacy
-method=ignore
-EOF
-
-chmod 600 /etc/NetworkManager/system-connections/Hotspot.nmconnection
-
-# ----------------------------------------------------------------------------
-# 6. Servicios Systemd Personalizados
-# ----------------------------------------------------------------------------
-# Servico VNC/noVNC (Headless Display)
-# Modificado para NO lanzar el wizard automáticamente en el startx, 
-# sino que el wizard se lanzará en una terminal o será invocado por el usuario.
-# OJO: Queremos que el wizard aparezca al conectarse por VNC? SÍ.
-
-cat <<EOF > /etc/systemd/system/astro-headless.service
-[Unit]
-Description=Astro Headless Virtual Display (Xvfb + VNC + noVNC)
-After=network.target
-
-[Service]
-Type=simple
-User=OPI5_Astro
-Environment=DISPLAY=:1
-Environment=HOME=/home/OPI5_Astro
-ExecStartPre=-/usr/bin/rm -f /tmp/.X1-lock
-# Lógica de arranque: Xvfb -> Fluxbox -> VNC -> noVNC -> Wizard Check
-ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; feh --bg-fill /usr/share/backgrounds/astro-nebula-1.jpg; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900 & sleep 5; if [ -f /home/OPI5_Astro/.first_boot_wizard ]; then xterm -geometry 120x40 -e sudo /usr/local/bin/astro-wizard.sh; fi; conky -c /etc/conky/conky.conf"
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Servicio de Autoconmutación de Red
-# Si no hay wifi, levanta hotspot.
-cat <<EOF > /usr/local/bin/astro-net-check.sh
-#!/bin/bash
-# Esperar a que NM se asiente
-sleep 20
-# Comprobar si hay alguna conexión wifi activa
-if ! nmcli -t -f TYPE,STATE dev | grep -q "wifi:connected"; then
-    echo "No hay conexión Wifi cliente. Activando Hotspot de emergencia..."
-    nmcli con up Hotspot
-fi
-EOF
-chmod +x /usr/local/bin/astro-net-check.sh
-
-cat <<EOF > /etc/systemd/system/astro-network.service
-[Unit]
-Description=Astro Network Auto-Switcher
-After=NetworkManager.service
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/astro-net-check.sh
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Habilitar servicios
-systemctl enable astro-headless
-systemctl enable astro-network
+# Habilitar servicios modulares
+systemctl enable hotspot.service
+systemctl enable firstboot.service
+systemctl enable astro-wizard.service
+systemctl enable astro-headless.service
 systemctl enable gpsd
 
 # ----------------------------------------------------------------------------
@@ -215,47 +130,7 @@ mkswap /swapfile
 echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
 
 # ----------------------------------------------------------------------------
-# 8. Script de Primer Arranque (First Boot) - Solo para redimensionar y setups de bajo nivel
-# ----------------------------------------------------------------------------
-echo "Configurando script de primer arranque (hostname, fs)..."
-cat <<EOF > /usr/local/bin/astro-first-boot.sh
-#!/bin/bash
-# Este script se ejecuta una sola vez al primer inicio.
-
-LOG=/var/log/astro-first-boot.log
-echo "--- Iniciando Script de Primer Arranque ---" > \$LOG
-date >> \$LOG
-
-# 1. Ajustes de hostname
-hostnamectl set-hostname astro-opi
-sed -i 's/127.0.1.1.*/127.0.1.1\tastro-opi/' /etc/hosts
-
-# 2. Asegurar permisos de OPI5_Astro
-chown -R OPI5_Astro:OPI5_Astro /home/OPI5_Astro
-
-# 3. Finalizar
-echo "Primer arranque completado." >> \$LOG
-systemctl disable astro-first-boot.service
-EOF
-
-chmod +x /usr/local/bin/astro-first-boot.sh
-
-cat <<EOF > /etc/systemd/system/astro-first-boot.service
-[Unit]
-Description=Astro First Boot Setup
-After=network.target
-ConditionPathExists=!/var/log/astro-first-boot.log
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/astro-first-boot.sh
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl enable astro-first-boot.service
+# (Se delega configuración específica a firstboot.sh)
 
 # Asegurar configuración de Polkit para que el usuario pueda gestionar redes sin sudo
 mkdir -p /etc/polkit-1/localauthority/50-local.d/
