@@ -139,8 +139,8 @@ OUTPUT_NAME="Astro-OPI5-Pro-Ubuntu-Jammy-$(date +%Y%m%d).img"
 mv "$IMAGE_FILE" "${OUTPUT_DIR}/${OUTPUT_NAME}"
 
 cd "${OUTPUT_DIR}"
-echo "Comprimiendo con xz (esto puede tardar varios minutos)..."
-xz -v -9 -T0 "${OUTPUT_NAME}"
+echo "Comprimiendo con xz (nivel ligero para evitar falta de RAM)..."
+xz -v -1 -T0 "${OUTPUT_NAME}"
 
 echo ""
 echo "=== ¡Proceso completado! ==="
