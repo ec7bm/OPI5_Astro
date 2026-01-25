@@ -102,9 +102,9 @@ sudo chmod +x "${MOUNT_DIR}/usr/local/bin/"*.sh
 echo "Copiando servicios systemd..."
 sudo cp -rv "${BASE_DIR}/systemd/"*.service "${MOUNT_DIR}/etc/systemd/system/"
 
-# C. Copiar fondos de pantalla y configuración estética (del repo antiguo)
+# C. Copiar fondos de pantalla y configuración estética
 mkdir -p "${MOUNT_DIR}/usr/share/backgrounds"
-sudo cp -rv "${USERPATCHES_DIR}/overlay/usr/share/backgrounds/"* "${MOUNT_DIR}/usr/share/backgrounds/" || true
+sudo cp -rv "${BASE_DIR}/assets/backgrounds/"* "${MOUNT_DIR}/usr/share/backgrounds/" || true
 
 # Ejecutar customize-image.sh en el chroot para habilitar todo
 echo "Habilitando servicios en chroot..."
