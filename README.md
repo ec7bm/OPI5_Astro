@@ -1,30 +1,45 @@
-# 🌌 Astro OPI 5 Pro (Armbian Jammy)
-Este proyecto automatiza la creación de una imagen personalizada de **Armbian** para la **Orange Pi 5 Pro**, diseñada específicamente para astrofotografía. Incluye un stack completo de software astronómico y un entorno gráfico accesible desde el navegador.
+Armbian-unofficial_26.02.0-trunk_Orangepi5_jammy_vendor_6.1.115_minimal.img
+Armbian-unofficial_26.02.0-trunk_Orangepi5_jammy_vendor_6.1.115_minimal.img.sha
+Armbian-unofficial_26.02.0-trunk_Orangepi5_jammy_vendor_6.1.115_minimal.img.txt
+# 🌌 Astro OPI 5 Pro (v2 - Setup Wizard)
 
-## 🚀 Guía de Inicio Rápido (Post-Flasheo)
+Este proyecto automatiza la creación de una imagen base ligera de **Armbian Jammy** para la **Orange Pi 5 Pro**, optimizada para astrofotografía. 
 
-Una vez que hayas flasheado la imagen en tu tarjeta SD o eMMC, sigue estos pasos:
+A diferencia de las versiones tradicionales "todo en uno", este sistema utiliza un **Asistente de Instalación (Setup Wizard)** que permite elegir qué software instalar una vez que la placa ha arrancado.
 
-### 1. Primer Arranque
-Conecta la Orange Pi a la alimentación. No necesitas monitor ni teclado. El sistema tardará un par de minutos en arrancar y auto-configurarse la primera vez.
+## 🚀 Guía de Inicio Rápido
 
-### 2. Conexión al Hotspot
-El sistema creará automáticamente una red Wi-Fi si no detecta una conocida:
-*   **SSID (Nombre)**: `OPI5_Astro`
-*   **Password**: `password`
-*   **IP del Sistema**: `10.0.0.1`
+1.  **Flashear**: Graba el archivo `.img.xz` en una MicroSD usando **Raspberry Pi Imager**.
+2.  **Arranque**: Inserta la tarjeta en la Orange Pi 5 Pro y conéctala a la alimentación. Espera 2-3 minutos.
+3.  **Conexión**: Conéctate a la red Wi-Fi generada por la placa:
+    *   **SSID**: `OPI5_Astro`
+    *   **Password**: `password`
+4.  **Acceso Gráfico**: Abre tu navegador y entra en: `http://10.0.0.1:6080`
+5.  **Setup Wizard**: Al entrar, se lanzará automáticamente el asistente. Sigue los pasos:
+    *   Mira el tour fotográfico inicial.
+    *   Selecciona el software deseado (INDI, KStars, PHD2, ASTAP, etc.).
+    *   Espera a que finalice la instalación con la barra de progreso.
 
-Conecta tu móvil o PC a esta red `OPI5_Astro`.
+## 🛠️ Credenciales y Puertos
+*   **Usuario**: `OPI5_Astro`
+*   **Contraseña**: `password`
+*   **Escritorio Remoto (noVNC)**: Puerto `6080`
+*   **Gestión de Red (Cockpit)**: Puerto `9090` (Opcional)
+*   **Sincronización (Syncthing)**: Puerto `8384`
 
-### 3. Acceso al Escritorio Remoto
-Abre tu navegador y ve a: **`http://10.0.0.1:6080`**
+## 📦 Software Disponible en el Wizard
+- **INDI Server (Core/Full)**: Drivers para hardware astronómico.
+- **KStars / Ekos**: Suite completa de control y planetario.
+- **PHD2**: Autoguiado de alta precisión.
+- **ASTAP**: Plate Solving rápido con bases de datos estelares.
+- **SkyChart (Cartes du Ciel)**: Software de mapas estelares.
+- **AstroDMx Capture**: Captura avanzada para cámaras astronómicas.
 
-Verás el escritorio completo con:
-*   Fondo astronómico de la Vía Láctea.
-*   Widget de monitorización (Conky) en la esquina superior derecha.
-*   **Barra de tareas** en la parte inferior con el **icono de red** (dos flechas o señal Wi-Fi).
-
-### 4. Conectarte a tu Wi-Fi de Casa (Desde el Escritorio)
+## 📁 Estructura del Repositorio
+- `build.sh`: Script principal para construir la imagen base.
+- `userpatches/`: Configuraciones y hooks de personalización.
+- `scripts/astro-wizard.sh`: El script del asistente gráfico.
+a (Desde el Escritorio)
 **Desde el escritorio remoto (noVNC)**:
 1.  Haz clic en el **icono de red** de la barra de tareas (abajo).
 2.  Se abrirá un menú con todas las redes Wi-Fi disponibles.
