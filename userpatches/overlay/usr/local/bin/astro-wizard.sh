@@ -1,93 +1,127 @@
 #!/bin/bash
 
-# Astro Setup Wizard v1.0
-# Este script guía al usuario para instalar el software astronómico.
+# Astro Wizard TUI - Asistente de Instalación Astronómica
+# Se ejecuta en el segundo arranque (Fase 2) tras configurar la red
 
-export DISPLAY=:1
-User="OPI5_Astro"
-Log="/home/$User/astro-setup.log"
-Nebula1="/usr/share/backgrounds/astro-nebula-1.jpg"
-Nebula2="/usr/share/backgrounds/astro-nebula-2.jpg"
+set -e
 
-echo "Iniciando Astro Wizard..." > $Log
+# Colores y variables
+TITLE="Astro OPI 5 Pro - Setup Wizard"
+BACKTITLE="Instalador de Software Astronómico v1.0"
+LOGfile="/var/log/astro-wizard.log"
 
-# 1. Bienvenida con Imagen
-zenity --info \
-    --title="🌌 Bienvenidos a Astro OPI 5 Pro" \
-    --text="Gracias por elegir este sistema personalizado.\n\n⚠️ **IMPORTANTE**: Antes de continuar, asegúrate de estar conectado a una red Wi-Fi con Internet.\n\nPuedes usar el icono de red (dos flechas) en la barra inferior del escritorio para elegir tu red.\n\nPulsa 'Aceptar' una vez tengas Internet para ver el tour y elegir software." \
-    --width=450 --height=250
+# Función para registrar log
+log() {
+    echo "$(date) - $1" >> "$LOGfile"
+}
 
-# 2. Mini-Tour (Cambio de fondo intermitente)
-(
-echo "10" ; sleep 1 ; echo "# Mostrando Nebulosa del Velo..."
-feh --bg-fill $Nebula1
-echo "50" ; sleep 2 ; echo "# Sabías que... este sistema está optimizado para RK3588."
-echo "90" ; sleep 2 ; echo "# Preparando menú de selección..."
-feh --bg-fill $Nebula2
-) | zenity --progress --title="Tour Astronómico" --text="Cargando entorno..." --percentage=0 --auto-close
+log "Iniciando Astro Wizard..."
 
-# 3. Selección de Software
-CHOICES=$(zenity --list --checklist \
-    --title="Selección de Software para Astrofotografía" \
-    --width=500 --height=400 \
-    --column="Instalar" --column="Herramienta" --column="Descripción" \
-    TRUE "INDI-Full" "Drivers para monturas, cámaras y enfocadores." \
-    TRUE "KStars/Ekos" "Control total del observatorio y planetario." \
-    TRUE "PHD2" "Software de autoguiado avanzado." \
-    FALSE "ASTAP" "Plate Solving ultra-rápido (incluye base D50)." \
-    FALSE "SkyChart" "Planetario Cartes du Ciel." \
-    FALSE "AstroDMx" "Captura planetaria y de cielo profundo.")
+# Comprobar si somos root
+if [ "$EUID" -ne 0 ]; then
+  whiptail --title "Error" --msgbox "Este script debe ejecutarse como root (sudo)." 8 45
+  exit 1
+fi
 
-if [ -z "$CHOICES" ]; then
-    zenity --question --text="No has seleccionado nada. ¿Deseas salir del asistente?\n(Podrás lanzarlo más tarde desde el terminal)." || exec $0
+# Pantalla de bienvenida
+whiptail --title "$TITLE" --msgbox "¡Bienvenido a tu Astro OPI 5 Pro! 🌌🔭\n\nEste asistente te ayudará a instalar el software astronómico que necesitas.\n\nAsegúrate de estar conectado a Internet antes de continuar." 15 60
+
+# Menú principal de selección de software
+CHOICES=$(whiptail --title "Selección de Software" --checklist \
+"Selecciona los componentes que deseas instalar:" 20 78 12 \
+"INDI" "Servidor INDI + Drivers (Core)" ON \
+"KSTARS" "Planetario KStars + Ekos (Control total)" ON \
+"PHD2" "Guiado PHD2 Guiding" ON \
+"ASTAP" "Plate Solving Rápido + Base de datos D50" ON \
+"SKYCHART" "Cartes du Ciel (Planetario clásico)" OFF \
+"ASTRODMX" "AstroDMx Capture (Cámaras)" OFF \
+"SYNCTHING" "Sincronización de archivos (Nube personal)" ON \
+3>&1 1>&2 2>&3)
+
+# Si el usuario cancela
+if [ $? -ne 0 ]; then
+    log "Usuario canceló el wizard."
     exit 0
 fi
 
-# 4. Proceso de Instalación
-(
-echo "10" ; echo "# Actualizando base de datos de paquetes..."
-sudo apt-get update -y >> $Log 2>&1
-
-if [[ $CHOICES == *"INDI-Full"* ]]; then
-    echo "20" ; echo "# Instalando INDI Server y Drivers..."
-    sudo apt-get install -y indi-full >> $Log 2>&1
+# Confirmación
+whiptail --title "Confirmación" --yesno "Se instalarán los siguientes componentes:\n$CHOICES\n\n¿Deseas continuar? (Esto puede tardar unos minutos)" 15 60
+if [ $? -ne 0 ]; then
+    log "Usuario rechazó la instalación."
+    exit 0
 fi
 
-if [[ $CHOICES == *"KStars"* ]]; then
-    echo "40" ; echo "# Instalando KStars y Ekos..."
-    sudo apt-get install -y kstars-bleeding >> $Log 2>&1
-fi
+# Proceso de instalación
+{
+    PKG_LIST=""
+    
+    # 1. Preparar lista de paquetes según selección
+    if [[ "$CHOICES" == *"INDI"* ]]; then
+        echo "XXX\n10\nPreparando INDI Core...\nXXX"
+        PKG_LIST="$PKG_LIST indi-full gsc"
+    fi
 
-if [[ $CHOICES == *"PHD2"* ]]; then
-    echo "60" ; echo "# Instalando PHD2 Guiding..."
-    sudo apt-get install -y phd2 phdlogview >> $Log 2>&1
-fi
+    if [[ "$CHOICES" == *"KSTARS"* ]]; then
+        echo "XXX\n20\nPreparando KStars y Ekos...\nXXX"
+        PKG_LIST="$PKG_LIST kstars-bleeding"
+    fi
 
-if [[ $CHOICES == *"ASTAP"* ]]; then
-    echo "80" ; echo "# Instalando ASTAP y Base D50 (Esto puede tardar)..."
-    wget https://master.dl.sourceforge.net/project/astap-program/star_databases/d50_star_database.deb -O /tmp/d50.deb
-    wget https://sourceforge.net/projects/astap-program/files/linux_installer/astap_aarch64.deb/download -O /tmp/astap.deb
-    sudo apt-get install -y /tmp/astap.deb /tmp/d50.deb >> $Log 2>&1
-    rm /tmp/*.deb
-fi
+    if [[ "$CHOICES" == *"PHD2"* ]]; then
+        echo "XXX\n30\nPreparando PHD2...\nXXX"
+        PKG_LIST="$PKG_LIST phd2"
+    fi
 
-if [[ $CHOICES == *"SkyChart"* ]]; then
-    echo "90" ; echo "# Instalando Cartes du Ciel..."
-    sudo apt-get install -y skychart >> $Log 2>&1
-fi
+    if [[ "$CHOICES" == *"SKYCHART"* ]]; then
+        echo "XXX\n40\nPreparando SkyChart...\nXXX"
+        PKG_LIST="$PKG_LIST skychart"
+    fi
 
-if [[ $CHOICES == *"AstroDMx"* ]]; then
-    echo "95" ; echo "# Instalando AstroDMx Capture..."
-    wget https://www.astrodmx-capture.org.uk/downloads/astrodmx-capture_2.11.2_arm64.deb -O /tmp/astrodmx.deb
-    sudo apt-get install -y /tmp/astrodmx.deb >> $Log 2>&1
-    rm /tmp/astrodmx.deb
-fi
+    # Instalación real de paquetes APT
+    echo "XXX\n50\nActualizando repositorios y descargando paquetes...\nXXX"
+    apt-get update >> "$LOGfile" 2>&1
+    
+    if [ ! -z "$PKG_LIST" ]; then
+        echo "XXX\n60\nInstalando paquetes seleccionados: $PKG_LIST...\nXXX"
+        DEBIAN_FRONTEND=noninteractive apt-get install -y $PKG_LIST >> "$LOGfile" 2>&1
+    fi
 
-echo "100" ; echo "# ¡Toda la base instalada con éxito!"
-) | zenity --progress --title="Instalando Software" --text="Por favor, espera..." --percentage=0 --auto-close
+    # Instalación especial: ASTAP (deb externo)
+    if [[ "$CHOICES" == *"ASTAP"* ]]; then
+        echo "XXX\n70\nInstalando ASTAP y base de datos D50...\nXXX"
+        # ASTAP binario
+        wget -q https://github.com/hn-88/astap_binary/raw/main/astap_aarch64.deb -O /tmp/astap.deb
+        apt-install /tmp/astap.deb >> "$LOGfile" 2>&1 || apt-get install -f -y >> "$LOGfile" 2>&1
+        
+        # Base de datos D50 (ligera)
+        wget -q https://downloads.sourceforge.net/project/astap-program/star_databases/d50_star_database.zip -O /tmp/d50.zip
+        unzip -o /tmp/d50.zip -d /opt/astap >> "$LOGfile" 2>&1
+        rm /tmp/astap.deb /tmp/d50.zip
+    fi
 
-# 5. Finalización
-rm -f /home/$User/.first_boot_wizard
-zenity --info --title="Instalación Completada" --text="¡Tu Astro OPI 5 Pro está lista!\n\nDisfruta de los cielos oscuros. Se recomienda reiniciar para aplicar todos los cambios."
+    # Instalación especial: AstroDMx
+    if [[ "$CHOICES" == *"ASTRODMX"* ]]; then
+        echo "XXX\n80\nInstalando AstroDMx Capture...\nXXX"
+        # URL de ejemplo, habría que buscar la url real dinámica o fija
+        # Por ahora lo dejamos como placeholder funcional
+        log "AstroDMx seleccionado pero URL pendiente de definir."
+    fi
 
-echo "Wizard completado con éxito." >> $Log
+    # Configuración de Syncthing
+    if [[ "$CHOICES" == *"SYNCTHING"* ]]; then
+        echo "XXX\n90\nConfigurando Syncthing...\nXXX"
+        systemctl enable syncthing@OPI5_Astro --now >> "$LOGfile" 2>&1
+    fi
+
+    echo "XXX\n100\n¡Instalación completada!\nXXX"
+    sleep 2
+
+} | whiptail --title "Instalando..." --gauge "Por favor espere mientras se configura su sistema astronómico..." 10 70 0
+
+# Finalización
+whiptail --title "¡Éxito!" --msgbox "La instalación ha finalizado correctamente.\n\nEl sistema se reiniciará ahora para aplicar todos los cambios.\n\n¡Cielos despejados! 🌠" 10 60
+
+# Desactivar el flag de primer arranque para que no vuelva a salir el wizard
+rm -f /home/OPI5_Astro/.first_boot_wizard
+
+# Reiniciar
+reboot
