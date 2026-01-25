@@ -36,7 +36,7 @@ cd "$ARMBIAN_DIR"
 ./compile.sh \
     BOARD=orangepi5pro \
     BRANCH=vendor \
-    RELEASE=jammy \
+    RELEASE=noble \
     BUILD_MINIMAL=yes \
     BUILD_DESKTOP=no \
     KERNEL_CONFIGURE=no \
