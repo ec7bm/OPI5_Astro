@@ -125,7 +125,7 @@ autoconnect=false
 
 [wifi]
 mode=ap
-ssid=OPI5_Astro
+ssid=OrangePi-Astro
 band=bg
 
 [wifi-security]
@@ -134,7 +134,7 @@ psk=password
 
 [ipv4]
 method=shared
-address1=10.0.0.1/24
+address1=192.168.4.1/24
 
 [ipv6]
 addr-gen-mode=stable-privacy
