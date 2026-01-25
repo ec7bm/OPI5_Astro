@@ -19,7 +19,7 @@ apt-get install -y --no-install-recommends \
     network-manager vim htop zip unzip tar xz-utils \
     python3-pip python3-setuptools gpsd gpsd-clients \
     libxml2-utils gsettings-desktop-schemas \
-    network-manager-gnome tint2
+    network-manager-gnome tint2 zenity
 
 # Eliminar brltty (causa conflictos con dispositivos serial/USB de astronomía)
 apt-get purge -y brltty || true
@@ -63,46 +63,12 @@ usermod -a -G dialout OPI5_Astro
 usermod -a -G tty OPI5_Astro
 usermod -a -G video OPI5_Astro
 
-# 2. Instalación de Software Astronómico
+# 2. Preparación para el Software Astronómico (PPAs)
 # ----------------------------------------------------------------------------
-echo "Instalando Stack Astronómico..."
+echo "Configurando repositorios para el Wizard..."
 
-apt-get install -y \
-    indi-full kstars-bleeding phd2 phdlogview \
-    astrometry.net astrometry-data-tycho2 sextractor
-
-# Instalar ASTAP (Astrometry) y Base de Datos D50
-# Nota: ASTAP es opcional. Si los links fallan, el build continuará sin él.
-echo "Intentando instalar ASTAP..."
-set +e  # Desactivar salida en error temporalmente
-wget --timeout=30 --tries=2 https://master.dl.sourceforge.net/project/astap-program/star_databases/d50_star_database.deb -O /tmp/d50.deb 2>/dev/null
-wget --timeout=30 --tries=2 https://sourceforge.net/projects/astap-program/files/linux_installer/astap_aarch64.deb/download -O /tmp/astap.deb 2>/dev/null
-
-if [ -f /tmp/astap.deb ] && [ -s /tmp/astap.deb ]; then
-    echo "ASTAP descargado correctamente. Instalando..."
-    apt-get install -y /tmp/astap.deb /tmp/d50.deb 2>/dev/null || echo "Advertencia: Error al instalar ASTAP, continuando..."
-    rm -f /tmp/astap.deb /tmp/d50.deb
-else
-    echo "ADVERTENCIA: No se pudo descargar ASTAP. Continuando sin él..."
-    rm -f /tmp/astap.deb /tmp/d50.deb
-fi
-set -e  # Reactivar salida en error
-
-# Instalar AstroDMx Capture (ARM64)
-# Nota: AstroDMx es opcional. Si el link falla, el build continuará sin él.
-echo "Intentando instalar AstroDMx Capture..."
-set +e  # Desactivar salida en error temporalmente
-wget --timeout=30 --tries=2 https://www.astrodmx-capture.org.uk/downloads/astrodmx-capture_2.11.2_arm64.deb -O /tmp/astrodmx.deb 2>/dev/null
-
-if [ -f /tmp/astrodmx.deb ] && [ -s /tmp/astrodmx.deb ]; then
-    echo "AstroDMx descargado correctamente. Instalando..."
-    apt-get install -y /tmp/astrodmx.deb 2>/dev/null || echo "Advertencia: Error al instalar AstroDMx, continuando..."
-    rm -f /tmp/astrodmx.deb
-else
-    echo "ADVERTENCIA: No se pudo descargar AstroDMx. Continuando sin él..."
-    rm -f /tmp/astrodmx.deb
-fi
-set -e  # Reactivar salida en error
+# Nota: No instalamos nada aquí para mantener la imagen ligera. 
+# El Wizard se encargará de la instalación post-arranque.
 
 # ----------------------------------------------------------------------------
 # 3. Entorno Headless (Xvfb + x11vnc + noVNC)
@@ -129,8 +95,10 @@ tint2 &
 # Iniciar Fluxbox
 exec fluxbox
 EOF
+# Crear flag de primer arranque para el Wizard
+touch /home/OPI5_Astro/.first_boot_wizard
 chmod +x /home/OPI5_Astro/.fluxbox/startup
-chown -R OPI5_Astro:OPI5_Astro /home/OPI5_Astro/.fluxbox
+chown -R OPI5_Astro:OPI5_Astro /home/OPI5_Astro/.fluxbox /home/OPI5_Astro/.first_boot_wizard
 
 # ----------------------------------------------------------------------------
 # 4. Syncthing
@@ -185,7 +153,7 @@ Type=simple
 User=OPI5_Astro
 Environment=DISPLAY=:1
 ExecStartPre=-/usr/bin/rm -f /tmp/.X1-lock
-ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; feh --bg-fill /usr/share/backgrounds/astro-nebula-1.jpg; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900 & sleep 5; conky -c /etc/conky/conky.conf"
+ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; feh --bg-fill /usr/share/backgrounds/astro-nebula-1.jpg; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900 & sleep 5; [ -f /home/OPI5_Astro/.first_boot_wizard ] && /usr/local/bin/astro-wizard.sh; conky -c /etc/conky/conky.conf"
 Restart=always
 
 [Install]
