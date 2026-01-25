@@ -79,9 +79,10 @@ apt-get install -y \
     websockify novnc \
     feh conky-all lxterminal
 
-# Crear directorio para noVNC si no existe
+# Crear directorio para noVNC y configurar index automático
 mkdir -p /opt/novnc
 cp -r /usr/share/novnc/* /opt/novnc/ || true
+ln -s /opt/novnc/vnc_auto.html /opt/novnc/index.html || true
 
 # Configurar Fluxbox para que lance nm-applet y tint2 automáticamente
 # (El usuario OPI5_Astro ya existe en este punto)
@@ -153,7 +154,7 @@ Type=simple
 User=OPI5_Astro
 Environment=DISPLAY=:1
 ExecStartPre=-/usr/bin/rm -f /tmp/.X1-lock
-ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; feh --bg-fill /usr/share/backgrounds/astro-nebula-1.jpg; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900 & sleep 5; [ -f /home/OPI5_Astro/.first_boot_wizard ] && /usr/local/bin/astro-wizard.sh; conky -c /etc/conky/conky.conf"
+ExecStart=/usr/bin/bash -c "Xvfb :1 -screen 0 1920x1080x24 & sleep 2; feh --bg-fill /usr/share/backgrounds/astro-nebula-1.jpg; fluxbox & x11vnc -display :1 -forever -shared -nopw -rfbport 5900 & /usr/bin/websockify --web /opt/novnc 6080 localhost:5900 & sleep 10; [ -f /home/OPI5_Astro/.first_boot_wizard ] && /usr/local/bin/astro-wizard.sh; conky -c /etc/conky/conky.conf"
 Restart=always
 
 [Install]
