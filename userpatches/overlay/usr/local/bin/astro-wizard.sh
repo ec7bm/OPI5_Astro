@@ -14,8 +14,8 @@ echo "Iniciando Astro Wizard..." > $Log
 # 1. Bienvenida con Imagen
 zenity --info \
     --title="🌌 Bienvenidos a Astro OPI 5 Pro" \
-    --text="Gracias por elegir este sistema personalizado.\n\nEste asistente te ayudará a instalar las herramientas que necesites para tu sesión de astrofotografía.\n\nPulsa 'Aceptar' para ver el tour fotográfico y elegir software." \
-    --width=400 --height=200
+    --text="Gracias por elegir este sistema personalizado.\n\n⚠️ **IMPORTANTE**: Antes de continuar, asegúrate de estar conectado a una red Wi-Fi con Internet.\n\nPuedes usar el icono de red (dos flechas) en la barra inferior del escritorio para elegir tu red.\n\nPulsa 'Aceptar' una vez tengas Internet para ver el tour y elegir software." \
+    --width=450 --height=250
 
 # 2. Mini-Tour (Cambio de fondo intermitente)
 (
