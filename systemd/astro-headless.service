@@ -1,6 +1,6 @@
 [Unit]
 Description=Astro Headless Virtual Display (Xvfb + VNC + noVNC)
-After=network.target
+After=multi-user.target
 
 [Service]
 Type=simple

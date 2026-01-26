@@ -1,6 +1,6 @@
 [Unit]
 Description=OrangePi Astro First Boot Setup
-After=network.target
+After=multi-user.target
 ConditionPathExists=!/var/log/firstboot.log
 
 [Service]
