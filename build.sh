@@ -6,7 +6,7 @@
 
 set -e
 
-echo "=== AstroOrange Pro v2.1 Remaster System ==="
+echo "=== AstroOrange Pro v2.2 Remaster System (Cache Edition) ==="
 
 # Directorios
 BASE_DIR="$(pwd)"
@@ -135,8 +135,7 @@ echo "[6/6] Comprimiendo imagen final..."
 OUTPUT_DIR="${BASE_DIR}/output"
 mkdir -p "${OUTPUT_DIR}"
 
-OUTPUT_NAME="AstroOrange-v2.1-$(date +%Y%m%d).img"
-mv "$IMAGE_FILE" "${OUTPUT_DIR}/${OUTPUT_NAME}"
+OUTPUT_NAME="AstroOrange-v2.2-$(date +%Y%m%d).img"
 
 cd "${OUTPUT_DIR}"
 echo "Comprimiendo con xz (nivel ligero para evitar falta de RAM)..."
