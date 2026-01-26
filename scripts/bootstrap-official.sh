@@ -12,6 +12,25 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 echo "=== AstroOrange Pro: Bootstrap de Imagen Oficial ==="
 date
 
+# 0. Crear Usuario de Trabajo
+echo "[0/5] Configurando usuario del sistema..."
+read -p "Introduce el nombre del usuario astronómico (ej: astro): " NEW_USER
+
+if id "$NEW_USER" &>/dev/null; then
+    echo "El usuario $NEW_USER ya existe. Usando este usuario."
+else
+    echo "Creando usuario $NEW_USER..."
+    useradd -m -s /bin/bash "$NEW_USER"
+    passwd "$NEW_USER"
+    
+    # Añadir a grupos críticos
+    usermod -aG sudo,dialout,tty,video,input,plugdev "$NEW_USER"
+    echo "✅ Usuario $NEW_USER creado y configurado."
+fi
+
+# Hacer que el script use este usuario para las configuraciones posteriores
+BASE_USER="$NEW_USER"
+
 # 1. Comprobar Hostname y Red
 echo "[1/5] Configurando identidad y red..."
 hostnamectl set-hostname astroorange
@@ -99,13 +118,6 @@ add-apt-repository -y ppa:pch/phd2
 
 # 5. Preparar el Wizard para el primer inicio
 echo "[5/5] Preparando Wizard Astronómico..."
-
-# Asegurar que el usuario base existe o crearlo (ajustar según imagen oficial)
-# En imágenes oficiales de OPi suele ser 'orangepi'
-BASE_USER="orangepi"
-if ! id "$BASE_USER" &>/dev/null; then
-    BASE_USER="root"
-fi
 
 # Crear flag para el wizard
 touch "/home/$BASE_USER/.first_boot_wizard"
