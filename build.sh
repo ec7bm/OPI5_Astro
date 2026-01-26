@@ -6,7 +6,7 @@
 
 set -e
 
-echo "=== AstroOrange Pro v2.2 Remaster System (Cache Edition) ==="
+echo "=== AstroOrange Pro v2.3 Remaster System (Auto-Cleanup Edition) ==="
 
 # Directorios
 BASE_DIR="$(pwd)"
@@ -22,27 +22,33 @@ mkdir -p "${MOUNT_DIR}"
 IMAGE_BASE_DIR="${BASE_DIR}/image-base"
 mkdir -p "${IMAGE_BASE_DIR}"
 
-# Buscar en la caché de imagen base
-IMAGE_SOURCE=$(find "${IMAGE_BASE_DIR}" -name "*.img" -o -name "*.img.xz" | head -n 1)
+# NUEVO: Comprobar si ya existe una copia de trabajo para no copiarla de nuevo
+IMAGE_FILE=$(find "${WORK_DIR}" -name "base_working_copy.img" | head -n 1)
 
-if [ -n "$IMAGE_SOURCE" ]; then
-    echo "[1/6] Imagen base encontrada en caché: $(basename "$IMAGE_SOURCE")"
-    echo "Copiando a directorio de trabajo (esto preserva la original)..."
-    cp -v "$IMAGE_SOURCE" "${WORK_DIR}/base_working_copy${IMAGE_SOURCE##*.}"
-    IMAGE_FILE="${WORK_DIR}/base_working_copy${IMAGE_SOURCE##*.}"
+if [ -n "$IMAGE_FILE" ]; then
+    echo "[1/6] Usando copia de trabajo existente en: ${IMAGE_FILE}"
 else
-    echo "[1/6] No se encontró imagen en ${IMAGE_BASE_DIR}. Iniciando modo manual..."
-    cd "${WORK_DIR}"
-    
-    # Fallback: Pedir descarga manual si no hay nada en caché
-    echo "Por favor, coloca la imagen oficial (.img o .img.xz) en: ${IMAGE_BASE_DIR}/"
-    echo "Presiona Enter cuando esté listo..."
-    read
-    
-    IMAGE_FILE=$(find "${WORK_DIR}" -name "*.img.xz" -o -name "*.img" | head -n 1)
-    if [ -z "$IMAGE_FILE" ]; then
-        echo "ERROR: Sigo sin encontrar ninguna imagen base en ${WORK_DIR}"
-        exit 1
+    # Buscar en la caché de imagen base
+    IMAGE_SOURCE=$(find "${IMAGE_BASE_DIR}" -name "*.img" -o -name "*.img.xz" | head -n 1)
+
+    if [ -n "$IMAGE_SOURCE" ]; then
+        echo "[1/6] Imagen base encontrada en caché: $(basename "$IMAGE_SOURCE")"
+        echo "Copiando a directorio de trabajo (esto preserva la original)..."
+        # Determinamos extensión
+        EXT="${IMAGE_SOURCE##*.}"
+        cp -v "$IMAGE_SOURCE" "${WORK_DIR}/base_working_copy.${EXT}"
+        IMAGE_FILE="${WORK_DIR}/base_working_copy.${EXT}"
+    else
+        echo "[1/6] No se encontró imagen en ${IMAGE_BASE_DIR}. Iniciando modo manual..."
+        cd "${WORK_DIR}"
+        echo "Por favor, coloca la imagen oficial (.img o .img.xz) en: ${IMAGE_BASE_DIR}/"
+        echo "Presiona Enter cuando esté listo..."
+        read
+        IMAGE_FILE=$(find "${WORK_DIR}" -name "*.img.xz" -o -name "*.img" | head -n 1)
+        if [ -z "$IMAGE_FILE" ]; then
+            echo "ERROR: Sigo sin encontrar ninguna imagen base."
+            exit 1
+        fi
     fi
 fi
 
@@ -134,7 +140,7 @@ echo "[6/6] Comprimiendo imagen final..."
 OUTPUT_DIR="${BASE_DIR}/output"
 mkdir -p "${OUTPUT_DIR}"
 
-OUTPUT_NAME="AstroOrange-v2.2-$(date +%Y%m%d).img"
+OUTPUT_NAME="AstroOrange-v2.3-$(date +%Y%m%d).img"
 mv "$IMAGE_FILE" "${OUTPUT_DIR}/${OUTPUT_NAME}"
 
 cd "${OUTPUT_DIR}"
@@ -142,8 +148,15 @@ echo "Comprimiendo con xz (nivel ligero para evitar falta de RAM)..."
 xz -v -1 -T0 "${OUTPUT_NAME}"
 
 echo ""
-echo "=== ¡Proceso completado! ==="
+echo "=== ¡Proceso de construcción completado! ==="
 echo "Imagen final: ${OUTPUT_DIR}/${OUTPUT_NAME}.xz"
 echo ""
-echo "Para limpiar archivos temporales:"
-echo "sudo rm -rf ${WORK_DIR}"
+
+# 7. ENTREGA Y LIMPIEZA AUTOMÁTICA
+echo "[7/7] Iniciando servidor de entrega..."
+echo "Una vez descargues la imagen en tu Windows, cierra este servidor (Ctrl+C) para limpiar los temporales."
+python3 "${BASE_DIR}/scripts/serve_image.py"
+
+echo "Limpiando directorio de trabajo..."
+sudo rm -rf "${WORK_DIR}"
+echo "✅ Sistema limpio. ¡Misión cumplida!"
