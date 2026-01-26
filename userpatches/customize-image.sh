@@ -5,7 +5,18 @@
 
 set -e
 
-echo "=== Iniciando personalización de AstroOrange ==="
+# BLOQUEO DE DISPARADORES PELIGROSOS EN CHROOT
+# Evita que se inicien servicios o se regenere el initramfs incorrectamente
+echo "#!/bin/sh" > /usr/sbin/policy-rc.d
+echo "exit 101" >> /usr/sbin/policy-rc.d
+chmod +x /usr/sbin/policy-rc.d
+
+# Prevenir actualización accidental del initramfs (Causa del error actual)
+export INITRAMFS_SKIP=1
+echo "update-initramfs: skipped by AstroOrange build"
+alias update-initramfs='echo skipping update-initramfs'
+
+echo "=== Iniciando personalización segura de AstroOrange ==="
 
 # ----------------------------------------------------------------------------
 # 1. Ajustes Básicos y Repositorios
@@ -116,6 +127,9 @@ systemctl enable firstboot.service
 systemctl enable astro-wizard.service
 systemctl enable astro-headless.service
 systemctl enable gpsd
+
+# LIMPIEZA DE DISPARADORES
+rm -f /usr/sbin/policy-rc.d
 
 # ----------------------------------------------------------------------------
 # 7. Ajustes Finales (Swap, Auto-mount)

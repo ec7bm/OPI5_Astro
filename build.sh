@@ -126,14 +126,28 @@ sudo chroot "${MOUNT_DIR}" /bin/bash /tmp/customize-image.sh
 # Limpiar
 sudo rm "${MOUNT_DIR}/tmp/customize-image.sh"
 
-# 5. Desmontar
-echo "[5/6] Desmontando imagen..."
-sudo umount "${MOUNT_DIR}/dev"
-sudo umount "${MOUNT_DIR}/proc"
-sudo umount "${MOUNT_DIR}/sys"
-sudo umount "${MOUNT_DIR}/boot"
-sudo umount "${MOUNT_DIR}"
-sudo losetup -d "$LOOP_DEVICE"
+# 5. Desmontar y Limpiar de forma robusta
+echo "[5/6] Desmontando imagen de forma segura..."
+sync
+sleep 2
+
+# Desmontar en orden inverso
+sudo umount -l "${MOUNT_DIR}/dev" || true
+sudo umount -l "${MOUNT_DIR}/proc" || true
+sudo umount -l "${MOUNT_DIR}/sys" || true
+sudo umount -l "${MOUNT_DIR}/boot" || true
+sudo umount -l "${MOUNT_DIR}" || true
+
+# Asegurar que los procesos en el chroot han muerto
+sudo fuser -k "${MOUNT_DIR}" || true
+
+# Liberar loop device
+sudo losetup -d "$LOOP_DEVICE" || true
+sync
+
+# Verificación final de consistencia
+echo "Realizando chequeo final de integridad..."
+sudo e2fsck -f -y "$IMAGE_FILE" || true
 
 # 6. Comprimir imagen final
 echo "[6/6] Comprimiendo imagen final..."
