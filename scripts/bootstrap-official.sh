@@ -116,8 +116,45 @@ echo "[4/5] Añadiendo repositorios PPA de Astronomía..."
 add-apt-repository -y ppa:mutlaqja/ppa
 add-apt-repository -y ppa:pch/phd2
 
-# 5. Preparar el Wizard para el primer inicio
-echo "[5/5] Preparando Wizard Astronómico..."
+# 5. Preparar el Wizard y Servicios
+echo "[5/5] Registrando servicios de sistema..."
+
+# Copiar el wizard si está en el directorio actual
+if [ -f "./astro-wizard.sh" ]; then
+    cp ./astro-wizard.sh /usr/local/bin/
+    chmod +x /usr/local/bin/astro-wizard.sh
+fi
+
+# A. Servicio para el Escritorio Virtual (noVNC)
+cat <<EOF > /etc/systemd/system/astro-desktop.service
+[Unit]
+Description=AstroOrange Virtual Desktop (noVNC)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/astro-desktop-start.sh
+User=$BASE_USER
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# B. Servicio para el Wizard (Desktop Startup)
+# Configuramos el wizard para que se lance cuando se inicie la sesión XFCE
+mkdir -p "/home/$BASE_USER/.config/autostart"
+cat <<EOF > "/home/$BASE_USER/.config/autostart/astro-wizard.desktop"
+[Desktop Entry]
+Type=Application
+Name=AstroOrange Wizard
+Exec=lxterminal -e "/usr/local/bin/astro-wizard.sh"
+OnlyShowIn=XFCE;
+EOF
+chown -R "$BASE_USER:$BASE_USER" "/home/$BASE_USER/.config"
+
+systemctl daemon-reload
+systemctl enable astro-desktop.service
 
 # Crear flag para el wizard
 touch "/home/$BASE_USER/.first_boot_wizard"
@@ -126,5 +163,5 @@ chown "$BASE_USER:$BASE_USER" "/home/$BASE_USER/.first_boot_wizard"
 echo ""
 echo "=== Bootstrap Completado ==="
 echo "Por favor, reinicia el sistema: sudo reboot"
-echo "Tras el reinicio, accede a: http://<IP-DE-LA-OPI>:6080/vnc.html"
-echo "El Wizard de instalación aparecerá automáticamente."
+echo "Tras el reinicio, accede a: http://localhost:6080/vnc.html (o la IP de la placa)"
+echo "El Wizard de instalación aparecerá automáticamente dentro del escritorio."
