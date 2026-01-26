@@ -157,7 +157,7 @@ ResultInactive=yes
 ResultActive=yes
 EOF
 
-# 9. Añadir rootwait
-echo "extraargs=rootwait" >> /boot/armbianEnv.txt
+# 9. Añadir rootwait y rootdelay
+echo "extraargs=rootwait rootdelay=15" >> /boot/armbianEnv.txt
 
 echo "=== Personalización finalizada correctamente ==="
