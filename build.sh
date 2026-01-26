@@ -18,36 +18,35 @@ USERPATCHES_DIR="${BASE_DIR}/userpatches"
 mkdir -p "${WORK_DIR}"
 mkdir -p "${MOUNT_DIR}"
 
-# 1. Descargar imagen oficial de Orange Pi Ubuntu Jammy Server
-echo "[1/6] Descargando imagen oficial de Ubuntu Jammy Server..."
-cd "${WORK_DIR}"
+# 1. Localizar imagen base o descargar
+IMAGE_BASE_DIR="${BASE_DIR}/image-base"
+mkdir -p "${IMAGE_BASE_DIR}"
 
-# URL de la imagen oficial (necesitarás el ID del archivo de Google Drive)
-# Por ahora usaremos gdown para descargar desde Google Drive
-if ! command -v gdown &> /dev/null; then
-    echo "Instalando gdown para descargar desde Google Drive..."
-    pip3 install gdown
+# Buscar en la caché de imagen base
+IMAGE_SOURCE=$(find "${IMAGE_BASE_DIR}" -name "*.img" -o -name "*.img.xz" | head -n 1)
+
+if [ -n "$IMAGE_SOURCE" ]; then
+    echo "[1/6] Imagen base encontrada en caché: $(basename "$IMAGE_SOURCE")"
+    echo "Copiando a directorio de trabajo (esto preserva la original)..."
+    cp -v "$IMAGE_SOURCE" "${WORK_DIR}/base_working_copy${IMAGE_SOURCE##*.}"
+    IMAGE_FILE="${WORK_DIR}/base_working_copy${IMAGE_SOURCE##*.}"
+else
+    echo "[1/6] No se encontró imagen en ${IMAGE_BASE_DIR}. Iniciando modo manual..."
+    cd "${WORK_DIR}"
+    
+    # Fallback: Pedir descarga manual si no hay nada en caché
+    echo "Por favor, coloca la imagen oficial (.img o .img.xz) en: ${IMAGE_BASE_DIR}/"
+    echo "Presiona Enter cuando esté listo..."
+    read
+    
+    IMAGE_FILE=$(find "${WORK_DIR}" -name "*.img.xz" -o -name "*.img" | head -n 1)
+    if [ -z "$IMAGE_FILE" ]; then
+        echo "ERROR: Sigo sin encontrar ninguna imagen base en ${WORK_DIR}"
+        exit 1
+    fi
 fi
 
-# Descargar la imagen más reciente de Ubuntu Jammy Server
-# Nota: Reemplaza este ID con el archivo correcto del Google Drive
-GDRIVE_FOLDER="11tj_ivEBwvJx4vdNtK91YQeGOKDC4JNy"
-echo "Por favor, descarga manualmente la imagen de Ubuntu Jammy Server desde:"
-echo "https://drive.google.com/drive/folders/11tj_ivEBwvJx4vdNtK91YQeGOKDC4JNy"
-echo ""
-echo "Coloca el archivo .img.xz en: ${WORK_DIR}/"
-echo "Presiona Enter cuando esté listo..."
-read
-
-# Buscar el archivo descargado
-IMAGE_FILE=$(find "${WORK_DIR}" -name "*.img.xz" -o -name "*.img" | head -n 1)
-
-if [ -z "$IMAGE_FILE" ]; then
-    echo "ERROR: No se encontró ninguna imagen .img o .img.xz en ${WORK_DIR}"
-    exit 1
-fi
-
-echo "Imagen encontrada: ${IMAGE_FILE}"
+echo "Procesando: ${IMAGE_FILE}"
 
 # 2. Descomprimir si es necesario
 echo "[2/6] Descomprimiendo imagen..."
@@ -136,6 +135,7 @@ OUTPUT_DIR="${BASE_DIR}/output"
 mkdir -p "${OUTPUT_DIR}"
 
 OUTPUT_NAME="AstroOrange-v2.2-$(date +%Y%m%d).img"
+mv "$IMAGE_FILE" "${OUTPUT_DIR}/${OUTPUT_NAME}"
 
 cd "${OUTPUT_DIR}"
 echo "Comprimiendo con xz (nivel ligero para evitar falta de RAM)..."
