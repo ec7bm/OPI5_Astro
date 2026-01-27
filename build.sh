@@ -61,30 +61,39 @@ if [[ "$IMAGE_FILE" == *.xz ]]; then
     IMAGE_FILE="${IMAGE_FILE%.xz}"
 fi
 
-# 2.5. Expandir la imagen para tener espacio
-# DESHABILITADO: Causa corrupción de la tabla de particiones
-# La imagen oficial ya tiene suficiente espacio para nuestras modificaciones
-echo "[2.5/6] Saltando expansión de imagen (usando espacio original)..."
+# 2.5. Expandir la imagen para tener espacio (V2 - Necesario para XFCE)
+echo "[2.5/6] Expandiendo imagen en +3GB..."
+# Añadir 3GB al final del archivo
+truncate -s +3G "$IMAGE_FILE"
 
-# # Usar truncate en lugar de dd para evitar depencias de /dev/zero
-# truncate -s +3G "$IMAGE_FILE"
-# # Buscar el dispositivo loop libre
-# LOOP_DEVICE=$(sudo losetup -f)
-# # Asociar imagen al loop device
-# sudo losetup "$LOOP_DEVICE" "$IMAGE_FILE"
-# # Leer la tabla de particiones
-# sudo partprobe "$LOOP_DEVICE"
-# # Expandir la partición root (la última, usualmente la 2)
-# # Usamos growpart (parte de cloud-guest-utils)
-# if ! command -v growpart &> /dev/null; then
-#     sudo apt-get update && sudo apt-get install -y cloud-guest-utils
-# fi
-# sudo growpart "$LOOP_DEVICE" 2
-# # Verificar y redimensionar el sistema de archivos (e2fsck + resize2fs)
-# sudo e2fsck -f -y "${LOOP_DEVICE}p2"
-# sudo resize2fs "${LOOP_DEVICE}p2"
-# # Liberar loop para volver a montarlo limpiamente después
-# sudo losetup -d "$LOOP_DEVICE"
+# Buscar el dispositivo loop libre
+LOOP_DEVICE=$(sudo losetup -f)
+# Asociar imagen al loop device
+sudo losetup "$LOOP_DEVICE" "$IMAGE_FILE"
+# Leer la tabla de particiones
+sudo partprobe "$LOOP_DEVICE"
+
+# Expandir la partición root (PARTICIÓN 2) de forma segura con growpart
+# (Aseguramos que cloud-guest-utils está instalado)
+if ! command -v growpart &> /dev/null; then
+    sudo apt-get update && sudo apt-get install -y cloud-guest-utils
+fi
+
+echo "Expandiendo partición 2..."
+# El "|| true" evita que pare el script si dice que ya está expandido, 
+# pero si falla de verdad, e2fsck lo detectará después.
+sudo growpart "$LOOP_DEVICE" 2 || true
+sleep 1
+sudo partprobe "$LOOP_DEVICE"
+sleep 1
+
+# Verificar y redimensionar el sistema de archivos (e2fsck + resize2fs)
+echo "Redimensionando sistema de archivos ext4..."
+sudo e2fsck -f -y "${LOOP_DEVICE}p2"
+sudo resize2fs "${LOOP_DEVICE}p2"
+
+# Liberar loop para volver a montarlo limpiamente después para el chroot
+sudo losetup -d "$LOOP_DEVICE"
 
 # 3. Montar la imagen
 echo "[3/6] Montando imagen..."
