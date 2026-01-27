@@ -5,4 +5,5 @@ Exec=sudo /opt/astroorange/main.py
 Icon=preferences-system
 Comment=Setup Wizard for AstroOrange
 X-GNOME-Autostart-enabled=true
+OnlyShowIn=XFCE;
 Terminal=false

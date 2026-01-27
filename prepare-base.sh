@@ -60,12 +60,24 @@ echo "🔧 Mounting image (NO partition changes)..."
 LOOP_DEVICE=$(sudo losetup -f --show -P "$WORK_IMAGE")
 echo "   Loop device: $LOOP_DEVICE"
 
-# Partition detection (standard Orange Pi images: p1=boot, p2=rootfs usually, but checking widely)
-# Assuming standard layout: p3 or p2 is often root on OPi, but let's stick to standard p2 for linux-root usually.
-# You might need to adjust this depending on the specific OPi image layout!
-# For this script we assume p2 is root, p1 is boot (fairly standard).
-ROOT_PART="${LOOP_DEVICE}p2"
-BOOT_PART="${LOOP_DEVICE}p1"
+# Partition detection (Robust)
+echo "🔍 Detecting partitions..."
+# Try to find the ext4 partition (usually root)
+ROOT_PART=$(sudo blkid | grep "${LOOP_DEVICE}p" | grep "ext4" | head -n 1 | cut -d: -f1)
+
+# Fallback: largest partition? or last partition?
+if [ -z "$ROOT_PART" ]; then
+    echo "⚠️  Could not detect ext4 partition via blkid. Using last partition as heuristic."
+    ROOT_PART=$(ls -1 ${LOOP_DEVICE}p* | sort -V | tail -n 1)
+fi
+
+# Boot partition (usually the first one, or the one before root)
+# Simple heuristic: First partition is often boot or loader.
+# On OPi5, p1 often loader, p2 often boot/root.
+# Let's assume standard Ubuntu layout: /boot might be a folder on root, or separate.
+# If separate, it's usually the vfat/ext4 small one.
+# For simplicity in this script, we mount ROOT first. Then checks if we need to mount boot.
+echo "   Root partition detected: $ROOT_PART"
 
 if [ ! -e "$ROOT_PART" ]; then
     echo "❌ Error: Root partition $ROOT_PART not found!"
@@ -74,8 +86,22 @@ fi
 
 mkdir -p "${MOUNT_POINT}"
 sudo mount "$ROOT_PART" "${MOUNT_POINT}"
-if [ -e "$BOOT_PART" ]; then
-    sudo mount "$BOOT_PART" "${MOUNT_POINT}/boot"
+
+# Check if /boot is empty, if so, try to find a boot partition
+if [ -z "$(ls -A ${MOUNT_POINT}/boot 2>/dev/null)" ]; then
+    echo "ℹ️  /boot appears empty, looking for separate boot partition..."
+    BOOT_PART=$(ls -1 ${LOOP_DEVICE}p* | sort -V | head -n 2 | tail -n 1) # Guessing p2 if p3 is root? Or p1?
+    # Actually, safely skipping strict boot mount unless we need to update kernel/initramfs (which we don't).
+    # "Minimal Touch" means we probably don't even need /boot mounted unless dpkg triggers update-initramfs.
+    # Apt install xfce might trigger it. So we should mount just in case.
+    # Let's try to identify p1 or p2.
+    # User's heuristic: BOOT_PART=$(ls ${LOOP_DEVICE}p* | head -n 1) is risky if p1 is u-boot binary blob.
+    # Let's verify with blkid for vfat or ext4 label "boot"
+    BOOT_CANDIDATE=$(sudo blkid | grep "${LOOP_DEVICE}p" | grep -E "vfat|ext4" | grep -v "$ROOT_PART" | head -n 1 | cut -d: -f1)
+    if [ -n "$BOOT_CANDIDATE" ]; then
+        echo "   Mounting potential boot partition: $BOOT_CANDIDATE"
+        sudo mount "$BOOT_CANDIDATE" "${MOUNT_POINT}/boot"
+    fi
 fi
 
 # 4. PREPARE CHROOT
@@ -103,10 +129,7 @@ chmod +x /usr/sbin/policy-rc.d
 apt-get update
 
 # Core GUI Requirements (XFCE + VNC)
-# - xfce4: Desktop environment
-# - tightvncserver: VNC Server
-# - novnc + websockify: Browser based VNC
-# - network-manager: For hotspot control
+# Added xserver-xorg-video-dummy for headless support
 apt-get install -y --no-install-recommends \
     xfce4 \
     xfce4-terminal \
@@ -121,12 +144,41 @@ apt-get install -y --no-install-recommends \
     gir1.2-gtk-3.0 \
     gir1.2-vte-2.91 \
     dnsmasq-base \
-    hostapd
+    hostapd \
+    xserver-xorg-video-dummy
 
 # Clean up
 rm /usr/sbin/policy-rc.d
 apt-get clean
 rm -rf /var/lib/apt/lists/*
+EOF
+
+# 6. HEADLESS XORG CONFIG
+echo "🖥️  Configuring Headless Xorg (Dummy Driver)..."
+sudo mkdir -p "${MOUNT_POINT}/etc/X11/xorg.conf.d"
+cat <<EOF | sudo tee "${MOUNT_POINT}/etc/X11/xorg.conf.d/20-dummy.conf"
+Section "Device"
+    Identifier  "DummyVideo"
+    Driver      "dummy"
+    VideoRam    16384
+EndSection
+
+Section "Monitor"
+    Identifier  "DummyMonitor"
+    HorizSync   28.0-80.0
+    VertRefresh 48.0-75.0
+EndSection
+
+Section "Screen"
+    Identifier  "DummyScreen"
+    Device      "DummyVideo"
+    Monitor     "DummyMonitor"
+    DefaultDepth 24
+    SubSection "Display"
+        Depth 24
+        Modes "1920x1080" "1280x720"
+    EndSubSection
+EndSection
 EOF
 
 # 6. INJECT FILES
