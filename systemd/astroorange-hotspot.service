@@ -1,0 +1,12 @@
+[Unit]
+Description=AstroOrange Hotspot Auto-Switcher
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/astroorange-hotspot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

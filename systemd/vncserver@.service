@@ -1,0 +1,13 @@
+[Unit]
+Description=VNC Server for user %i
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=%i
+ExecStartPre=-/usr/bin/vncserver -kill :%i
+ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24
+ExecStop=/usr/bin/vncserver -kill :%i
+
+[Install]
+WantedBy=multi-user.target

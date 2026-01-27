@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=AstroOrange Wizard
+Exec=sudo /opt/astroorange/main.py
+Icon=preferences-system
+Comment=Setup Wizard for AstroOrange
+X-GNOME-Autostart-enabled=true
+Terminal=false
