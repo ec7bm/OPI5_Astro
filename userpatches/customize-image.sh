@@ -94,7 +94,13 @@ apt-get install -y --no-install-recommends \
     dbus-x11 \
     net-tools
 
-# Crear directorio para el Wizard V2
+# Copiar fondo de pantalla
+mkdir -p /usr/share/backgrounds
+cp /tmp/assets/backgrounds/* /usr/share/backgrounds/ || true
+
+# Configurar XFCE para usar el fondo por defecto (intento best-effort para LightDM y Desktop)
+# Nota: La configuración real de usuario se hace mejor al crear el usuario o en firstboot
+# Pero esto asegura que la imagen esté disponible
 mkdir -p /opt/astro-wizard
 
 # Preparar entorno noVNC

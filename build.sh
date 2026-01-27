@@ -120,9 +120,14 @@ echo "Copiando servicios systemd..."
 sudo cp -rv "${BASE_DIR}/systemd/"*.service "${MOUNT_DIR}/etc/systemd/system/"
 
 # C. Copiar Wizard V2 a /opt/astro-wizard
-echo "Inyectando AstroOrange Wizard V2..."
+echo "Inyectando AstroOrange Wizard V2 y Assets..."
 mkdir -p "${MOUNT_DIR}/opt/astro-wizard"
 sudo cp -rv "${BASE_DIR}/wizard/"* "${MOUNT_DIR}/opt/astro-wizard/"
+
+# Copiar Assets (Fondos, etc) temporalmente para que customize-image los mueva
+mkdir -p "${MOUNT_DIR}/tmp/assets"
+sudo cp -rv "${BASE_DIR}/assets/"* "${MOUNT_DIR}/tmp/assets/"
+
 # Copiar el instalador systemd también
 sudo cp "${BASE_DIR}/systemd/wizard-autostart.service" "${MOUNT_DIR}/etc/systemd/system/"
 

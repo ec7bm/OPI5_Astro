@@ -16,10 +16,20 @@ class AstroWizard(Gtk.Window):
         # CSS Styling
         css_provider = Gtk.CssProvider()
         css_provider.load_from_data(b"""
-            window { background-color: #1a1b26; color: #a9b1d6; }
+            window { 
+                background-image: url('/usr/share/backgrounds/astro-wallpaper.jpg');
+                background-size: cover;
+                background-position: center;
+            }
+            box {
+                background-color: rgba(26, 27, 38, 0.85);
+                margin: 50px;
+                padding: 30px;
+                border-radius: 15px;
+            }
             button { background-color: #f7768e; color: white; padding: 10px; border-radius: 5px; font-weight: bold; }
             button:hover { background-color: #ff9e64; }
-            label { font-size: 14px; }
+            label { font-size: 14px; color: #c0caf5; }
             entry { background-color: #24283b; color: white; border: 1px solid #414868; }
             .header { font-size: 24px; font-weight: bold; color: #7aa2f7; margin-bottom: 20px; }
             .section { margin-top: 20px; margin-bottom: 10px; font-weight: bold; color: #bb9af7; }
