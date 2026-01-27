@@ -183,3 +183,18 @@ if [ -f "${MOUNT_POINT}/etc/resolv.conf.bak" ]; then
 fi
 
 echo "✅ Done! Cleanup trap will handle unmounting."
+
+echo ""
+echo "========================================="
+echo "  🚀 SERVIDOR DE DESCARGA"
+echo "========================================="
+read -p "¿Quieres iniciar un servidor web para bajar la imagen ahora? (S/n): " SERVER_REPLY
+if [[ "$SERVER_REPLY" =~ ^[SsYy]$ ]] || [[ -z "$SERVER_REPLY" ]]; then
+    IP_ADDR=$(hostname -I | awk '{print $1}')
+    echo ""
+    echo "📂 Sirviendo directorio actual..."
+    echo "🔗 URL: http://${IP_ADDR}:8000/astroorange-v2-work.img"
+    echo "⚠️  Pulsa Ctrl+C para detener."
+    echo ""
+    python3 -m http.server 8000
+fi
