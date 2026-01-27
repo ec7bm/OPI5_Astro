@@ -8,13 +8,26 @@ echo "🚀 AstroOrange customization starting..."
 
 # ---------------- BASE PACKAGES ----------------
 apt-get update
+# Instalar software-properties-common para poder añadir repositorios
+apt-get install -y --no-install-recommends software-properties-common
+
+# Añadir PPA de Mozilla Team para tener Firefox .deb (no Snap)
+add-apt-repository -y ppa:mozillateam/ppa
+echo '
+Package: *
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001
+' > /etc/apt/preferences.d/mozilla-firefox
+
+apt-get update
+
 apt-get install -y --no-install-recommends \
     xfce4 xfce4-terminal xfce4-screenshooter \
     x11vnc xvfb novnc websockify \
     network-manager \
     git curl wget xterm xz-utils \
     python3 python3-pip python3-tk \
-    firefox-esr \
+    firefox \
     dbus-x11
 
 apt-get clean
