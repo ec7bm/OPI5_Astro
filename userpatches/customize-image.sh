@@ -60,7 +60,7 @@ echo "deb [signed-by=/etc/apt/trusted.gpg.d/phd2.gpg] https://ppa.launchpadconte
 apt-get update -y
 
 # ----------------------------------------------------------------------------
-# 1.5. Crear usuario AstroOrange PRIMERO
+# 1.5. Crear usuario AstroOrange
 echo "Configurando usuario AstroOrange..."
 if ! id "AstroOrange" &>/dev/null; then
     useradd -m -s /bin/bash AstroOrange
@@ -73,17 +73,41 @@ usermod -a -G dialout AstroOrange
 usermod -a -G tty AstroOrange
 usermod -a -G video AstroOrange
 
-# 2. Configuración de Red y Herramientas Base
+# 2. Configuración de Entorno Gráfico V2 (Pre-instalado)
 # ----------------------------------------------------------------------------
-echo "Instalando herramientas base y de red..."
+echo "Instalando entorno gráfico XFCE4 completo..."
 apt-get install -y --no-install-recommends \
-    network-manager curl wget vim htop tar xz-utils \
-    dnsmasq-base iptables iproute2
+    xfce4 xfce4-goodies lightdm \
+    network-manager-gnome \
+    firefox \
+    fonts-noto-color-emoji
 
-# Habilitar servicios modulares
+echo "Instalando infraestructura VNC y Wizard..."
+apt-get install -y --no-install-recommends \
+    tightvncserver \
+    novnc \
+    python3-websockify \
+    python3-numpy \
+    python3-gi \
+    python3-gi-cairo \
+    gir1.2-gtk-3.0 \
+    dbus-x11 \
+    net-tools
+
+# Crear directorio para el Wizard V2
+mkdir -p /opt/astro-wizard
+
+# Preparar entorno noVNC
+mkdir -p /opt/novnc
+cp -r /usr/share/novnc/* /opt/novnc/ || true
+ln -s /opt/novnc/vnc_auto.html /opt/novnc/index.html || true
+
+# Habilitar servicios V2
 systemctl enable hotspot.service
 systemctl enable firstboot.service
-systemctl enable auto-installer.service
+systemctl enable vncserver@1.service
+systemctl enable novnc.service
+# systemctl enable wizard-autostart.service  <-- Se activará en firstboot, no aquí
 systemctl enable gpsd
 
 # LIMPIEZA DE DISPARADORES

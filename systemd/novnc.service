@@ -1,11 +1,11 @@
 [Unit]
-Description=noVNC Web Service
-After=network.target
+Description=noVNC (Web VNC) Service
+After=network.target vncserver@1.service
 
 [Service]
 Type=simple
-User=root
-ExecStart=/usr/bin/websockify -D --web=/usr/share/novnc 6080 localhost:5901
+User=AstroOrange
+ExecStart=/usr/share/novnc/utils/novnc_proxy --vnc localhost:5901 --listen 6080 --cert /home/AstroOrange/novnc.pem
 Restart=on-failure
 
 [Install]

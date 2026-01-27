@@ -4,13 +4,14 @@ After=syslog.target network.target
 
 [Service]
 Type=forking
-User=%i
-Group=%i
-WorkingDirectory=/home/%i
-PIDFile=/home/%i/.vnc/%H:1.pid
-ExecStartPre=-/usr/bin/vncserver -kill :1 > /dev/null 2>&1
-ExecStart=/usr/bin/vncserver -depth 24 -geometry 1280x720 :1
-ExecStop=/usr/bin/vncserver -kill :1
+User=AstroOrange
+Group=AstroOrange
+WorkingDirectory=/home/AstroOrange
+
+PIDFile=/home/AstroOrange/.vnc/%H:%i.pid
+ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
+ExecStart=/usr/bin/vncserver -depth 24 -geometry 1280x720 :%i
+ExecStop=/usr/bin/vncserver -kill :%i
 
 [Install]
 WantedBy=multi-user.target

@@ -110,12 +110,12 @@ sudo chmod +x "${MOUNT_DIR}/usr/local/bin/"*.sh
 echo "Copiando servicios systemd..."
 sudo cp -rv "${BASE_DIR}/systemd/"*.service "${MOUNT_DIR}/etc/systemd/system/"
 
-# C. Copiar scripts de instalación AstroOrange al home del usuario
-echo "Inyectando scripts AstroOrange en el home del usuario..."
-mkdir -p "${MOUNT_DIR}/home/AstroOrange/setup"
-cp -rv "${BASE_DIR}/scripts/"* "${MOUNT_DIR}/home/AstroOrange/setup/"
-chown -R 1000:1000 "${MOUNT_DIR}/home/AstroOrange/setup"
-chmod +x "${MOUNT_DIR}/home/AstroOrange/setup/"*.sh
+# C. Copiar Wizard V2 a /opt/astro-wizard
+echo "Inyectando AstroOrange Wizard V2..."
+mkdir -p "${MOUNT_DIR}/opt/astro-wizard"
+sudo cp -rv "${BASE_DIR}/wizard/"* "${MOUNT_DIR}/opt/astro-wizard/"
+# Copiar el instalador systemd también
+sudo cp "${BASE_DIR}/systemd/wizard-autostart.service" "${MOUNT_DIR}/etc/systemd/system/"
 
 # Ejecutar customize-image.sh en el chroot para habilitar todo
 echo "Habilitando servicios en chroot..."
