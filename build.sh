@@ -40,10 +40,40 @@ fi
 
 echo "➡️ Usando imagen: $IMAGE_FILE"
 
+# ---------------- SAFE EXPANSION (REQUIRED) ----------------
+# El sistema necesita más espacio para XFCE/KStars.
+# Usamos sgdisk para mover el header GPT y evitar corrupción.
+echo "🔧 Expandiendo imagen +4GB..."
+if command -v sgdisk &> /dev/null; then
+    truncate -s +4G "$IMAGE_FILE"
+    sync
+    # Mover backup header al final del disco (Fix GPT)
+    sgdisk -e "$IMAGE_FILE" > /dev/null 2>&1 || true
+    # Informar al kernel cambio de tamaño
+    partprobe "$IMAGE_FILE" 2>/dev/null || true
+else
+    echo "⚠️ 'gdisk' no instalado. Intentando expansión simple (puede fallar)..."
+    truncate -s +4G "$IMAGE_FILE"
+fi
+
 # ---------------- LOOP + MOUNT ----------------
 echo "🔧 Asociando loop device..."
 LOOP_DEVICE=$(sudo losetup -f --show -P "$IMAGE_FILE")
 sleep 2
+
+# Expandir Partición y Filesystem
+echo "📏 Redimensionando partición root..."
+# Opción A: growpart (cloud-guest-utils)
+if command -v growpart &> /dev/null; then
+    sudo growpart "$LOOP_DEVICE" 2 || true
+else
+    # Opción B: parted
+    sudo parted -s "$LOOP_DEVICE" resizepart 2 100% || true
+fi
+
+sleep 1
+sudo e2fsck -f -y "${LOOP_DEVICE}p2" || true
+sudo resize2fs "${LOOP_DEVICE}p2"
 
 # Detectar particiones por filesystem
 ROOT_PART=$(blkid | grep "$LOOP_DEVICE" | grep ext4 | cut -d: -f1 | head -n1)
