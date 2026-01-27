@@ -125,5 +125,10 @@ echo ""
 echo "✅ BUILD COMPLETADO"
 echo "📀 Imagen final: $OUTPUT_DIR/$OUTPUT_NAME.xz"
 echo ""
-echo "Para descargar, ejecuta: python3 ../scripts/serve_image.py"
-echo ""
+
+# ---------------- AUTO SERVE ----------------
+echo "📡 Iniciando servidor de descarga..."
+echo "--------------------------------------------------"
+cd "$OUTPUT_DIR"
+# Usamos ../scripts/serve_image.py porque estamos en output/
+python3 ../scripts/serve_image.py
