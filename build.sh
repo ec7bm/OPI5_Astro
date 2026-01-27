@@ -1,196 +1,129 @@
 #!/bin/bash
-
-# AstroOrange Pro - Remaster Script
-# Este script toma la imagen oficial de Ubuntu Jammy Server de Orange Pi
-# y le inyecta toda nuestra personalización astronómica
+# AstroOrange Pro v2.3 - SAFE Remaster Script for Orange Pi
+# NO offline resize | NO partition rewriting | Orange Pi safe
 
 set -e
 
-echo "=== AstroOrange Pro v2.3 Remaster System (Auto-Cleanup Edition) ==="
+echo "=== AstroOrange Pro v2.3 Remaster (SAFE MODE) ==="
 
-# Directorios
+# ---------------- CONFIG ----------------
 BASE_DIR="$(pwd)"
 WORK_DIR="${BASE_DIR}/remaster-work"
 MOUNT_DIR="${WORK_DIR}/mount"
-USERPATCHES_DIR="${BASE_DIR}/userpatches"
-
-# Crear directorio de trabajo
-mkdir -p "${WORK_DIR}"
-mkdir -p "${MOUNT_DIR}"
-
-# 1. Localizar imagen base o descargar
 IMAGE_BASE_DIR="${BASE_DIR}/image-base"
-mkdir -p "${IMAGE_BASE_DIR}"
+USERPATCHES_DIR="${BASE_DIR}/userpatches"
+OUTPUT_DIR="${BASE_DIR}/output"
 
-# NUEVO: Comprobar si ya existe una copia de trabajo para no copiarla de nuevo
-IMAGE_FILE=$(find "${WORK_DIR}" -name "base_working_copy.img" | head -n 1)
+mkdir -p "$WORK_DIR" "$MOUNT_DIR" "$IMAGE_BASE_DIR" "$OUTPUT_DIR"
 
-if [ -n "$IMAGE_FILE" ]; then
-    echo "[1/6] Usando copia de trabajo existente en: ${IMAGE_FILE}"
-else
-    # Buscar en la caché de imagen base
-    IMAGE_SOURCE=$(find "${IMAGE_BASE_DIR}" -name "*.img" -o -name "*.img.xz" | head -n 1)
+# ---------------- IMAGE DETECTION ----------------
+IMAGE_FILE=$(find "$WORK_DIR" -name "base_working_copy.img" 2>/dev/null | head -n1)
 
-    if [ -n "$IMAGE_SOURCE" ]; then
-        echo "[1/6] Imagen base encontrada en caché: $(basename "$IMAGE_SOURCE")"
-        echo "Copiando a directorio de trabajo (esto preserva la original)..."
-        # Determinamos extensión
-        EXT="${IMAGE_SOURCE##*.}"
-        cp -v "$IMAGE_SOURCE" "${WORK_DIR}/base_working_copy.${EXT}"
-        IMAGE_FILE="${WORK_DIR}/base_working_copy.${EXT}"
-    else
-        echo "[1/6] No se encontró imagen en ${IMAGE_BASE_DIR}. Iniciando modo manual..."
-        cd "${WORK_DIR}"
-        echo "Por favor, coloca la imagen oficial (.img o .img.xz) en: ${IMAGE_BASE_DIR}/"
-        echo "Presiona Enter cuando esté listo..."
-        read
-        IMAGE_FILE=$(find "${WORK_DIR}" -name "*.img.xz" -o -name "*.img" | head -n 1)
-        if [ -z "$IMAGE_FILE" ]; then
-            echo "ERROR: Sigo sin encontrar ninguna imagen base."
-            exit 1
-        fi
+if [ -z "$IMAGE_FILE" ]; then
+    IMAGE_SOURCE=$(find "$IMAGE_BASE_DIR" -name "*.img" -o -name "*.img.xz" | head -n1)
+    if [ -z "$IMAGE_SOURCE" ]; then
+        echo "❌ No se encontró imagen base en image-base/"
+        exit 1
     fi
+
+    echo "📦 Copiando imagen base..."
+    cp "$IMAGE_SOURCE" "$WORK_DIR/base_working_copy.${IMAGE_SOURCE##*.}"
+    IMAGE_FILE="$WORK_DIR/base_working_copy.${IMAGE_SOURCE##*.}"
 fi
 
-echo "Procesando: ${IMAGE_FILE}"
-
-# 2. Descomprimir si es necesario
-echo "[2/6] Descomprimiendo imagen..."
+# ---------------- DECOMPRESS ----------------
 if [[ "$IMAGE_FILE" == *.xz ]]; then
-    unxz -v "$IMAGE_FILE"
+    echo "📂 Descomprimiendo imagen..."
+    unxz "$IMAGE_FILE"
     IMAGE_FILE="${IMAGE_FILE%.xz}"
 fi
 
-# 2.5. Expandir la imagen para tener espacio (V2 - Necesario para XFCE)
-echo "[2.5/6] Expandiendo imagen en +3GB..."
-# Añadir 3GB al final del archivo
-truncate -s +3G "$IMAGE_FILE"
+echo "➡️ Usando imagen: $IMAGE_FILE"
 
-# Buscar el dispositivo loop libre
-LOOP_DEVICE=$(sudo losetup -f)
-# Asociar imagen al loop device
-sudo losetup "$LOOP_DEVICE" "$IMAGE_FILE"
-# Leer la tabla de particiones
-sudo partprobe "$LOOP_DEVICE"
+# ---------------- LOOP + MOUNT ----------------
+echo "🔧 Asociando loop device..."
+LOOP_DEVICE=$(sudo losetup -f --show -P "$IMAGE_FILE")
+sleep 2
 
-# Expandir la partición root (PARTICIÓN 2) de forma segura con growpart
-# (Aseguramos que cloud-guest-utils está instalado)
-if ! command -v growpart &> /dev/null; then
-    sudo apt-get update && sudo apt-get install -y cloud-guest-utils
+# Detectar particiones por filesystem
+ROOT_PART=$(blkid | grep "$LOOP_DEVICE" | grep ext4 | cut -d: -f1 | head -n1)
+BOOT_PART=$(blkid | grep "$LOOP_DEVICE" | grep vfat | cut -d: -f1 | head -n1)
+
+if [ -z "$ROOT_PART" ]; then
+    echo "❌ No se pudo detectar la partición root"
+    sudo losetup -d "$LOOP_DEVICE"
+    exit 1
 fi
 
-echo "Expandiendo partición 2..."
-# El "|| true" evita que pare el script si dice que ya está expandido, 
-# pero si falla de verdad, e2fsck lo detectará después.
-sudo growpart "$LOOP_DEVICE" 2 || true
-sleep 1
-sudo partprobe "$LOOP_DEVICE"
-sleep 1
+echo "🗂 Root: $ROOT_PART"
+[ -n "$BOOT_PART" ] && echo "🗂 Boot: $BOOT_PART"
 
-# Verificar y redimensionar el sistema de archivos (e2fsck + resize2fs)
-echo "Redimensionando sistema de archivos ext4..."
-sudo e2fsck -f -y "${LOOP_DEVICE}p2"
-sudo resize2fs "${LOOP_DEVICE}p2"
+sudo mount "$ROOT_PART" "$MOUNT_DIR"
+[ -n "$BOOT_PART" ] && sudo mount "$BOOT_PART" "$MOUNT_DIR/boot"
 
-# Liberar loop para volver a montarlo limpiamente después para el chroot
+# ---------------- CHROOT PREP ----------------
+echo "🔗 Preparando chroot..."
+sudo mount --bind /dev "$MOUNT_DIR/dev"
+sudo mount --bind /dev/pts "$MOUNT_DIR/dev/pts"
+sudo mount --bind /proc "$MOUNT_DIR/proc"
+sudo mount --bind /sys "$MOUNT_DIR/sys"
+
+sudo cp /etc/resolv.conf "$MOUNT_DIR/etc/resolv.conf"
+
+# Bloquear arranque de servicios
+echo -e '#!/bin/sh\nexit 101' | sudo tee "$MOUNT_DIR/usr/sbin/policy-rc.d" >/dev/null
+sudo chmod +x "$MOUNT_DIR/usr/sbin/policy-rc.d"
+
+# ---------------- INJECT FILES ----------------
+echo "📂 Inyectando scripts..."
+sudo cp -rv "$BASE_DIR/scripts/"* "$MOUNT_DIR/usr/local/bin/"
+sudo chmod +x "$MOUNT_DIR/usr/local/bin/"*.sh
+
+echo "📂 Inyectando servicios systemd..."
+sudo cp -rv "$BASE_DIR/systemd/"*.service "$MOUNT_DIR/etc/systemd/system/"
+
+echo "📂 Inyectando Wizard AstroOrange..."
+sudo mkdir -p "$MOUNT_DIR/opt/astro-wizard"
+sudo cp -rv "$BASE_DIR/wizard/"* "$MOUNT_DIR/opt/astro-wizard/"
+
+echo "📂 Inyectando Assets (Fondos)..."
+sudo mkdir -p "$MOUNT_DIR/tmp/assets"
+sudo cp -rv "$BASE_DIR/assets/"* "$MOUNT_DIR/tmp/assets/"
+
+# ---------------- CUSTOMIZE IMAGE ----------------
+if [ -f "$USERPATCHES_DIR/customize-image.sh" ]; then
+    echo "⚙️ Ejecutando customize-image.sh..."
+    sudo cp "$USERPATCHES_DIR/customize-image.sh" "$MOUNT_DIR/tmp/"
+    sudo chmod +x "$MOUNT_DIR/tmp/customize-image.sh"
+    sudo chroot "$MOUNT_DIR" /bin/bash /tmp/customize-image.sh
+    sudo rm "$MOUNT_DIR/tmp/customize-image.sh"
+fi
+
+# ---------------- CLEAN CHROOT ----------------
+echo "🧹 Limpiando chroot..."
+sudo rm "$MOUNT_DIR/usr/sbin/policy-rc.d"
+
+sudo umount -l "$MOUNT_DIR/dev/pts"
+sudo umount -l "$MOUNT_DIR/dev"
+sudo umount -l "$MOUNT_DIR/proc"
+sudo umount -l "$MOUNT_DIR/sys"
+[ -n "$BOOT_PART" ] && sudo umount -l "$MOUNT_DIR/boot"
+sudo umount -l "$MOUNT_DIR"
+
 sudo losetup -d "$LOOP_DEVICE"
-
-# 3. Montar la imagen
-echo "[3/6] Montando imagen..."
-LOOP_DEVICE=$(sudo losetup -f)
-sudo losetup -P "$LOOP_DEVICE" "$IMAGE_FILE"
-
-# Esperar a que el kernel detecte las particiones
-sleep 2
-
-# Montar la partición root (normalmente p2)
-sudo mount "${LOOP_DEVICE}p2" "${MOUNT_DIR}"
-sudo mount "${LOOP_DEVICE}p1" "${MOUNT_DIR}/boot"
-
-# 4. Inyectar personalización
-echo "[4/6] Inyectando personalización astronómica..."
-
-# A. Copiar scripts al sistema (usr/local/bin)
-echo "Copiando scripts de sistema..."
-sudo cp -rv "${BASE_DIR}/scripts/"* "${MOUNT_DIR}/usr/local/bin/"
-sudo chmod +x "${MOUNT_DIR}/usr/local/bin/"*.sh
-
-# B. Copiar servicios systemd
-echo "Copiando servicios systemd..."
-sudo cp -rv "${BASE_DIR}/systemd/"*.service "${MOUNT_DIR}/etc/systemd/system/"
-
-# C. Copiar Wizard V2 a /opt/astro-wizard
-echo "Inyectando AstroOrange Wizard V2 y Assets..."
-mkdir -p "${MOUNT_DIR}/opt/astro-wizard"
-sudo cp -rv "${BASE_DIR}/wizard/"* "${MOUNT_DIR}/opt/astro-wizard/"
-
-# Copiar Assets (Fondos, etc) temporalmente para que customize-image los mueva
-mkdir -p "${MOUNT_DIR}/tmp/assets"
-sudo cp -rv "${BASE_DIR}/assets/"* "${MOUNT_DIR}/tmp/assets/"
-
-# Copiar el instalador systemd también
-sudo cp "${BASE_DIR}/systemd/wizard-autostart.service" "${MOUNT_DIR}/etc/systemd/system/"
-
-# Ejecutar customize-image.sh en el chroot para habilitar todo
-echo "Habilitando servicios en chroot..."
-sudo cp "${USERPATCHES_DIR}/customize-image.sh" "${MOUNT_DIR}/tmp/"
-
-# Preparar chroot
-sudo mount --bind /dev "${MOUNT_DIR}/dev"
-sudo mount --bind /proc "${MOUNT_DIR}/proc"
-sudo mount --bind /sys "${MOUNT_DIR}/sys"
-
-# Ejecutar personalización
-sudo chroot "${MOUNT_DIR}" /bin/bash /tmp/customize-image.sh
-
-# Limpiar
-sudo rm "${MOUNT_DIR}/tmp/customize-image.sh"
-
-# 5. Desmontar y Limpiar de forma robusta
-echo "[5/6] Desmontando imagen de forma segura..."
-sync
-sleep 2
-
-# Desmontar en orden inverso
-sudo umount -l "${MOUNT_DIR}/dev" || true
-sudo umount -l "${MOUNT_DIR}/proc" || true
-sudo umount -l "${MOUNT_DIR}/sys" || true
-sudo umount -l "${MOUNT_DIR}/boot" || true
-sudo umount -l "${MOUNT_DIR}" || true
-
-# Asegurar que los procesos en el chroot han muerto
-sudo fuser -k "${MOUNT_DIR}" || true
-
-# Liberar loop device
-sudo losetup -d "$LOOP_DEVICE" || true
 sync
 
-# Verificación final de consistencia
-echo "Realizando chequeo final de integridad..."
-sudo e2fsck -f -y "$IMAGE_FILE" || true
-
-# 6. Comprimir imagen final
-echo "[6/6] Comprimiendo imagen final..."
-OUTPUT_DIR="${BASE_DIR}/output"
-mkdir -p "${OUTPUT_DIR}"
-
+# ---------------- FINAL IMAGE ----------------
 OUTPUT_NAME="AstroOrange-v2.3-$(date +%Y%m%d).img"
-mv "$IMAGE_FILE" "${OUTPUT_DIR}/${OUTPUT_NAME}"
+mv "$IMAGE_FILE" "$OUTPUT_DIR/$OUTPUT_NAME"
 
-cd "${OUTPUT_DIR}"
-echo "Comprimiendo con xz (nivel ligero para evitar falta de RAM)..."
-xz -v -1 -T0 "${OUTPUT_NAME}"
+echo "📦 Comprimiendo imagen..."
+cd "$OUTPUT_DIR"
+xz -1 -T0 "$OUTPUT_NAME"
 
 echo ""
-echo "=== ¡Proceso de construcción completado! ==="
-echo "Imagen final: ${OUTPUT_DIR}/${OUTPUT_NAME}.xz"
+echo "✅ BUILD COMPLETADO"
+echo "📀 Imagen final: $OUTPUT_DIR/$OUTPUT_NAME.xz"
 echo ""
-
-# 7. ENTREGA Y LIMPIEZA AUTOMÁTICA
-echo "[7/7] Iniciando servidor de entrega..."
-echo "Una vez descargues la imagen en tu Windows, cierra este servidor (Ctrl+C) para limpiar los temporales."
-python3 "${BASE_DIR}/scripts/serve_image.py"
-
-echo "Limpiando directorio de trabajo..."
-sudo rm -rf "${WORK_DIR}"
-echo "✅ Sistema limpio. ¡Misión cumplida!"
+echo "Para descargar, ejecuta: python3 ../scripts/serve_image.py"
+echo ""
