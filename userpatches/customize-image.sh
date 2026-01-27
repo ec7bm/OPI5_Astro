@@ -83,6 +83,7 @@ apt-get install -y --no-install-recommends \
 # Habilitar servicios modulares
 systemctl enable hotspot.service
 systemctl enable firstboot.service
+systemctl enable auto-installer.service
 systemctl enable gpsd
 
 # LIMPIEZA DE DISPARADORES

@@ -107,8 +107,8 @@ sudo chmod +x "${MOUNT_DIR}/usr/local/bin/"*.sh
 echo "Copiando servicios systemd..."
 sudo cp -rv "${BASE_DIR}/systemd/"*.service "${MOUNT_DIR}/etc/systemd/system/"
 
-# C. Copiar scripts de instalación SARA al home del usuario
-echo "Inyectando scripts SARA en el home del usuario..."
+# C. Copiar scripts de instalación AstroOrange al home del usuario
+echo "Inyectando scripts AstroOrange en el home del usuario..."
 mkdir -p "${MOUNT_DIR}/home/AstroOrange/setup"
 cp -rv "${BASE_DIR}/scripts/"* "${MOUNT_DIR}/home/AstroOrange/setup/"
 chown -R 1000:1000 "${MOUNT_DIR}/home/AstroOrange/setup"
