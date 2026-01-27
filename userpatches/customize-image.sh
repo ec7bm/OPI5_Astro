@@ -132,25 +132,8 @@ setup_hotspot() {
     nmcli con add type wifi ifname "\$INTERFACE" con-name "\$HOTSPOT_SSID" \
         ssid "\$HOTSPOT_SSID" autoconnect yes
     nmcli con modify "\$HOTSPOT_SSID" 802-11-wireless.mode ap \
-        802-11-wireless.band bg ipv4.method shared
-    nmcli con modify "\$HOTSPOT_SSID" wifi-sec.key-mgmt wpa-psk
-    nmcli con modify "\$HOTSPOT_SSID" wifi-sec.psk "\$HOTSPOT_PASS"
-    nmcli con modify "\$HOTSPOT_SSID" ipv4.addresses 10.42.0.1/24
-    nmcli con modify "\$HOTSPOT_SSID" ipv4.gateway 10.42.0.1
-    nmcli con modify "\$HOTSPOT_SSID" ipv4.dns "8.8.8.8 8.8.4.4"
-    
-    # Activar hotspot
-    nmcli con up "\$HOTSPOT_SSID"
-    
-    # Configurar NAT para internet sharing
-    echo 1 > /proc/sys/net/ipv4/ip_forward
-    iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE 2>/dev/null || true
-    iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
-    iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-    
 
-# Paquetes del Sistema Base (GUI Ligera + Red + Utilidades)
-echo -e "${GREEN}[1/5] Installing Base System...${NC}"
+# Paquetes
 apt-get install -y --no-install-recommends \
     xfce4 xfce4-goodies lightdm lightdm-gtk-greeter \
     network-manager network-manager-gnome \
@@ -161,79 +144,78 @@ apt-get install -y --no-install-recommends \
     curl wget git nano htop \
     firefox \
     dbus-x11 \
-    feh
+    feh \
+    onboard
 
-# ==================== 2. ESTRUCTURA DE DISTRO ====================
-echo -e "${GREEN}[2/5] Creating AstroOrange Structure...${NC}"
+# ==================== 2. USUARIO SETUP (TEMPORAL) ====================
+echo -e "${GREEN}[2/5] Creating Setup User...${NC}"
+SETUP_USER="astro-setup"
+SETUP_PASS="setup"
 
+if ! id "$SETUP_USER" &>/dev/null; then
+    useradd -m -s /bin/bash -G sudo,dialout,video "$SETUP_USER"
+    echo "$SETUP_USER:$SETUP_PASS" | chpasswd
+fi
+
+# Configurar LightDM para autologin en SETUP
+mkdir -p /etc/lightdm/lightdm.conf.d
+cat <<EOF > /etc/lightdm/lightdm.conf.d/50-setup.conf
+[Seat:*]
+autologin-user=$SETUP_USER
+autologin-session=xfce
+EOF
+
+# ==================== 3. MODULOS (/opt/astroorange) ====================
+echo -e "${GREEN}[3/5] Installing Modules...${NC}"
 OPT_DIR="/opt/astroorange"
-mkdir -p "$OPT_DIR/bin"
-mkdir -p "$OPT_DIR/firstboot"
-mkdir -p "$OPT_DIR/wizard"
-mkdir -p "$OPT_DIR/assets"
+mkdir -p "$OPT_DIR/bin" "$OPT_DIR/wizard" "$OPT_DIR/assets"
 
-# Copiar wallpaper si existe (de la inyección anterior de build.sh)
+# Copiar wallpaper si existe
 if [ -d "/tmp/assets/backgrounds" ]; then
     mkdir -p /usr/share/backgrounds
     cp /tmp/assets/backgrounds/* /usr/share/backgrounds/ || true
 fi
 
-# ==================== 3. SCRIPTS DE MODULOS ====================
-echo -e "${GREEN}[3/5] Installing Modules...${NC}"
-
-# --- A. Script de Red (Hotspot inteligente) ---
+# --- A. Script de Red (Rescue Hotspot) ---
 cat <<EOF > "$OPT_DIR/bin/astro-network.sh"
 #!/bin/bash
+# Rescue Hotspot: Solo se activa si no hay wifi conectado
 IFACE="wlan0"
-SSID="$HOTSPOT_SSID"
-PASS="$HOTSPOT_PASS"
+SSID="AstroOrange-Setup"
+PASS="astrosetup"
 
-# Esperar a NetworkManager
-sleep 5
-
-# Si ya estamos conectados a algo, no hacemos nada
+sleep 8
+# Si estamos conectados, salir
 if nmcli -t -f STATE g | grep -q connected; then
-    echo "Online via \$(nmcli -t -f DEVICE,STATE dev | grep connected)"
     exit 0
 fi
 
-# Si no hay conexión, levantar Hotspot
-echo "No connection. Starting Hotspot..."
-nmcli con delete "$HOTSPOT_SSID" 2>/dev/null || true
-nmcli con add type wifi ifname "\$IFACE" con-name "$HOTSPOT_SSID" autoconnect yes ssid "$HOTSPOT_SSID" mode ap ipv4.method shared
-nmcli con modify "$HOTSPOT_SSID" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "$HOTSPOT_PASS"
-nmcli con up "$HOTSPOT_SSID"
+# Si no, levantar Hotspot
+echo "Starting Rescue Hotspot..."
+nmcli con delete "\$SSID" 2>/dev/null || true
+nmcli con add type wifi ifname "\$IFACE" con-name "\$SSID" autoconnect yes ssid "\$SSID" mode ap ipv4.method shared
+nmcli con modify "\$SSID" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "\$PASS"
+nmcli con up "\$SSID"
 EOF
 chmod +x "$OPT_DIR/bin/astro-network.sh"
 
-# --- B. Script VNC Headless ---
-cat <<EOF > "$OPT_DIR/bin/astro-vnc.sh"
+# --- B. Script VNC (Dinámico) ---
+cat <<'EOF' > "$OPT_DIR/bin/astro-vnc.sh"
 #!/bin/bash
 export DISPLAY=:0
 rm -f /tmp/.X0-lock
-
-# 1. Virtual Display
 Xvfb :0 -screen 0 1920x1080x24 &
 sleep 2
-
-# 2. XFCE Session (si no arrancó por lightdm)
-# startxfce4 &
-
-# 3. VNC Server
 x11vnc -display :0 -forever -nopw -shared -bg -xkb &
-
-# 4. NoVNC Web
 /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080
 EOF
 chmod +x "$OPT_DIR/bin/astro-vnc.sh"
 
 # ==================== 4. SYSTEMD SERVICES ====================
-echo -e "${GREEN}[4/5] Configuring Services...${NC}"
-
 # Servicio Red
 cat <<EOF > /etc/systemd/system/astro-network.service
 [Unit]
-Description=AstroOrange Auto-Hotspot
+Description=AstroOrange Rescue Hotspot
 After=NetworkManager.service
 
 [Service]
@@ -245,15 +227,17 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
 
-# Servicio VNC
+# Servicio VNC (Template para instanciar por usuario)
+# Usaremos un servicio global que arranque como el usuario activo de lightdm sería ideal, 
+# pero para simplificar, el Wizard reescribirá este servicio en la Fase 1.
 cat <<EOF > /etc/systemd/system/astro-vnc.service
 [Unit]
-Description=AstroOrange VNC/NoVNC Headless
+Description=AstroOrange Headless VNC
 After=network.target
 
 [Service]
 Type=simple
-User=$ASTRO_USER
+User=$SETUP_USER
 ExecStart=$OPT_DIR/bin/astro-vnc.sh
 Restart=always
 
@@ -266,154 +250,157 @@ systemctl enable astro-vnc.service
 systemctl enable lightdm
 systemctl enable ssh
 
-# ==================== 5. FIRST BOOT & WIZARD ====================
-echo -e "${GREEN}[5/5] Setup First Boot Wizard...${NC}"
+# ==================== 5. EL WIZARD (Python) ====================
+echo -e "${GREEN}[5/5] Installing Wizard...${NC}"
 
-# --- Wizard Gráfico (Python Tkinter Modular) ---
-cat <<'PY_EOF' > "$OPT_DIR/wizard/wizard.py"
+cat <<'PY_EOF' > "$OPT_DIR/wizard/main.py"
 import tkinter as tk
 from tkinter import messagebox, ttk
 import subprocess
 import os
 import threading
 
-# Configuration
-BG_COLOR = "#1a1b26"
-FG_COLOR = "#c0caf5"
-ACCENT_COLOR = "#7aa2f7"
+BG_COLOR = "#0f172a"
+FG_COLOR = "#e2e8f0"
+ACCENT_COLOR = "#38bdf8"
 
-class AstroWizard:
+class WizardApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange Setup")
-        self.root.geometry("800x600")
-        self.root.configure(bg=BG_COLOR)
+        self.setup_window()
         
-        # Try Loading Wallpaper
+        # Check Stage
+        if not os.path.exists("/etc/astro-configured"):
+            self.show_stage_1()
+        else:
+            self.show_stage_2()
+
+    def setup_window(self):
+        self.root.title("AstroOrange Wizard")
+        self.root.geometry("900x650")
+        self.root.configure(bg=BG_COLOR)
         try:
-            self.bg_img = tk.PhotoImage(file="/usr/share/backgrounds/astro-wallpaper.jpg")
-            tk.Label(root, image=self.bg_img).place(x=0, y=0, relwidth=1, relheight=1)
-        except:
-            pass
+            self.bg = tk.PhotoImage(file="/usr/share/backgrounds/astro-wallpaper.jpg")
+            tk.Label(self.root, image=self.bg).place(x=0,y=0,relwidth=1,relheight=1)
+        except: pass
 
-        # Header
-        header = tk.Label(root, text="AstroOrange Setup", font=("Arial", 24, "bold"), 
-                         bg=BG_COLOR, fg=ACCENT_COLOR)
-        header.pack(pady=30)
+    def header(self, text):
+        tk.Label(self.root, text=text, font=("Sans", 24, "bold"), 
+                bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=30)
 
-        # Checkboxes
-        self.check_vars = {
+    # --- STAGE 1: CREAR USUARIO + WIFI ---
+    def show_stage_1(self):
+        self.header("Bienvenido a AstroOrange")
+        
+        frame = tk.Frame(self.root, bg=BG_COLOR)
+        frame.pack(pady=10)
+        
+        # User Form
+        tk.Label(frame, text="Nuevo Usuario:", bg=BG_COLOR, fg="white").grid(row=0,0,pady=5)
+        self.entry_user = tk.Entry(frame); self.entry_user.grid(row=0,1,pady=5)
+        
+        tk.Label(frame, text="Contraseña:", bg=BG_COLOR, fg="white").grid(row=1,0,pady=5)
+        self.entry_pass = tk.Entry(frame, show="*"); self.entry_pass.grid(row=1,1,pady=5)
+
+        # WiFi Button
+        tk.Button(self.root, text="📡 Configurar WiFi", command=self.open_wifi,
+                 bg="#475569", fg="white", font=("Sans", 12), width=20).pack(pady=20)
+                 
+        # Apply Button
+        tk.Button(self.root, text="Aplicar y Reiniciar 🚀", command=self.apply_stage_1,
+                 bg=ACCENT_COLOR, fg="black", font=("Sans", 14, "bold"), width=25).pack(pady=10)
+
+    def open_wifi(self):
+        subprocess.Popen(["xfce4-terminal", "-e", "nmtui"])
+
+    def apply_stage_1(self):
+        user = self.entry_user.get()
+        pwd = self.entry_pass.get()
+        if not user or not pwd:
+            messagebox.showerror("Error", "Debes crear un usuario.")
+            return
+
+        # 1. Crear Usuario
+        cmd = f"useradd -m -s /bin/bash -G sudo,dialout,video {user} && echo '{user}:{pwd}' | chpasswd"
+        subprocess.call(f"sudo bash -c \"{cmd}\"", shell=True)
+
+        # 2. Configurar Autologin
+        cfg = f"[Seat:*]\nautologin-user={user}\nautologin-session=xfce\n"
+        subprocess.call(f"echo '{cfg}' | sudo tee /etc/lightdm/lightdm.conf.d/50-astro.conf", shell=True)
+        subprocess.call("sudo rm /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+
+        # 3. Actualizar VNC para usar nuevo usuario
+        subprocess.call(f"sudo sed -i 's/User=astro-setup/User={user}/g' /etc/systemd/system/astro-vnc.service", shell=True)
+        subprocess.call("sudo systemctl daemon-reload", shell=True)
+
+        # 4. Copiar Autostart al nuevo usuario
+        subprocess.call(f"sudo mkdir -p /home/{user}/.config/autostart", shell=True)
+        subprocess.call(f"sudo cp /etc/xdg/autostart/astro-wizard.desktop /home/{user}/.config/autostart/", shell=True)
+        subprocess.call(f"sudo chown -R {user}:{user} /home/{user}/.config", shell=True)
+
+        # 5. Marcar stage
+        subprocess.call("sudo touch /etc/astro-configured", shell=True)
+        
+        messagebox.showinfo("Éxito", "Usuario creado. El sistema se reiniciará.")
+        subprocess.call("sudo reboot", shell=True)
+
+    # --- STAGE 2: INSTALAR SOFTWARE ---
+    def show_stage_2(self):
+        self.header("Instalar Software Astronómico")
+
+        self.vars = {
             "kstars": tk.BooleanVar(value=True),
             "phd2": tk.BooleanVar(value=True),
             "syncthing": tk.BooleanVar(value=False),
             "astap": tk.BooleanVar(value=False)
         }
-
-        frame = tk.Frame(root, bg=BG_COLOR)
+        
+        frame = tk.Frame(self.root, bg=BG_COLOR)
         frame.pack(pady=20)
-
-        self.add_check(frame, "KStars + INDI (Planetarium & Drivers)", "kstars")
-        self.add_check(frame, "PHD2 (Guiding Software)", "phd2")
-        self.add_check(frame, "Syncthing (Image Sync)", "syncthing")
-        self.add_check(frame, "ASTAP (Plate Solving)", "astap")
-
-        # Buttons
-        btn_frame = tk.Frame(root, bg=BG_COLOR)
-        btn_frame.pack(pady=40)
         
-        tk.Button(btn_frame, text="Install Selected", command=self.start_install,
-                 bg=ACCENT_COLOR, fg="black", font=("Arial", 12, "bold"), width=20).pack(pady=5)
+        for name, var in self.vars.items():
+            tk.Checkbutton(frame, text=name.upper(), variable=var, 
+                          bg=BG_COLOR, fg="white", selectcolor="#0f172a", 
+                          font=("Sans", 12), activebackground=BG_COLOR).pack(anchor="w", pady=5)
+
+        tk.Button(self.root, text="Instalar Seleccionados", command=self.start_install,
+                 bg=ACCENT_COLOR, fg="black", font=("Sans", 14, "bold")).pack(pady=30)
                  
-        tk.Button(btn_frame, text="Configure WiFi", command=self.open_wifi,
-                 bg="#414868", fg="white", width=20).pack(pady=5)
-
-    def add_check(self, parent, text, var_key):
-        cb = tk.Checkbutton(parent, text=text, variable=self.check_vars[var_key],
-                           bg=BG_COLOR, fg=FG_COLOR, selectcolor="#24283b",
-                           font=("Arial", 12), activebackground=BG_COLOR)
-        cb.pack(anchor="w", pady=5)
-
-    def open_wifi(self):
-        subprocess.Popen(["xfce4-terminal", "-e", "nmtui"])
-
     def start_install(self):
-        # Disable buttons?
-        # Run install thread
-        threading.Thread(target=self.run_install_logic).start()
-
-    def run_install_logic(self):
-        cmds = ["apt-get update"]
+        threading.Thread(target=self.run_install).start()
         
-        if self.check_vars["kstars"].get():
-            cmds.append("add-apt-repository -y ppa:mutlaqja/ppa")
-            cmds.append("apt-get install -y kstars-bleeding indi-full")
+    def run_install(self):
+        cmds = ["sudo apt-get update"]
+        if self.vars["kstars"].get():
+            cmds.append("sudo add-apt-repository -y ppa:mutlaqja/ppa && sudo apt-get install -y kstars-bleeding indi-full")
+        if self.vars["phd2"].get():
+            cmds.append("sudo add-apt-repository -y ppa:pch/phd2 && sudo apt-get install -y phd2")
+        if self.vars["syncthing"].get():
+            cmds.append("sudo apt-get install -y syncthing")
             
-        if self.check_vars["phd2"].get():
-            cmds.append("add-apt-repository -y ppa:pch/phd2")
-            cmds.append("apt-get install -y phd2")
-            
-        if self.check_vars["syncthing"].get():
-            cmds.append("apt-get install -y syncthing")
-            
-        # Execute chain
-        full_cmd = " && ".join(cmds)
-        subprocess.call(["xfce4-terminal", "-e", f"bash -c '{full_cmd}; echo Done! Press Enter...; read'"])
+        full = " && ".join(cmds)
+        subprocess.call(["xfce4-terminal", "-e", f"bash -c '{full}; echo Pulse Enter...; read'"])
         
-        # Cleanup firstboot
-        if os.path.exists("/etc/astro-firstboot"):
-            os.remove("/etc/astro-firstboot")
-            
-        messagebox.showinfo("Done", "Installation config complete. Check terminal for errors.")
+        # Disable wizard
+        subprocess.call("rm ~/.config/autostart/astro-wizard.desktop", shell=True) # Remove from current user
+        messagebox.showinfo("Setup Completo", "El sistema está listo.")
+        self.root.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = AstroWizard(root)
+    app = WizardApp(root)
     root.mainloop()
 PY_EOF
 
-# --- Script Launcher que se ejecuta al inicio ---
-cat <<EOF > "$OPT_DIR/bin/firstboot-check.sh"
-#!/bin/bash
-if [ -f /etc/astro-firstboot ]; then
-    # Lanzar Wizard
-    export DISPLAY=:0
-    /usr/bin/python3 $OPT_DIR/wizard/wizard.py &
-fi
-EOF
-chmod +x "$OPT_DIR/bin/firstboot-check.sh"
-
-# --- Firstboot Marker ---
-touch /etc/astro-firstboot
-
-# --- Autostart para el Usuario ---
-mkdir -p /home/$ASTRO_USER/.config/autostart
-cat <<EOF > /home/$ASTRO_USER/.config/autostart/astro-wizard.desktop
+# --- Autostart Global (initially for setup user) ---
+mkdir -p /etc/xdg/autostart
+cat <<EOF > /etc/xdg/autostart/astro-wizard.desktop
 [Desktop Entry]
 Type=Application
-Name=AstroWizard First Boot
-Exec=$OPT_DIR/bin/firstboot-check.sh
+Name=AstroWizard
+Exec=sudo python3 $OPT_DIR/wizard/main.py
 OnlyShowIn=XFCE;
 EOF
-chown -R $ASTRO_USER:$ASTRO_USER /home/$ASTRO_USER/.config
-
-# ==================== 6. CREACIÓN DE USUARIO ====================
-if ! id "$ASTRO_USER" &>/dev/null; then
-    useradd -m -s /bin/bash -G sudo,dialout,video "$ASTRO_USER"
-    echo "$ASTRO_USER:$ASTRO_PASS" | chpasswd
-fi
-
-# Configurar LightDM Autologin
-mkdir -p /etc/lightdm/lightdm.conf.d
-cat <<EOF > /etc/lightdm/lightdm.conf.d/50-astro.conf
-[Seat:*]
-autologin-user=$ASTRO_USER
-autologin-session=xfce
-chmod 600 /home/$ASTRO_USER/.vnc/passwd
-chown -R $ASTRO_USER:$ASTRO_USER /home/$ASTRO_USER/.vnc
-
-# Servicio x11vnc
-cat > /etc/systemd/system/x11vnc.service << EOF
-[Unit]
 Description=X11 VNC Server for AstroOrange
 After=display-manager.service
 Requires=display-manager.service
