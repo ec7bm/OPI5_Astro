@@ -60,72 +60,29 @@ echo "deb [signed-by=/etc/apt/trusted.gpg.d/phd2.gpg] https://ppa.launchpadconte
 apt-get update -y
 
 # ----------------------------------------------------------------------------
-# 1.5. Crear usuario OPI5_Astro PRIMERO (antes de configurar servicios)
-# ----------------------------------------------------------------------------
-echo "Configurando usuario OPI5_Astro..."
-if ! id "OPI5_Astro" &>/dev/null; then
-    useradd -m -s /bin/bash OPI5_Astro
-    echo "OPI5_Astro:password" | chpasswd
-    usermod -aG sudo OPI5_Astro
+# 1.5. Crear usuario AstroOrange PRIMERO
+echo "Configurando usuario AstroOrange..."
+if ! id "AstroOrange" &>/dev/null; then
+    useradd -m -s /bin/bash AstroOrange
+    echo "AstroOrange:astroorange" | chpasswd
+    usermod -aG sudo AstroOrange
 fi
 
 # Configurar grupos para acceso a hardware
-usermod -a -G dialout OPI5_Astro
-usermod -a -G tty OPI5_Astro
-usermod -a -G video OPI5_Astro
+usermod -a -G dialout AstroOrange
+usermod -a -G tty AstroOrange
+usermod -a -G video AstroOrange
 
-# 2. Preparación para el Software Astronómico (PPAs)
+# 2. Configuración de Red y Herramientas Base
 # ----------------------------------------------------------------------------
-echo "Configurando repositorios para el Wizard (SIN INSTALAR NADA AÚN)..."
-
-# Nota: Los PPAs ya se añadieron arriba.
-# Aquí NO instalamos kstars, indi, phd2, etc.
-# Eso lo hará el astro-wizard.sh en el segundo arranque.
-
-# ----------------------------------------------------------------------------
-# 3. Entorno Headless (Xvfb + x11vnc + noVNC)
-# ----------------------------------------------------------------------------
-echo "Configurando entorno Headless Virtual con Estética y Gestión de Red..."
-apt-get install -y \
-    xvfb x11vnc fluxbox \
-    websockify novnc \
-    feh conky-all lxterminal \
-    whiptail  # Esencial para el Wizard
-
-# Crear directorio para noVNC y configurar index automático
-mkdir -p /opt/novnc
-cp -r /usr/share/novnc/* /opt/novnc/ || true
-ln -s /opt/novnc/vnc_auto.html /opt/novnc/index.html || true
-
-# Configurar Fluxbox para que lance nm-applet y tint2 automáticamente
-# (El usuario OPI5_Astro ya existe en este punto)
-mkdir -p /home/OPI5_Astro/.fluxbox
-cat <<EOF > /home/OPI5_Astro/.fluxbox/startup
-#!/bin/sh
-# Lanzar applet de red (nm-applet)
-nm-applet &
-# Lanzar barra de tareas ligera
-tint2 &
-# Iniciar Fluxbox
-exec fluxbox
-EOF
-# Crear flag de primer arranque para el Wizard
-touch /home/OPI5_Astro/.first_boot_wizard
-chmod +x /home/OPI5_Astro/.fluxbox/startup
-chown -R OPI5_Astro:OPI5_Astro /home/OPI5_Astro/.fluxbox /home/OPI5_Astro/.first_boot_wizard
-
-# ----------------------------------------------------------------------------
-# 4. Syncthing (Lo dejamos preinstalado por utilidad de sistema, o movemos al wizard?)
-# ----------------------------------------------------------------------------
-# Lo dejamos como opcional en el Wizard, pero instalamos el binario para que sea rápido activarlo.
-echo "Instalando binario de Syncthing..."
-apt-get install -y syncthing
+echo "Instalando herramientas base y de red..."
+apt-get install -y --no-install-recommends \
+    network-manager curl wget vim htop tar xz-utils \
+    dnsmasq-base iptables iproute2
 
 # Habilitar servicios modulares
 systemctl enable hotspot.service
 systemctl enable firstboot.service
-systemctl enable astro-wizard.service
-systemctl enable astro-headless.service
 systemctl enable gpsd
 
 # LIMPIEZA DE DISPARADORES
@@ -150,7 +107,7 @@ echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
 mkdir -p /etc/polkit-1/localauthority/50-local.d/
 cat <<EOF > /etc/polkit-1/localauthority/50-local.d/allow-network-manager.pkla
 [Allow Network Manager]
-Identity=unix-user:OPI5_Astro
+Identity=unix-user:AstroOrange
 Action=org.freedesktop.NetworkManager.*
 ResultAny=yes
 ResultInactive=yes

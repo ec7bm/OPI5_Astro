@@ -10,7 +10,7 @@ hostnamectl set-hostname astroorange
 sed -i 's/127.0.1.1.*/127.0.1.1\tastroorange/' /etc/hosts
 
 # 2. Permisos de Usuario
-chown -R OPI5_Astro:OPI5_Astro /home/OPI5_Astro
+chown -R AstroOrange:AstroOrange /home/AstroOrange
 
 # 3. Finalizar y deshabilitar auto-reinicio
 echo "First boot completado." >> $LOG
