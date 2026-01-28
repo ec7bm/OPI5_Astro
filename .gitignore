@@ -1,14 +1,21 @@
-# Armbian Build Engine
-armbian-build/
+# Build artifacts
+remaster-work/
+output/*.img
+output/*.sha256
+cache/
+*.log
 
-# Logs and outputs
-output/
-userpatches/temp/
+# Temporary files
+*.tmp
+*.bak
+*~
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# Misc
+# IDE
+.vscode/
+.idea/
 *.swp
-*~
+*.swo

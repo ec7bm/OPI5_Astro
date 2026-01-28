@@ -4,13 +4,11 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/Platform-Orange%20Pi%205%20Pro-orange)](https://github.com/ec7bm/OPI5_Astro)
-[![Based on](https://img.shields.io/badge/Based%20on-Debian%20Bookworm-red)](https://www.debian.org/)
+[![Based on](https://img.shields.io/badge/Based%20on-Ubuntu%2022.04%20LTS-E95420)](https://ubuntu.com/)
 
 ---
 
-## 📖 Descripción
-
-AstroOrange V2 es una distribución Linux basada en Debian/Armbian optimizada para astrofotografía. Diseñada para funcionar en **Orange Pi 5 Pro**, proporciona un entorno completo y listo para usar con:
+AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server** optimizada para astrofotografía. Diseñada para funcionar en **Orange Pi 5 Pro**, proporciona un entorno completo y listo para usar con:
 
 - 🛰️ **Hotspot de rescate automático** - Acceso garantizado sin WiFi
 - 🖥️ **Escritorio remoto VNC** - Control desde navegador web
@@ -47,60 +45,23 @@ Tienes **dos opciones** para instalar AstroOrange V2:
 
 ---
 
-### Opción B: Construcción desde Fuente
+### Opción B: Transformación desde Imagen Oficial (Live Setup)
 
-**Para desarrolladores o usuarios avanzados:**
+**Si ya tienes la imagen oficial instalada y quieres "AstroOrangizarla" en segundos:**
 
-#### Requisitos
-
-- **Sistema**: Ubuntu 22.04 o superior (VM o nativo)
-- **Espacio**: Mínimo 30GB libres
-- **RAM**: 4GB mínimo, 8GB recomendado
-- **Imagen base**: Imagen oficial/personalizada para Orange Pi 5 Pro ([Descargar aquí](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link))
-
-#### Pasos
-
-1. **Clona este repositorio**
+1. **Descarga e instala la imagen oficial** en tu Orange Pi:
+   - **URL**: [Google Drive (Oficial OPi5 Pro)](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link)
+2. **Arranca tu Orange Pi** y conéctate a internet (Ethernet recomendado).
+3. **Clona y ejecuta el script de transformación**:
    ```bash
    git clone https://github.com/ec7bm/OPI5_Astro.git
    cd OPI5_Astro
+   git checkout v2-release
+   sudo chmod +x setup-live.sh
+   sudo ./setup-live.sh
    ```
-
-2. **Descarga la imagen base oficial**
-   
-   Descarga la imagen base necesaria para el proceso de construcción:
-   - **URL**: [Google Drive (Oficial OPi5 Pro)](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link)
-   
-   Coloca el archivo `.img` (o `.img.xz`) en la carpeta `image-base/`:
-   ```bash
-   mkdir -p image-base
-   mv ~/Downloads/Orangepi5pro_*.img image-base/
-   ```
-
-3. **Ejecuta el script de construcción**
-   ```bash
-   chmod +x build.sh
-   sudo ./build.sh
-   ```
-
-4. **Espera 10-20 minutos** - El script:
-   - Descomprimirá la imagen base
-   - Expandirá el sistema de archivos
-   - Instalará todos los componentes de AstroOrange
-   - Generará la imagen final en `output/`
-
-5. **Descarga la imagen**
-   
-   Al finalizar, el script levantará un servidor HTTP automáticamente:
-   ```
-   🌐 Starting HTTP server for download...
-   Access from your network at:
-   http://192.168.X.X:8000/
-   ```
-   
-   Abre esa URL en tu navegador para descargar la imagen.
-
-6. **Flashea la imagen** resultante en tu microSD
+4. El script instalará automáticamente todos los temas, servicios y el Wizard.
+5. Al finalizar, el sistema se reiniciará directamente en el **AstroOrange Wizard**.
 
 ---
 
@@ -129,7 +90,7 @@ OPI5_Astro/
 ## 🌟 Características
 
 ### Sistema Base
-- **OS**: Debian 12 (Bookworm)
+- **OS**: Ubuntu 22.04 LTS (Jammy Jellyfish)
 - **Desktop**: XFCE4 con tema Arc-Dark
 - **Iconos**: Papirus-Dark
 - **Acceso remoto**: VNC + noVNC (acceso por navegador)
@@ -213,39 +174,13 @@ El sistema incluye un wizard gráfico que te guiará para:
 
 ---
 
-## 🆘 Solución de Problemas
-
-### El Hotspot no aparece
-
-**Solución**:
-```bash
-# Conecta por Ethernet y ejecuta:
-sudo systemctl restart astro-network
-sudo journalctl -u astro-network -n 20
-```
-
-### VNC no carga
-
-**Solución**:
-```bash
-sudo systemctl restart astro-vnc
-sudo systemctl status astro-vnc
-```
-
-### Más ayuda
-
-Consulta el [Manual de Usuario](MANUAL_USUARIO.md) completo o abre un [Issue](https://github.com/ec7bm/OPI5_Astro/issues).
-
----
-
 ## 📄 Licencia
 
 Este proyecto está licenciado bajo GPL v3 - ver el archivo [LICENSE](LICENSE) para detalles.
 
 ### Componentes de Terceros
 
-- **Armbian**: [GPL v2](https://www.armbian.com/)
-- **Debian**: [DFSG](https://www.debian.org/social_contract)
+- **Ubuntu**: [Canonical](https://ubuntu.com/)
 - **KStars/INDI**: [GPL v2+](https://indilib.org/)
 - **PHD2**: [BSD](https://github.com/OpenPHDGuiding/phd2)
 - **ASTAP**: [Freeware](https://www.hnsky.org/astap.htm)
