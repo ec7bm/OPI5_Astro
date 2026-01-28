@@ -12,11 +12,22 @@ cat <<'EOF' | sudo tee /opt/astroorange/bin/astro-vnc.sh
 #!/bin/bash
 export DISPLAY=:0
 rm -f /tmp/.X0-lock
+
+# 1. ¿Hay monitor físico?
 if ! xset -display :0 q &>/dev/null; then
+    echo "Headless detectado. Iniciando pantalla virtual..."
     Xvfb :0 -screen 0 1920x1080x24 &
     sleep 3
+    # FORZAR ARRANQUE DE SESIÓN XFCE
+    DISPLAY=:0 startxfce4 &
 fi
-x11vnc -display :0 -forever -nopw -shared -bg -xkb -noxrecord -noxfixes &
+
+# 2. Configurar password fija
+mkdir -p ~/.vnc
+x11vnc -storepasswd "astroorange" ~/.vnc/passwd
+
+# 3. Lanzar con password 'astroorange'
+x11vnc -display :0 -forever -rfbauth ~/.vnc/passwd -shared -bg -xkb -noxrecord -noxfixes -noxdamage &
 /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080
 EOF
 sudo chmod +x /opt/astroorange/bin/astro-vnc.sh

@@ -78,7 +78,7 @@ if [ -d "/tmp/assets/backgrounds" ]; then
     cp /tmp/assets/backgrounds/* /usr/share/backgrounds/ || true
 fi
 
-# --- A. Script de Red (Rescue Hotspot - ROBUSTO) ---
+# --- A. Script de Red (Rescue Hotspot - VERIFICADO) ---
 cat <<'EOF' > "$OPT_DIR/bin/astro-network.sh"
 #!/bin/bash
 # Detectar interfaz wifi dinamicamente
@@ -91,42 +91,40 @@ PASS="astrosetup"
 echo "Checking network state on $IFACE..."
 sleep 15
 
-# Si ya hay conexion activa (ethernet o wifi), no hacemos nada
+# Si ya hay conexion activa, saltar
 if nmcli -t -f STATE g | grep -q "^connected"; then
-    echo "Ya hay conexión activa. Saltando Hotspot."
     exit 0
 fi
 
-# Intentar levantar Hotspot
-echo "No hay conexión. Levantando Hotspot de emergencia en $IFACE..."
 nmcli device set "$IFACE" managed yes
 nmcli con delete "$SSID" 2>/dev/null || true
 nmcli con add type wifi ifname "$IFACE" con-name "$SSID" autoconnect yes ssid "$SSID" mode ap ipv4.method shared
 nmcli con modify "$SSID" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "$PASS"
-nmcli con up "$SSID" || echo "Error al levantar Hotspot. ¿Hardware compatible?"
+nmcli con up "$SSID"
 EOF
 chmod +x "$OPT_DIR/bin/astro-network.sh"
 
-# --- B. Script VNC (Compatible con Monitor y Headless) ---
+# --- B. Script VNC (Con Fix de Sesión - VERIFICADO) ---
 cat <<'EOF' > "$OPT_DIR/bin/astro-vnc.sh"
 #!/bin/bash
 export DISPLAY=:0
 rm -f /tmp/.X0-lock
 
-# 1. Comprobar si ya existe un servidor X (ej: LightDM en monitor fisico)
+# 1. ¿Hay monitor físico?
 if ! xset -display :0 q &>/dev/null; then
-    echo "No se detecta servidor X. Iniciando Xvfb (Virtual)..."
+    echo "Headless detectado. Iniciando pantalla virtual..."
     Xvfb :0 -screen 0 1920x1080x24 &
     sleep 3
-else
-    echo "Servidor X detectado en monitor. Compartiendo pantalla física..."
+    # FIX: Arrancar XFCE en la pantalla virtual si no hay monitor
+    DISPLAY=:0 startxfce4 &
 fi
 
-# 2. VNC Server (atado al :0, sea fisico o virtual)
-# -noxrecord -noxfixes para evitar conflictos de input
-x11vnc -display :0 -forever -nopw -shared -bg -xkb -noxrecord -noxfixes &
+# 2. VNC Password Fija
+mkdir -p ~/.vnc
+x11vnc -storepasswd "astroorange" ~/.vnc/passwd
 
-# 3. noVNC Port 6080
+# 3. Lanzar VNC y noVNC
+x11vnc -display :0 -forever -rfbauth ~/.vnc/passwd -shared -bg -xkb -noxrecord -noxfixes -noxdamage &
 /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080
 EOF
 chmod +x "$OPT_DIR/bin/astro-vnc.sh"
@@ -192,61 +190,108 @@ class WizardApp:
             self.show_stage_2()
 
     def setup_window(self):
-        self.root.title("AstroOrange Wizard")
-        self.root.geometry("900x650")
+        self.root.title("AstroOrange V2 - Wizard")
+        self.root.geometry("900x700")
         self.root.configure(bg=BG_COLOR)
-        self.root.attributes("-topmost", True) # Asegurar que esté encima de todo
+        self.root.attributes("-topmost", True)
         try:
             self.bg = tk.PhotoImage(file="/usr/share/backgrounds/astro-wallpaper.jpg")
             tk.Label(self.root, image=self.bg).place(x=0,y=0,relwidth=1,relheight=1)
         except: pass
 
     def header(self, text):
-        tk.Label(self.root, text=text, font=("Sans", 24, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=30)
+        tk.Label(self.root, text=text, font=("Sans", 22, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=20)
 
     def show_stage_1(self):
-        self.header("Configuración Inicial")
+        self.header("Etapa 1: Usuario y WiFi")
         frame = tk.Frame(self.root, bg=BG_COLOR)
         frame.pack(pady=10)
-        tk.Label(frame, text="Nuevo Usuario:", bg=BG_COLOR, fg="white").grid(row=0,0,pady=5)
-        self.entry_user = tk.Entry(frame); self.entry_user.grid(row=0,1,pady=5)
-        tk.Label(frame, text="Contraseña:", bg=BG_COLOR, fg="white").grid(row=1,0,pady=5)
-        self.entry_pass = tk.Entry(frame, show="*"); self.entry_pass.grid(row=1,1,pady=5)
-        tk.Button(self.root, text="📡 Configurar WiFi", command=lambda: subprocess.Popen(["xfce4-terminal", "-e", "nmtui"]), bg="#475569", fg="white", width=20).pack(pady=20)
-        tk.Button(self.root, text="Aplicar y Reiniciar 🚀", command=self.apply_stage_1, bg=ACCENT_COLOR, fg="black", font=("Sans", 14, "bold"), width=25).pack(pady=10)
+        tk.Label(frame, text="Usuario:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=0, column=0, pady=10, padx=10)
+        self.entry_user = tk.Entry(frame, font=("Sans", 12)); self.entry_user.grid(row=0, column=1, pady=10, padx=10)
+        tk.Label(frame, text="Password:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=1, column=0, pady=10, padx=10)
+        self.entry_pass = tk.Entry(frame, show="*", font=("Sans", 12)); self.entry_pass.grid(row=1, column=1, pady=10, padx=10)
+        
+        tk.Button(self.root, text="📡 Configurar WiFi (nmtui)", command=lambda: subprocess.Popen(["xfce4-terminal", "-e", "nmtui"]), 
+                  bg="#475569", fg="white", width=25).pack(pady=20)
+        tk.Button(self.root, text="Guardar y Reiniciar 🚀", command=self.apply_stage_1, 
+                  bg=ACCENT_COLOR, fg="black", font=("Sans", 14, "bold"), width=25).pack(pady=10)
 
     def apply_stage_1(self):
         user, pwd = self.entry_user.get(), self.entry_pass.get()
         if not user or not pwd:
-            messagebox.showerror("Error", "Completa los datos.")
+            messagebox.showerror("Error", "Rellena todos los campos.")
             return
-        subprocess.call(f"sudo bash -c \"useradd -m -s /bin/bash -G sudo,dialout,video {user} && echo '{user}:{pwd}' | chpasswd\"", shell=True)
+        # Creacion de usuario real con grupos necesarios incluyendo 'input'
+        subprocess.call(f"sudo bash -c \"useradd -m -s /bin/bash -G sudo,dialout,video,input,plugdev,netdev {user} && echo '{user}:{pwd}' | chpasswd\"", shell=True)
+        # Configurar autologin para el nuevo usuario
         subprocess.call(f"echo '[Seat:*]\nautologin-user={user}\nautologin-session=xfce\n' | sudo tee /etc/lightdm/lightdm.conf.d/50-astro.conf", shell=True)
-        subprocess.call("sudo rm /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+        subprocess.call("sudo rm -f /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+        # Actualizar servicio VNC para que corra como el nuevo usuario
         subprocess.call(f"sudo sed -i 's/User=astro-setup/User={user}/g' /etc/systemd/system/astro-vnc.service", shell=True)
+        # Asegurar que el wizard salte para el nuevo usuario
         subprocess.call(f"sudo mkdir -p /home/{user}/.config/autostart", shell=True)
         subprocess.call(f"sudo cp /etc/xdg/autostart/astro-wizard.desktop /home/{user}/.config/autostart/", shell=True)
         subprocess.call(f"sudo chown -R {user}:{user} /home/{user}/.config", shell=True)
+        # Marcar etapa 1 como completada
         subprocess.call("sudo touch /etc/astro-configured", shell=True)
-        messagebox.showinfo("OK", "Reiniciando...")
+        messagebox.showinfo("OK", "Usuario creado. El sistema se reiniciará.")
         subprocess.call("sudo reboot", shell=True)
 
     def show_stage_2(self):
-        self.header("Instalador de Software")
-        self.vars = {"kstars": tk.BooleanVar(value=True), "phd2": tk.BooleanVar(value=True), "syncthing": tk.BooleanVar(value=False)}
-        frame = tk.Frame(self.root, bg=BG_COLOR); frame.pack(pady=20)
-        for name, var in self.vars.items():
-            tk.Checkbutton(frame, text=name.upper(), variable=var, bg=BG_COLOR, fg="white", selectcolor="#0f172a").pack(anchor="w")
-        tk.Button(self.root, text="Instalar", command=self.start_install, bg=ACCENT_COLOR, fg="black").pack(pady=30)
+        self.header("Etapa 2: Instalador de Software")
+        tk.Label(self.root, text="Selecciona el software astronómico a instalar:", bg=BG_COLOR, fg="white").pack()
+        
+        frame = tk.Frame(self.root, bg=BG_COLOR); frame.pack(pady=10)
+        self.vars = {
+            "KStars / INDI": tk.BooleanVar(value=True),
+            "PHD2 Guiding": tk.BooleanVar(value=True),
+            "ASTAP (Plate Solver)": tk.BooleanVar(value=True),
+            "Stellarium": tk.BooleanVar(value=False),
+            "AstroDMX Capture": tk.BooleanVar(value=False),
+            "CCDciel": tk.BooleanVar(value=False),
+            "Syncthing": tk.BooleanVar(value=False)
+        }
+        
+        # Grid para las checkboxes
+        for i, (name, var) in enumerate(self.vars.items()):
+            tk.Checkbutton(frame, text=name, variable=var, bg=BG_COLOR, fg="white", 
+                           selectcolor="#0f172a", font=("Sans", 11)).grid(row=i//2, column=i%2, sticky="w", padx=20, pady=5)
 
-    def start_install(self): threading.Thread(target=self.run_install).start()
+        tk.Button(self.root, text="🚀 Iniciar Instalación", command=self.start_install, 
+                  bg=ACCENT_COLOR, fg="black", font=("Sans", 14, "bold"), width=25).pack(pady=20)
+
+    def start_install(self):
+        if messagebox.askyesno("Confirmar", "¿Deseas instalar el software seleccionado?"):
+            threading.Thread(target=self.run_install).start()
+
     def run_install(self):
-        cmds = ["sudo apt-get update"]
-        if self.vars["kstars"].get(): cmds.append("sudo add-apt-repository -y ppa:mutlaqja/ppa && sudo apt-get install -y kstars-bleeding indi-full")
-        if self.vars["phd2"].get(): cmds.append("sudo add-apt-repository -y ppa:pch/phd2 && sudo apt-get install -y phd2")
-        if self.vars["syncthing"].get(): cmds.append("sudo apt-get install -y syncthing")
-        subprocess.call(["xfce4-terminal", "-e", f"bash -c '{' && '.join(cmds)}; echo Fin; read'"])
-        subprocess.call("rm ~/.config/autostart/astro-wizard.desktop", shell=True)
+        cmds = ["export DEBIAN_FRONTEND=noninteractive", "sudo apt-get update"]
+        
+        if self.vars["KStars / INDI"].get():
+            cmds.append("sudo add-apt-repository -y ppa:mutlaqja/ppa")
+            cmds.append("sudo apt-get install -y kstars-bleeding indi-full gsc")
+        if self.vars["PHD2 Guiding"].get():
+            cmds.append("sudo add-apt-repository -y ppa:pch/phd2")
+            cmds.append("sudo apt-get install -y phd2")
+        if self.vars["ASTAP (Plate Solver)"].get():
+            cmds.append("wget https://www.hnsky.org/astap_arm64.deb -O /tmp/astap.deb")
+            cmds.append("sudo apt-get install -y /tmp/astap.deb")
+        if self.vars["Stellarium"].get():
+            cmds.append("sudo apt-get install -y stellarium")
+        if self.vars["AstroDMX Capture"].get():
+            cmds.append("wget https://www.astrodmx-astrophotography.org/downloads/astrodmx-capture/astrodmx_latest_arm64.deb -O /tmp/astrodmx.deb")
+            cmds.append("sudo apt-get install -y /tmp/astrodmx.deb")
+        if self.vars["CCDciel"].get():
+            cmds.append("sudo apt-get install -y ccdciel")
+        if self.vars["Syncthing"].get():
+            cmds.append("sudo apt-get install -y syncthing")
+        
+        full_command = " && ".join(cmds)
+        subprocess.call(["xfce4-terminal", "--title=Instalando Software", "--maximize", "-e", f"bash -c '{full_command}; echo; echo Instalación finalizada. Pulsa Enter para cerrar.; read'"])
+        
+        # Eliminar autostart para que no vuelva a salir
+        subprocess.call("rm -f ~/.config/autostart/astro-wizard.desktop", shell=True)
+        messagebox.showinfo("Finalizado", "Software instalado correctamente.")
         self.root.destroy()
 
 if __name__ == "__main__":
