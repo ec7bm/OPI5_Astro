@@ -135,50 +135,48 @@ XFDESKTOP
 
 chown -R $SETUP_USER:$SETUP_USER "$SETUP_HOME/.config"
 
-# --- A. Script de Red (Rescue Hotspot - VERIFICADO) ---
+# --- A. Script de Red (Rescue Hotspot - ULTRA-ROBUST) ---
 cat <<'EOF' > "$OPT_DIR/bin/astro-network.sh"
 #!/bin/bash
-# AstroOrange - Network Rescue Hotspot
-# Auto-starts if no internet connection is detected
+# AstroOrange Auto Hotspot (Runtime)
 
-echo "AstroOrange Network Manager - Initializing..."
-sleep 15  # Wait for NetworkManager to settle
+# Esperar a que el sistema y el WiFi despierten
+sleep 25
 
-# Detectar interfaz wifi dinamicamente
-for i in {1..5}; do
-    IFACE=$(nmcli -t -f DEVICE,TYPE device | grep wifi | cut -d: -f1 | head -n1)
-    if [ -n "$IFACE" ]; then break; fi
-    echo "Waiting for WiFi interface... ($i/5)"
-    sleep 5
-done
-
+# Buscar interfaz WiFi
+IFACE=$(nmcli -t -f DEVICE,TYPE device | grep wifi | cut -d: -f1 | head -n1)
 [ -z "$IFACE" ] && IFACE="wlan0"
 
+CON_NAME="astroorange-ap"
 SSID="AstroOrange-Setup"
 PASS="astrosetup"
 
-echo "Checking connectivity on $IFACE..."
-
-# Verificar si hay conexión a internet real (no solo "connected")
+# ¿Hay conexión a INTERNET real?
 if ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
-    echo "Internet detected. Hotspot not needed."
+    echo "Internet detectado. Hotspot no necesario."
     exit 0
 fi
 
-echo "No internet detected. Starting rescue hotspot..."
+echo "Sin internet. Iniciando Hotspot de rescate..."
 
-nmcli device set "$IFACE" managed yes
-nmcli con delete "$SSID" 2>/dev/null || true
-nmcli con add type wifi ifname "$IFACE" con-name "$SSID" autoconnect yes ssid "$SSID" mode ap ipv4.method shared
+# Limpiar posibles restos
+nmcli device set "$IFACE" managed yes 2>/dev/null || true
+nmcli con delete "$CON_NAME" 2>/dev/null || true
 
-# Fix: Forzar seguridad WPA2 compatible (evita supplicant-timeout en OPi5 Pro)
-nmcli con modify "$SSID" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "$PASS"
-nmcli con modify "$SSID" wifi-sec.proto rsn
-nmcli con modify "$SSID" wifi-sec.group ccmp
-nmcli con modify "$SSID" wifi-sec.pairwise ccmp
+# Crear conexión AP
+nmcli con add type wifi ifname "$IFACE" con-name "$CON_NAME" \
+    autoconnect yes ssid "$SSID" \
+    mode ap ipv4.method shared
 
-echo "Bringing up hotspot..."
-nmcli con up "$SSID"
+# FORZAR WPA2 (Crucial para compatibilidad OPi5 Pro)
+nmcli con modify "$CON_NAME" \
+    wifi-sec.key-mgmt wpa-psk \
+    wifi-sec.psk "$PASS" \
+    wifi-sec.proto rsn \
+    wifi-sec.group ccmp \
+    wifi-sec.pairwise ccmp
+
+nmcli con up "$CON_NAME"
 echo "Hotspot '$SSID' is now active!"
 EOF
 chmod +x "$OPT_DIR/bin/astro-network.sh"
@@ -211,12 +209,12 @@ x11vnc -display :0 -forever -rfbauth ~/.vnc/passwd -shared -bg -xkb -noxrecord -
 EOF
 chmod +x "$OPT_DIR/bin/astro-vnc.sh"
 
-# ==================== 4. SYSTEMD SERVICES ====================
-# Servicio Red
+# --- C. Servicios Systemd ---
 cat <<EOF > /etc/systemd/system/astro-network.service
 [Unit]
 Description=AstroOrange Rescue Hotspot
 After=NetworkManager.service
+Wants=NetworkManager.service
 
 [Service]
 Type=oneshot
