@@ -38,7 +38,7 @@ apt-get install $APT_OPTS \
     openssh-server \
     xserver-xorg-video-dummy \
     x11vnc xvfb novnc websockify \
-    python3 python3-pip python3-tk \
+    python3 python3-pip python3-tk python3-pil \
     curl wget git nano htop \
     firefox \
     dbus-x11 \
@@ -78,10 +78,16 @@ echo -e "${GREEN}[3/5] Installing Modules...${NC}"
 OPT_DIR="/opt/astroorange"
 mkdir -p "$OPT_DIR/bin" "$OPT_DIR/wizard" "$OPT_DIR/assets"
 
-# --- 0. ASSETS (Wallpaper/Logo) ---
+# --- 0. ASSETS (Wallpaper/Logo/Gallery) ---
 mkdir -p /usr/share/backgrounds
 if [ -f "/tmp/userpatches/astro-wallpaper.jpg" ]; then
     cp "/tmp/userpatches/astro-wallpaper.jpg" "/usr/share/backgrounds/astro-wallpaper.jpg"
+fi
+
+# Copy NASA gallery images for carousel
+mkdir -p "$OPT_DIR/assets/gallery"
+if [ -d "/tmp/userpatches/gallery" ]; then
+    cp /tmp/userpatches/gallery/*.png "$OPT_DIR/assets/gallery/" 2>/dev/null || true
 fi
 
 # --- 0.1 XFCE Theme Configuration (Arc + Papirus) ---
@@ -234,10 +240,48 @@ from tkinter import messagebox, ttk
 import subprocess
 import os
 import threading
+from glob import glob
+try:
+    from PIL import Image, ImageTk
+except ImportError:
+    Image = None
+    ImageTk = None
 
 BG_COLOR = "#0f172a"
 FG_COLOR = "#e2e8f0"
 ACCENT_COLOR = "#38bdf8"
+BUTTON_COLOR = "#475569"
+
+class ImageCarousel:
+    """Displays a rotating carousel of astronomical images"""
+    def __init__(self, parent, image_folder="/opt/astroorange/assets/gallery"):
+        self.parent = parent
+        self.images = []
+        self.current_index = 0
+        self.label = None
+        
+        if Image and ImageTk and os.path.exists(image_folder):
+            try:
+                image_files = sorted(glob(os.path.join(image_folder, "*.png")))
+                for img_path in image_files:
+                    img = Image.open(img_path)
+                    # Resize to fit nicely in the wizard (800x450)
+                    img = img.resize((800, 450), Image.Resampling.LANCZOS)
+                    photo = ImageTk.PhotoImage(img)
+                    self.images.append(photo)
+            except Exception as e:
+                print(f"Error loading carousel images: {e}")
+        
+        if self.images:
+            self.label = tk.Label(parent, bg=BG_COLOR)
+            self.label.pack(pady=10)
+            self.animate()
+    
+    def animate(self):
+        if self.images and self.label:
+            self.label.config(image=self.images[self.current_index])
+            self.current_index = (self.current_index + 1) % len(self.images)
+            self.label.after(5000, self.animate)  # Change every 5 seconds
 
 class WizardApp:
     def __init__(self, root):
@@ -335,9 +379,29 @@ class WizardApp:
 
     def start_install(self):
         if messagebox.askyesno("Confirmar", "¿Deseas instalar el software seleccionado?"):
-            threading.Thread(target=self.run_install).start()
+            # Create installation window with carousel
+            install_win = tk.Toplevel(self.root)
+            install_win.title("Instalando Software Astronómico")
+            install_win.geometry("900x700")
+            install_win.configure(bg=BG_COLOR)
+            
+            tk.Label(install_win, text="Instalación en Progreso", 
+                    font=("Sans", 18, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=10)
+            
+            # Carousel
+            carousel = ImageCarousel(install_win)
+            
+            tk.Label(install_win, text="Mientras se instala el software, disfruta de estas imágenes del cosmos...", 
+                    font=("Sans", 11), bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
+            
+            # Progress info
+            self.install_label = tk.Label(install_win, text="Iniciando instalación...", 
+                                         font=("Sans", 12), bg=BG_COLOR, fg="white")
+            self.install_label.pack(pady=10)
+            
+            threading.Thread(target=self.run_install, args=(install_win,)).start()
 
-    def run_install(self):
+    def run_install(self, install_win):
         cmds = ["export DEBIAN_FRONTEND=noninteractive", "sudo apt-get update"]
         
         if self.vars["KStars / INDI"].get():
@@ -364,6 +428,7 @@ class WizardApp:
         
         # Eliminar autostart para que no vuelva a salir
         subprocess.call("rm -f ~/.config/autostart/astro-wizard.desktop", shell=True)
+        install_win.destroy()
         messagebox.showinfo("Finalizado", "Software instalado correctamente.")
         self.root.destroy()
 
