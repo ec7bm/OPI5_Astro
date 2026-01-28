@@ -129,6 +129,9 @@ if ! xset -display :0 q &>/dev/null; then
     DISPLAY=:0 startxfce4 &
 fi
 
+# 1.5 FIX: Cambiar el cursor 'X' por defecto a una flecha
+xsetroot -cursor_name left_ptr
+
 # 2. VNC Password Fija
 mkdir -p ~/.vnc
 x11vnc -storepasswd "astroorange" ~/.vnc/passwd
