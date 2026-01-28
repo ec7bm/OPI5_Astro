@@ -231,12 +231,16 @@ class WizardApp:
         tk.Label(frame, text="Password:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=1, column=0, pady=10, padx=10)
         self.entry_pass = tk.Entry(frame, show="*", font=("Sans", 12)); self.entry_pass.grid(row=1, column=1, pady=10, padx=10)
         
-        tk.Button(self.root, text="📡 Configurar WiFi (nmtui)", command=lambda: subprocess.Popen(["xfce4-terminal", "-e", "nmtui"]), 
-                  bg="#475569", fg="white", width=25).pack(pady=20)
-        tk.Button(self.root, text="Guardar y Reiniciar 🚀", command=self.apply_stage_1, 
-                  bg=ACCENT_COLOR, fg="black", font=("Sans", 14, "bold"), width=25).pack(pady=10)
+        tk.Button(self.root, text="Configurar WiFi (nmtui)", font=("Sans", 14), 
+                  bg=BUTTON_COLOR, fg="white", command=self.run_nmtui).pack(pady=10)
+        
+        tk.Button(self.root, text="GUARDAR Y REINICIAR", font=("Sans", 16, "bold"), 
+                  bg=ACCENT_COLOR, fg=BG_COLOR, command=self.save_and_reboot).pack(pady=40)
 
-    def apply_stage_1(self):
+    def run_nmtui(self):
+        subprocess.Popen(["xfce4-terminal", "-e", "nmtui"])
+
+    def save_and_reboot(self):
         user, pwd = self.entry_user.get(), self.entry_pass.get()
         if not user or not pwd:
             messagebox.showerror("Error", "Rellena todos los campos.")
