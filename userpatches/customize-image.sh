@@ -31,10 +31,10 @@ Pin-Priority: 1001
 ' > /etc/apt/preferences.d/mozilla-firefox
 apt-get update
 
-# Paquetes esencialmente LIGEROS
+# Paquetes esenciales (INCLUYENDO dnsmasq-base para Hotspot)
 apt-get install $APT_OPTS \
     xfce4 xfce4-goodies lightdm lightdm-gtk-greeter \
-    network-manager network-manager-gnome \
+    network-manager network-manager-gnome dnsmasq-base \
     openssh-server \
     xserver-xorg-video-dummy \
     x11vnc xvfb novnc websockify \
@@ -44,6 +44,11 @@ apt-get install $APT_OPTS \
     dbus-x11 \
     feh \
     onboard
+
+# Fix: Desactivar dnsmasq de sistema para que no choque con NetworkManager
+systemctl stop dnsmasq || true
+systemctl disable dnsmasq || true
+systemctl mask dnsmasq
 
 # ==================== 2. USUARIO SETUP (TEMPORAL) ====================
 echo -e "${GREEN}[2/5] Creating Setup User...${NC}"
@@ -72,10 +77,10 @@ echo -e "${GREEN}[3/5] Installing Modules...${NC}"
 OPT_DIR="/opt/astroorange"
 mkdir -p "$OPT_DIR/bin" "$OPT_DIR/wizard" "$OPT_DIR/assets"
 
-# Copiar wallpaper si existe
-if [ -d "/tmp/assets/backgrounds" ]; then
-    mkdir -p /usr/share/backgrounds
-    cp /tmp/assets/backgrounds/* /usr/share/backgrounds/ || true
+# --- 0. ASSETS (Wallpaper/Logo) ---
+mkdir -p /usr/share/backgrounds
+if [ -f "/tmp/userpatches/astro-wallpaper.jpg" ]; then
+    cp "/tmp/userpatches/astro-wallpaper.jpg" "/usr/share/backgrounds/astro-wallpaper.jpg"
 fi
 
 # --- A. Script de Red (Rescue Hotspot - VERIFICADO) ---
@@ -194,13 +199,23 @@ class WizardApp:
         self.root.geometry("900x700")
         self.root.configure(bg=BG_COLOR)
         self.root.attributes("-topmost", True)
+        # Intentar cargar fondo astronomico
         try:
             self.bg = tk.PhotoImage(file="/usr/share/backgrounds/astro-wallpaper.jpg")
             tk.Label(self.root, image=self.bg).place(x=0,y=0,relwidth=1,relheight=1)
-        except: pass
+        except: 
+            try:
+                self.bg = tk.PhotoImage(file="/opt/astroorange/assets/background.png")
+                tk.Label(self.root, image=self.bg).place(x=0,y=0,relwidth=1,relheight=1)
+            except: pass
 
     def header(self, text):
-        tk.Label(self.root, text=text, font=("Sans", 22, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=20)
+        # Header con logo si existe
+        try:
+            self.logo = tk.PhotoImage(file="/opt/astroorange/assets/logo.png").subsample(2,2)
+            tk.Label(self.root, image=self.logo, bg=BG_COLOR).pack(pady=10)
+        except: pass
+        tk.Label(self.root, text=text, font=("Sans", 22, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=10)
 
     def show_stage_1(self):
         self.header("Etapa 1: Usuario y WiFi")
