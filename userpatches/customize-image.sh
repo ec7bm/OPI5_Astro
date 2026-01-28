@@ -18,7 +18,7 @@ echo -e "${GREEN}[1/5] Installing Base System...${NC}"
 
 # Forzar modo no interactivo y manejar conflictos de configuracion automaticamente
 export DEBIAN_FRONTEND=noninteractive
-APT_OPTS="-y --no-install-recommends -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\""
+APT_OPTS="-y --no-install-recommends -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
 
 # Repositorios (Mozilla PPA para Firefox)
 apt-get update
