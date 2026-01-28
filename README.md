@@ -174,31 +174,6 @@ El sistema incluye un wizard gráfico que te guiará para:
 
 ---
 
-## 🆘 Solución de Problemas
-
-### El Hotspot no aparece
-
-**Solución**:
-```bash
-# Conecta por Ethernet y ejecuta:
-sudo systemctl restart astro-network
-sudo journalctl -u astro-network -n 20
-```
-
-### VNC no carga
-
-**Solución**:
-```bash
-sudo systemctl restart astro-vnc
-sudo systemctl status astro-vnc
-```
-
-### Más ayuda
-
-Consulta el [Manual de Usuario](MANUAL_USUARIO.md) completo o abre un [Issue](https://github.com/ec7bm/OPI5_Astro/issues).
-
----
-
 ## 📄 Licencia
 
 Este proyecto está licenciado bajo GPL v3 - ver el archivo [LICENSE](LICENSE) para detalles.
