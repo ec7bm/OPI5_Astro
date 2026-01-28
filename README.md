@@ -104,6 +104,25 @@ Tienes **dos opciones** para instalar AstroOrange V2:
 
 ---
 
+### Opción C: Transformación Rápida (Live Setup)
+
+**Si ya tienes la imagen oficial instalada y quieres "AstroOrangizarla" sin construir una imagen nueva:**
+
+1. **Arranca tu Orange Pi** con la imagen oficial.
+2. **Conéctate a internet** (Ethernet recomendado).
+3. **Clona y ejecuta el script de transformación**:
+   ```bash
+   git clone https://github.com/ec7bm/OPI5_Astro.git
+   cd OPI5_Astro
+   git checkout v2-release
+   sudo chmod +x setup-live.sh
+   sudo ./setup-live.sh
+   ```
+4. El script instalará automáticamente todos los temas, servicios y el Wizard.
+5. Al finalizar, el sistema se reiniciará directamente en el **AstroOrange Wizard**.
+
+---
+
 ## 📁 Estructura del Proyecto
 
 ```
