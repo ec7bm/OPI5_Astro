@@ -147,13 +147,20 @@ sync
 OUTPUT_NAME="AstroOrange-v2.3-$(date +%Y%m%d).img"
 mv "$IMAGE_FILE" "$OUTPUT_DIR/$OUTPUT_NAME"
 
-echo "📦 Comprimiendo imagen..."
+echo "🛡️ Generando suma de comprobación (sha256)..."
 cd "$OUTPUT_DIR"
-xz -1 -T0 "$OUTPUT_NAME"
+sha256sum "$OUTPUT_NAME" > "${OUTPUT_NAME}.sha256"
+
+# echo "📦 Comprimiendo imagen (OPCIONAL - Descomenta si lo prefieres)..."
+# xz -1 -T0 "$OUTPUT_NAME"
 
 echo ""
 echo "✅ BUILD COMPLETADO"
-echo "📀 Imagen final: $OUTPUT_DIR/$OUTPUT_NAME.xz"
+echo "📀 Imagen final: $OUTPUT_DIR/$OUTPUT_NAME"
+echo "📄 Checksum: $OUTPUT_DIR/${OUTPUT_NAME}.sha256"
+echo ""
+echo "💡 TIP: Si la descarga de 8.5GB es lenta, puedes comprimirla tú mismo"
+echo "   en la terminal con: xz -1 $OUTPUT_NAME"
 echo ""
 
 # ---------------- AUTO SERVE ----------------
