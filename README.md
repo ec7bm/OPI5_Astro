@@ -4,7 +4,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/Platform-Orange%20Pi%205%20Pro-orange)](https://github.com/ec7bm/OPI5_Astro)
-[![Based on](https://img.shields.io/badge/Based%20on-Armbian%20Debian-red)](https://www.armbian.com/)
+[![Based on](https://img.shields.io/badge/Based%20on-Debian%20Bookworm-red)](https://www.debian.org/)
 
 ---
 
@@ -56,7 +56,7 @@ Tienes **dos opciones** para instalar AstroOrange V2:
 - **Sistema**: Ubuntu 22.04 o superior (VM o nativo)
 - **Espacio**: Mínimo 30GB libres
 - **RAM**: 4GB mínimo, 8GB recomendado
-- **Imagen base**: Armbian para Orange Pi 5 Pro
+- **Imagen base**: Imagen oficial/personalizada para Orange Pi 5 Pro ([Descargar aquí](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link))
 
 #### Pasos
 
@@ -66,16 +66,15 @@ Tienes **dos opciones** para instalar AstroOrange V2:
    cd OPI5_Astro
    ```
 
-2. **Descarga la imagen base de Armbian**
+2. **Descarga la imagen base oficial**
    
-   Descarga la imagen oficial de Armbian para Orange Pi 5 Pro:
-   - **URL**: [Armbian Downloads](https://www.armbian.com/orange-pi-5-pro/)
-   - **Versión recomendada**: Armbian 24.x Debian Bookworm (CLI o Desktop)
+   Descarga la imagen base necesaria para el proceso de construcción:
+   - **URL**: [Google Drive (Oficial OPi5 Pro)](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link)
    
-   Coloca el archivo `.img.xz` en la carpeta `image-base/`:
+   Coloca el archivo `.img` (o `.img.xz`) en la carpeta `image-base/`:
    ```bash
    mkdir -p image-base
-   mv ~/Downloads/Armbian_*.img.xz image-base/
+   mv ~/Downloads/Orangepi5pro_*.img image-base/
    ```
 
 3. **Ejecuta el script de construcción**
@@ -110,7 +109,7 @@ Tienes **dos opciones** para instalar AstroOrange V2:
 ```
 OPI5_Astro/
 ├── build.sh                    # Script principal de construcción
-├── image-base/                 # Imagen base de Armbian (no incluida)
+├── image-base/                 # Imagen base oficial (no incluida)
 ├── scripts/                    # Scripts del sistema
 │   ├── astro-network.sh       # Hotspot de rescate
 │   └── astro-vnc.sh           # VNC headless
@@ -130,7 +129,7 @@ OPI5_Astro/
 ## 🌟 Características
 
 ### Sistema Base
-- **OS**: Debian 12 (Bookworm) con kernel Armbian
+- **OS**: Debian 12 (Bookworm)
 - **Desktop**: XFCE4 con tema Arc-Dark
 - **Iconos**: Papirus-Dark
 - **Acceso remoto**: VNC + noVNC (acceso por navegador)

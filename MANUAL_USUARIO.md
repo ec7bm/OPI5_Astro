@@ -218,8 +218,8 @@ sudo nmcli con up "AstroOrange-Setup"
 ## 📄 Licencia
 
 AstroOrange V2 es software libre basado en:
-- Armbian (GPL)
 - Debian (GPL)
+- Imagen oficial Orange Pi (GPL/Proprietary drivers)
 - Software astronómico de código abierto
 
 ---
