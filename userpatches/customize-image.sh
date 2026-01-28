@@ -31,7 +31,7 @@ Pin-Priority: 1001
 ' > /etc/apt/preferences.d/mozilla-firefox
 apt-get update
 
-# Paquetes esenciales (INCLUYENDO dnsmasq-base para Hotspot)
+# Paquetes esenciales (INCLUYENDO dnsmasq-base para Hotspot + Temas modernos)
 apt-get install $APT_OPTS \
     xfce4 xfce4-goodies lightdm lightdm-gtk-greeter \
     network-manager network-manager-gnome dnsmasq-base \
@@ -43,7 +43,8 @@ apt-get install $APT_OPTS \
     firefox \
     dbus-x11 \
     feh \
-    onboard
+    onboard \
+    arc-theme papirus-icon-theme
 
 # Fix: Desactivar dnsmasq de sistema para que no choque con NetworkManager
 systemctl stop dnsmasq || true
@@ -82,6 +83,51 @@ mkdir -p /usr/share/backgrounds
 if [ -f "/tmp/userpatches/astro-wallpaper.jpg" ]; then
     cp "/tmp/userpatches/astro-wallpaper.jpg" "/usr/share/backgrounds/astro-wallpaper.jpg"
 fi
+
+# --- 0.1 XFCE Theme Configuration (Arc + Papirus) ---
+# Configurar tema para el usuario setup (se heredará al usuario final)
+SETUP_HOME="/home/$SETUP_USER"
+mkdir -p "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
+
+# Tema de ventanas Arc-Dark
+cat <<'XFWM' > "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfwm4" version="1.0">
+  <property name="general" type="empty">
+    <property name="theme" type="string" value="Arc-Dark"/>
+  </property>
+</channel>
+XFWM
+
+# Tema GTK y iconos
+cat <<'XSETTINGS' > "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xsettings" version="1.0">
+  <property name="Net" type="empty">
+    <property name="ThemeName" type="string" value="Arc-Dark"/>
+    <property name="IconThemeName" type="string" value="Papirus-Dark"/>
+  </property>
+</channel>
+XSETTINGS
+
+# Fondo de pantalla
+cat <<'XFDESKTOP' > "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-desktop" version="1.0">
+  <property name="backdrop" type="empty">
+    <property name="screen0" type="empty">
+      <property name="monitor0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="image-path" type="string" value="/usr/share/backgrounds/astro-wallpaper.jpg"/>
+          <property name="image-style" type="int" value="5"/>
+        </property>
+      </property>
+    </property>
+  </property>
+</channel>
+XFDESKTOP
+
+chown -R $SETUP_USER:$SETUP_USER "$SETUP_HOME/.config"
 
 # --- A. Script de Red (Rescue Hotspot - VERIFICADO) ---
 cat <<'EOF' > "$OPT_DIR/bin/astro-network.sh"
