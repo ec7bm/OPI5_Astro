@@ -16,9 +16,13 @@ echo -e "${BLUE}=== AstroOrange Distro Construction (2-Stage CLEAN) ===${NC}"
 # ==================== 1. DEPENDENCIAS BASE ====================
 echo -e "${GREEN}[1/5] Installing Base System...${NC}"
 
+# Forzar modo no interactivo y manejar conflictos de configuracion automaticamente
+export DEBIAN_FRONTEND=noninteractive
+APT_OPTS="-y --no-install-recommends -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\""
+
 # Repositorios (Mozilla PPA para Firefox)
 apt-get update
-apt-get install -y --no-install-recommends software-properties-common
+apt-get install $APT_OPTS software-properties-common
 add-apt-repository -y ppa:mozillateam/ppa
 echo '
 Package: *
@@ -28,7 +32,7 @@ Pin-Priority: 1001
 apt-get update
 
 # Paquetes esencialmente LIGEROS
-apt-get install -y --no-install-recommends \
+apt-get install $APT_OPTS \
     xfce4 xfce4-goodies lightdm lightdm-gtk-greeter \
     network-manager network-manager-gnome \
     openssh-server \
