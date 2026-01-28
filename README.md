@@ -4,13 +4,11 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/Platform-Orange%20Pi%205%20Pro-orange)](https://github.com/ec7bm/OPI5_Astro)
-[![Based on](https://img.shields.io/badge/Based%20on-Debian%20Bookworm-red)](https://www.debian.org/)
+[![Based on](https://img.shields.io/badge/Based%20on-Ubuntu%2022.04%20LTS-E95420)](https://ubuntu.com/)
 
 ---
 
-## 📖 Descripción
-
-AstroOrange V2 es una distribución Linux basada en Debian/Armbian optimizada para astrofotografía. Diseñada para funcionar en **Orange Pi 5 Pro**, proporciona un entorno completo y listo para usar con:
+AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server** optimizada para astrofotografía. Diseñada para funcionar en **Orange Pi 5 Pro**, proporciona un entorno completo y listo para usar con:
 
 - 🛰️ **Hotspot de rescate automático** - Acceso garantizado sin WiFi
 - 🖥️ **Escritorio remoto VNC** - Control desde navegador web
@@ -92,7 +90,7 @@ OPI5_Astro/
 ## 🌟 Características
 
 ### Sistema Base
-- **OS**: Debian 12 (Bookworm)
+- **OS**: Ubuntu 22.04 LTS (Jammy Jellyfish)
 - **Desktop**: XFCE4 con tema Arc-Dark
 - **Iconos**: Papirus-Dark
 - **Acceso remoto**: VNC + noVNC (acceso por navegador)
@@ -207,8 +205,7 @@ Este proyecto está licenciado bajo GPL v3 - ver el archivo [LICENSE](LICENSE) p
 
 ### Componentes de Terceros
 
-- **Armbian**: [GPL v2](https://www.armbian.com/)
-- **Debian**: [DFSG](https://www.debian.org/social_contract)
+- **Ubuntu**: [Canonical](https://ubuntu.com/)
 - **KStars/INDI**: [GPL v2+](https://indilib.org/)
 - **PHD2**: [BSD](https://github.com/OpenPHDGuiding/phd2)
 - **ASTAP**: [Freeware](https://www.hnsky.org/astap.htm)

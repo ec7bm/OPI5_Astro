@@ -16,9 +16,7 @@
 
 ---
 
-## 🌟 Introducción
-
-AstroOrange V2 es un sistema operativo basado en Debian diseñado específicamente para astrofotografía. Incluye:
+AstroOrange V2 es un sistema operativo basado en **Ubuntu 22.04 Jammy Server** diseñado específicamente para astrofotografía. Incluye:
 
 - ✅ **Hotspot de rescate automático** - Siempre accesible sin WiFi
 - ✅ **Escritorio remoto VNC** - Control desde cualquier dispositivo
@@ -218,7 +216,7 @@ sudo nmcli con up "AstroOrange-Setup"
 ## 📄 Licencia
 
 AstroOrange V2 es software libre basado en:
-- Debian (GPL)
+- Ubuntu 22.04 Jammy (GPL/Proprietary)
 - Imagen oficial Orange Pi (GPL/Proprietary drivers)
 - Software astronómico de código abierto
 
