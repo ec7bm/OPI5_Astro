@@ -1,0 +1,12 @@
+[Unit]
+Description=AstroOrange Headless VNC
+After=network.target
+
+[Service]
+Type=simple
+User=astro-setup
+ExecStart=/usr/local/bin/astro-vnc.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
