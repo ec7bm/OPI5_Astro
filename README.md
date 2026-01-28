@@ -47,69 +47,13 @@ Tienes **dos opciones** para instalar AstroOrange V2:
 
 ---
 
-### Opción B: Construcción desde Fuente
+### Opción B: Transformación desde Imagen Oficial (Live Setup)
 
-**Para desarrolladores o usuarios avanzados:**
+**Si ya tienes la imagen oficial instalada y quieres "AstroOrangizarla" en segundos:**
 
-#### Requisitos
-
-- **Sistema**: Ubuntu 22.04 o superior (VM o nativo)
-- **Espacio**: Mínimo 30GB libres
-- **RAM**: 4GB mínimo, 8GB recomendado
-- **Imagen base**: Imagen oficial/personalizada para Orange Pi 5 Pro ([Descargar aquí](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link))
-
-#### Pasos
-
-1. **Clona este repositorio**
-   ```bash
-   git clone https://github.com/ec7bm/OPI5_Astro.git
-   cd OPI5_Astro
-   ```
-
-2. **Descarga la imagen base oficial**
-   
-   Descarga la imagen base necesaria para el proceso de construcción:
+1. **Descarga e instala la imagen oficial** en tu Orange Pi:
    - **URL**: [Google Drive (Oficial OPi5 Pro)](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link)
-   
-   Coloca el archivo `.img` (o `.img.xz`) en la carpeta `image-base/`:
-   ```bash
-   mkdir -p image-base
-   mv ~/Downloads/Orangepi5pro_*.img image-base/
-   ```
-
-3. **Ejecuta el script de construcción**
-   ```bash
-   chmod +x build.sh
-   sudo ./build.sh
-   ```
-
-4. **Espera 10-20 minutos** - El script:
-   - Descomprimirá la imagen base
-   - Expandirá el sistema de archivos
-   - Instalará todos los componentes de AstroOrange
-   - Generará la imagen final en `output/`
-
-5. **Descarga la imagen**
-   
-   Al finalizar, el script levantará un servidor HTTP automáticamente:
-   ```
-   🌐 Starting HTTP server for download...
-   Access from your network at:
-   http://192.168.X.X:8000/
-   ```
-   
-   Abre esa URL en tu navegador para descargar la imagen.
-
-6. **Flashea la imagen** resultante en tu microSD
-
----
-
-### Opción C: Transformación Rápida (Live Setup)
-
-**Si ya tienes la imagen oficial instalada y quieres "AstroOrangizarla" sin construir una imagen nueva:**
-
-1. **Arranca tu Orange Pi** con la imagen oficial.
-2. **Conéctate a internet** (Ethernet recomendado).
+2. **Arranca tu Orange Pi** y conéctate a internet (Ethernet recomendado).
 3. **Clona y ejecuta el script de transformación**:
    ```bash
    git clone https://github.com/ec7bm/OPI5_Astro.git
