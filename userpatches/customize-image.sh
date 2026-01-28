@@ -51,7 +51,7 @@ SETUP_USER="astro-setup"
 SETUP_PASS="setup"
 
 if ! id "$SETUP_USER" &>/dev/null; then
-    useradd -m -s /bin/bash -G sudo,dialout,video "$SETUP_USER"
+    useradd -m -s /bin/bash -G sudo,dialout,video,input "$SETUP_USER"
     echo "$SETUP_USER:$SETUP_PASS" | chpasswd
 fi
 
@@ -78,31 +78,55 @@ if [ -d "/tmp/assets/backgrounds" ]; then
     cp /tmp/assets/backgrounds/* /usr/share/backgrounds/ || true
 fi
 
-# --- A. Script de Red (Rescue Hotspot) ---
+# --- A. Script de Red (Rescue Hotspot - ROBUSTO) ---
 cat <<'EOF' > "$OPT_DIR/bin/astro-network.sh"
 #!/bin/bash
-IFACE="wlan0"
+# Detectar interfaz wifi dinamicamente
+IFACE=$(nmcli -t -f DEVICE,TYPE device | grep wifi | cut -d: -f1 | head -n1)
+[ -z "$IFACE" ] && IFACE="wlan0"
+
 SSID="AstroOrange-Setup"
 PASS="astrosetup"
-sleep 10
-if nmcli -t -f STATE g | grep -q connected; then
+
+echo "Checking network state on $IFACE..."
+sleep 15
+
+# Si ya hay conexion activa (ethernet o wifi), no hacemos nada
+if nmcli -t -f STATE g | grep -q "^connected"; then
+    echo "Ya hay conexión activa. Saltando Hotspot."
     exit 0
 fi
+
+# Intentar levantar Hotspot
+echo "No hay conexión. Levantando Hotspot de emergencia en $IFACE..."
+nmcli device set "$IFACE" managed yes
 nmcli con delete "$SSID" 2>/dev/null || true
 nmcli con add type wifi ifname "$IFACE" con-name "$SSID" autoconnect yes ssid "$SSID" mode ap ipv4.method shared
 nmcli con modify "$SSID" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "$PASS"
-nmcli con up "$SSID"
+nmcli con up "$SSID" || echo "Error al levantar Hotspot. ¿Hardware compatible?"
 EOF
 chmod +x "$OPT_DIR/bin/astro-network.sh"
 
-# --- B. Script VNC ---
+# --- B. Script VNC (Compatible con Monitor y Headless) ---
 cat <<'EOF' > "$OPT_DIR/bin/astro-vnc.sh"
 #!/bin/bash
 export DISPLAY=:0
 rm -f /tmp/.X0-lock
-Xvfb :0 -screen 0 1920x1080x24 &
-sleep 2
-x11vnc -display :0 -forever -nopw -shared -bg -xkb &
+
+# 1. Comprobar si ya existe un servidor X (ej: LightDM en monitor fisico)
+if ! xset -display :0 q &>/dev/null; then
+    echo "No se detecta servidor X. Iniciando Xvfb (Virtual)..."
+    Xvfb :0 -screen 0 1920x1080x24 &
+    sleep 3
+else
+    echo "Servidor X detectado en monitor. Compartiendo pantalla física..."
+fi
+
+# 2. VNC Server (atado al :0, sea fisico o virtual)
+# -noxrecord -noxfixes para evitar conflictos de input
+x11vnc -display :0 -forever -nopw -shared -bg -xkb -noxrecord -noxfixes &
+
+# 3. noVNC Port 6080
 /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080
 EOF
 chmod +x "$OPT_DIR/bin/astro-vnc.sh"
@@ -171,6 +195,7 @@ class WizardApp:
         self.root.title("AstroOrange Wizard")
         self.root.geometry("900x650")
         self.root.configure(bg=BG_COLOR)
+        self.root.attributes("-topmost", True) # Asegurar que esté encima de todo
         try:
             self.bg = tk.PhotoImage(file="/usr/share/backgrounds/astro-wallpaper.jpg")
             tk.Label(self.root, image=self.bg).place(x=0,y=0,relwidth=1,relheight=1)
