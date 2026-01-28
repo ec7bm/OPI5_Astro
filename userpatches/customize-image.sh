@@ -104,7 +104,12 @@ fi
 nmcli device set "$IFACE" managed yes
 nmcli con delete "$SSID" 2>/dev/null || true
 nmcli con add type wifi ifname "$IFACE" con-name "$SSID" autoconnect yes ssid "$SSID" mode ap ipv4.method shared
+
+# Fix: Forzar seguridad WPA2 compatible (evita supplicant-timeout en OPi5 Pro)
 nmcli con modify "$SSID" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "$PASS"
+nmcli con modify "$SSID" wifi-sec.proto rsn
+nmcli con modify "$SSID" wifi-sec.group ccmp
+nmcli con modify "$SSID" wifi-sec.pairwise ccmp
 nmcli con up "$SSID"
 EOF
 chmod +x "$OPT_DIR/bin/astro-network.sh"
