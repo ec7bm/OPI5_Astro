@@ -38,6 +38,8 @@ apt-get install $APT_OPTS \
     network-manager network-manager-gnome dnsmasq-base \
     openssh-server \
     xserver-xorg-video-dummy \
+    python3-pil python3-pil.imagetk \
+    gio-bin
     x11vnc xvfb novnc websockify \
     python3 python3-pip python3-tk python3-pil \
     curl wget git nano htop \
@@ -101,6 +103,10 @@ UP_SRC="/tmp/remaster-source/userpatches"
 cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
 cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
 cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
+cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
+
+# Fix wallpaper path (PNG instead of JPG)
+sed -i 's/astro-wallpaper.jpg/astro-wallpaper.png/g' "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
 
 # Asegurar que las carpetas existen y tienen permisos
 chown -R $SETUP_USER:$SETUP_USER "$SETUP_HOME" || true
@@ -146,5 +152,10 @@ cp "$UP_SRC/overlay/etc/X11/xorg.conf.d/99-dummy-display.conf" /etc/X11/xorg.con
 
 # Ensure NetworkManager manages everything
 sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf || true
+
+# --- D. Permissions & Sudoers ---
+echo "   🔑 Configuring Permissions..."
+echo "%sudo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-astro-users
+chmod 440 /etc/sudoers.d/90-astro-users
 
 echo -e "${GREEN}✅ Base Distro Ready! (CLEAN)${NC}"

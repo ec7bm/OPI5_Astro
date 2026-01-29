@@ -327,15 +327,22 @@ class WizardApp:
                     wpwd = self.wifi_password
                     ssid = self.selected_ssid
                     # Borrar cualquier perfil previo con el mismo nombre para evitar duplicados
-                    subprocess.call(f"sudo nmcli connection delete '{ssid}'", shell=True)
+                    subprocess.call(f"sudo nmcli connection delete '{ssid}' 2>/dev/null || true", shell=True)
                     
-                    base_cmd = f"sudo nmcli dev wifi connect '{ssid}' password '{wpwd}' name '{ssid}'"
+                    # Usar 'connection add' en lugar de 'dev wifi connect' para asegurar persistencia
                     if self.static_ip_enabled:
-                        # Prioridad 50 para que Ethernet (100) mande si está conectado
-                        # Quitamos el autoconnect yes redundante ya que nmcli connect lo pone por defecto
-                        subprocess.call(f"{base_cmd} ipv4.method manual ipv4.addresses '{self.ip_addr}/24' ipv4.gateway '{self.gateway}' ipv4.dns '{self.dns_server}' connection.autoconnect-priority 50", shell=True)
+                        cmd = f"sudo nmcli connection add type wifi ifname '*' con-name '{ssid}' ssid '{ssid}' -- " \
+                              f"802-11-wireless-security.key-mgmt wpa-psk 802-11-wireless-security.psk '{wpwd}' " \
+                              f"ipv4.method manual ipv4.addresses '{self.ip_addr}/24' ipv4.gateway '{self.gateway}' ipv4.dns '{self.dns_server}' " \
+                              f"connection.autoconnect-priority 50"
                     else:
-                        subprocess.call(f"{base_cmd} connection.autoconnect-priority 50", shell=True)
+                        cmd = f"sudo nmcli connection add type wifi ifname '*' con-name '{ssid}' ssid '{ssid}' -- " \
+                              f"802-11-wireless-security.key-mgmt wpa-psk 802-11-wireless-security.psk '{wpwd}' " \
+                              f"ipv4.method auto connection.autoconnect-priority 50"
+                    
+                    subprocess.call(cmd, shell=True)
+                    # Levantar en segundo plano para no bloquear
+                    subprocess.Popen(f"sudo nmcli connection up '{ssid}'", shell=True)
                 
                 # 4. Heredar config y Accesos Directos
                 user_home = f"/home/{self.username}"
@@ -462,7 +469,8 @@ class WizardApp:
                     subprocess.call(f"gio set {dst} metadata::trusted true", shell=True)
                     subprocess.call(f"chmod +x {dst}", shell=True)
 
-        subprocess.call("rm -f ~/.config/autostart/astro-wizard.desktop", shell=True)
+        # Limpiar autostart del usuario actual (el nuevo usuario)
+        subprocess.call(f"rm -f {os.path.expanduser('~/.config/autostart/astro-wizard.desktop')}", shell=True)
         install_win.destroy()
         messagebox.showinfo("Finalizado", "Proceso completado.\nSi has instalado programas nuevos, ya aparecerán en el menú.")
         self.root.destroy()
