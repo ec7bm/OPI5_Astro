@@ -1,10 +1,11 @@
 [Unit]
 Description=AstroOrange Rescue Hotspot
 After=NetworkManager.service
+Wants=NetworkManager.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/astro-network.sh
+ExecStart=/opt/astroorange/bin/astro-network.sh
 RemainAfterExit=yes
 
 [Install]

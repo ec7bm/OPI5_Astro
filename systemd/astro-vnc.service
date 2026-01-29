@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=astro-setup
-ExecStart=/usr/local/bin/astro-vnc.sh
+ExecStart=/opt/astroorange/bin/astro-vnc.sh
 Restart=always
 
 [Install]

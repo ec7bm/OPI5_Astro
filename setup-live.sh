@@ -23,31 +23,17 @@ BASE_DIR="$(pwd)"
 
 # ==================== 1. PREPARE ASSETS ====================
 echo -e "${GREEN}[1/5] Preparing assets...${NC}"
-mkdir -p /tmp/userpatches
-cp -r "$BASE_DIR/userpatches/"* /tmp/userpatches/
+mkdir -p /tmp/remaster-source
+cp -r "$BASE_DIR/scripts" "$BASE_DIR/systemd" "$BASE_DIR/wizard" "$BASE_DIR/userpatches" /tmp/remaster-source/
 
-# ==================== 2. INJECT SYSTEM SCRIPTS ====================
-echo -e "${GREEN}[2/5] Installing system scripts...${NC}"
-mkdir -p /usr/local/bin
+# ==================== 2. RUN CUSTOMIZATION ====================
+echo -e "${GREEN}[2/5] Running customization...${NC}"
+# customize-image.sh ahora se encarga de mover todo a /opt/astroorange
+chmod +x /tmp/remaster-source/userpatches/customize-image.sh
+bash /tmp/remaster-source/userpatches/customize-image.sh
 
-if [ -d "$BASE_DIR/scripts" ]; then
-    cp "$BASE_DIR/scripts"/*.sh /usr/local/bin/
-    chmod +x /usr/local/bin/*.sh
-fi
-
-# ==================== 3. INSTALL SERVICES ====================
-echo -e "${GREEN}[3/5] Installing systemd services...${NC}"
-if [ -d "$BASE_DIR/systemd" ]; then
-    cp "$BASE_DIR/systemd"/*.service /etc/systemd/system/
-fi
-
-# ==================== 4. RUN CUSTOMIZATION ====================
-echo -e "${GREEN}[4/5] Running customization (this may take 10-15 min)...${NC}"
-chmod +x /tmp/userpatches/customize-image.sh
-bash /tmp/userpatches/customize-image.sh
-
-# ==================== 5. LIVE FIXES (Themes & Network) ====================
-echo -e "${GREEN}[5/5] Applying live fixes...${NC}"
+# ==================== 3. LIVE FIXES (Themes & Network) ====================
+echo -e "${GREEN}[3/5] Applying live fixes...${NC}"
 
 # Detectar el usuario real que ejecutó sudo
 REAL_USER=${SUDO_USER:-$USER}
@@ -55,9 +41,9 @@ REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 
 echo "Applying themes to user: $REAL_USER ($REAL_HOME)"
 
-# Copiar configuraciones de tema al usuario actual
+# Copiar configuraciones de tema al usuario actual (desde el repo recién inyectado)
 mkdir -p "$REAL_HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
-cp -r /home/astro-setup/.config/xfce4/xfconf/xfce-perchannel-xml/* "$REAL_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/" || true
+cp -r /tmp/remaster-source/userpatches/xfce4/xfconf/xfce-perchannel-xml/* "$REAL_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/" || true
 chown -R "$REAL_USER:$REAL_USER" "$REAL_HOME/.config"
 
 # Forzar NetworkManager como renderizador (evita conflictos con netplan en Ubuntu Server)
@@ -69,15 +55,6 @@ network:
   renderer: NetworkManager
 EOF
     netplan apply || true
-fi
-
-# ==================== 6. FINAL TOUCHES ====================
-echo -e "${GREEN}[6/6] Finalizing...${NC}"
-
-# Ensure wizard folder exists
-if [ -d "$BASE_DIR/wizard" ]; then
-    mkdir -p /opt/astroorange/wizard
-    cp -r "$BASE_DIR/wizard"/* /opt/astroorange/wizard/
 fi
 
 echo -e "${GREEN}✅ AstroOrange Setup Completed!${NC}"

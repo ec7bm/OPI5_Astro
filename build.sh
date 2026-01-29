@@ -78,31 +78,16 @@ chmod +x "$MOUNT_DIR/usr/sbin/policy-rc.d"
 # ==================== INJECT FILES ====================
 echo -e "${GREEN}[5/7] Injecting AstroOrange components...${NC}"
 
-# Scripts
-if [ -d "$BASE_DIR/scripts" ]; then
-    echo "   📜 Installing scripts..."
-    cp "$BASE_DIR/scripts"/*.sh "$MOUNT_DIR/usr/local/bin/" 2>/dev/null || true
-    chmod +x "$MOUNT_DIR/usr/local/bin/"*.sh 2>/dev/null || true
-fi
+# Crear directorio temporal de inyección
+mkdir -p "$MOUNT_DIR/tmp/remaster-source"
 
-# Systemd services
-if [ -d "$BASE_DIR/systemd" ]; then
-    echo "   ⚙️  Installing systemd services..."
-    cp "$BASE_DIR/systemd"/*.service "$MOUNT_DIR/etc/systemd/system/" 2>/dev/null || true
-fi
-
-# Wizard
-if [ -d "$BASE_DIR/wizard" ]; then
-    echo "   🧙 Installing wizard..."
-    mkdir -p "$MOUNT_DIR/opt/astro-wizard"
-    cp -r "$BASE_DIR/wizard"/* "$MOUNT_DIR/opt/astro-wizard/"
-fi
-
-# Userpatches (wallpaper, etc)
-if [ -d "$BASE_DIR/userpatches" ]; then
-    echo "   🎨 Copying assets..."
-    cp -r "$BASE_DIR/userpatches" "$MOUNT_DIR/tmp/"
-fi
+# Copiar todo el árbol de scripts, systemd y wizard para que customize-image.sh los use
+for dir in scripts systemd wizard userpatches; do
+    if [ -d "$BASE_DIR/$dir" ]; then
+        echo "   📂 Injecting $dir..."
+        cp -r "$BASE_DIR/$dir" "$MOUNT_DIR/tmp/remaster-source/"
+    fi
+done
 
 # ==================== CUSTOMIZE ====================
 echo -e "${GREEN}[6/7] Running customization script...${NC}"

@@ -22,5 +22,6 @@ mkdir -p ~/.vnc
 x11vnc -storepasswd "astroorange" ~/.vnc/passwd
 
 # 3. Lanzar VNC y noVNC
+echo "Starting VNC and noVNC..."
 x11vnc -display :0 -forever -rfbauth ~/.vnc/passwd -shared -bg -xkb -noxrecord -noxfixes -noxdamage &
 /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080
