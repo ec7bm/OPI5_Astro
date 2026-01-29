@@ -5,7 +5,26 @@
 export DISPLAY=:0
 rm -f /tmp/.X0-lock
 
-# 1. Esperar a que el servidor X esté listo (max 60s)
+# 1. Detectar el archivo Xauthority de LightDM (CRÍTICO: Hacerlo antes de esperar)
+echo "Searching for Xauthority..."
+XAUTH=""
+# Reintento de búsqueda de XAUTH si el sistema acaba de arrancar
+for i in {1..30}; do
+    XAUTH=$(find /var/run/lightdm /run/lightdm -name ":0*" 2>/dev/null | head -n 1)
+    [ -n "$XAUTH" ] && break
+    sleep 1
+done
+
+if [ -z "$XAUTH" ]; then
+    X_USER=$(ps aux | grep Xorg | grep -v grep | awk '{print $1}' | head -n 1)
+    [ -n "$X_USER" ] && [ "$X_USER" != "root" ] && XAUTH="/home/$X_USER/.Xauthority"
+    [ "$X_USER" == "root" ] && XAUTH="/root/.Xauthority"
+fi
+
+echo "Using XAUTHORITY: $XAUTH"
+export XAUTHORITY=$XAUTH
+
+# 2. Esperar a que el servidor X esté listo (max 60s)
 echo "Waiting for X server on :0..."
 for i in {1..60}; do
     if xset -display :0 q &>/dev/null; then
@@ -15,22 +34,7 @@ for i in {1..60}; do
     sleep 1
 done
 
-# 2. Detectar el archivo Xauthority de LightDM (Más robusto)
-echo "Searching for Xauthority..."
-XAUTH=$(find /var/run/lightdm -name ":0*" 2>/dev/null | head -n 1)
-
-if [ -z "$XAUTH" ]; then
-    # Fallback al usuario que posee Xorg
-    X_USER=$(ps aux | grep Xorg | grep -v grep | awk '{print $1}' | head -n 1)
-    [ -z "$X_USER" ] && X_USER="root"
-    XAUTH="/home/$X_USER/.Xauthority"
-    [ "$X_USER" == "root" ] && XAUTH="/root/.Xauthority"
-fi
-
-echo "Using XAUTHORITY: $XAUTH"
-export XAUTHORITY=$XAUTH
-
-# 3. VNC Password Fija (Siempre en /etc/shadow-vnc para ser independiente del usuario)
+# 3. VNC Password Fija
 VNC_PASS_FILE="/etc/x11vnc.pass"
 if [ ! -f "$VNC_PASS_FILE" ]; then
     x11vnc -storepasswd "astroorange" "$VNC_PASS_FILE"
