@@ -135,4 +135,8 @@ cp -r "$REM_SRC/wizard/"* "$OPT_DIR/wizard/"
 mkdir -p /etc/xdg/autostart
 cp "$UP_SRC/xdg/autostart/astro-wizard.desktop" /etc/xdg/autostart/
 
+# Permanent Menu Entry
+mkdir -p /usr/share/applications
+cp "$UP_SRC/xdg/applications/astro-wizard.desktop" /usr/share/applications/
+
 echo -e "${GREEN}✅ Base Distro Ready! (CLEAN)${NC}"

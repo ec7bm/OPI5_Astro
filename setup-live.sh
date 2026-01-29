@@ -57,6 +57,10 @@ EOF
     netplan apply || true
 fi
 
+# Permanent Menu Entry
+mkdir -p /usr/share/applications
+cp /tmp/remaster-source/userpatches/xdg/applications/astro-wizard.desktop /usr/share/applications/
+
 echo -e "${GREEN}✅ AstroOrange Setup Completed!${NC}"
 echo -e "${YELLOW}🔄 The system will now reboot into the Wizard.${NC}"
 echo ""
