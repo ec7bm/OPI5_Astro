@@ -23,6 +23,7 @@ APT_OPTS="-y --no-install-recommends -o Dpkg::Options::=--force-confdef -o Dpkg:
 # Repositorios (Mozilla PPA para Firefox)
 apt-get update
 apt-get install $APT_OPTS software-properties-common
+add-apt-repository -y universe
 add-apt-repository -y ppa:mozillateam/ppa
 echo '
 Package: *
@@ -133,6 +134,9 @@ cat <<'XFDESKTOP' > "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-
 </channel>
 XFDESKTOP
 
+# Asegurar que las carpetas existen y tienen permisos
+chown -R $SETUP_USER:$SETUP_USER "$SETUP_HOME" || true
+mkdir -p "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
 chown -R $SETUP_USER:$SETUP_USER "$SETUP_HOME/.config"
 
 # --- A. Script de Red (Rescue Hotspot - ULTRA-ROBUST) ---

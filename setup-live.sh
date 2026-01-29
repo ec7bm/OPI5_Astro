@@ -46,10 +46,35 @@ echo -e "${GREEN}[4/5] Running customization (this may take 10-15 min)...${NC}"
 chmod +x /tmp/userpatches/customize-image.sh
 bash /tmp/userpatches/customize-image.sh
 
-# ==================== 5. FINAL TOUCHES ====================
-echo -e "${GREEN}[5/5] Finalizing...${NC}"
+# ==================== 5. LIVE FIXES (Themes & Network) ====================
+echo -e "${GREEN}[5/5] Applying live fixes...${NC}"
 
-# Ensure wizard folder exists (it is created by customize-image.sh but let's be safe)
+# Detectar el usuario real que ejecutó sudo
+REAL_USER=${SUDO_USER:-$USER}
+REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+
+echo "Applying themes to user: $REAL_USER ($REAL_HOME)"
+
+# Copiar configuraciones de tema al usuario actual
+mkdir -p "$REAL_HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
+cp -r /home/astro-setup/.config/xfce4/xfconf/xfce-perchannel-xml/* "$REAL_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/" || true
+chown -R "$REAL_USER:$REAL_USER" "$REAL_HOME/.config"
+
+# Forzar NetworkManager como renderizador (evita conflictos con netplan en Ubuntu Server)
+if [ -d "/etc/netplan" ]; then
+    echo "Configuring Netplan to use NetworkManager..."
+    cat <<EOF > /etc/netplan/01-network-manager-all.yaml
+network:
+  version: 2
+  renderer: NetworkManager
+EOF
+    netplan apply || true
+fi
+
+# ==================== 6. FINAL TOUCHES ====================
+echo -e "${GREEN}[6/6] Finalizing...${NC}"
+
+# Ensure wizard folder exists
 if [ -d "$BASE_DIR/wizard" ]; then
     mkdir -p /opt/astroorange/wizard
     cp -r "$BASE_DIR/wizard"/* /opt/astroorange/wizard/
