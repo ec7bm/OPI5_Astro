@@ -78,12 +78,20 @@ class WizardApp:
         except: pass
         tk.Label(self.root, text=text, font=("Sans", 22, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=10)
 
+    def check_internet(self):
+        """Verifica si hay conexión a internet real"""
+        try:
+            subprocess.check_call(["ping", "-c", "1", "-W", "2", "8.8.8.8"], 
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        except:
+            return False
+
     def show_stage_1(self):
         self.header("Etapa 1: Usuario y WiFi")
         
-        # Tutorial de WiFi
-        tutorial = ("Para descargar el software en la siguiente etapa,\n"
-                    "necesitas conectar la placa a Internet ahora.")
+        tutorial = ("Bienvenido a AstroOrange. Configura tu usuario principal\n"
+                    "y asegúrate de conectar la placa a Internet.")
         tk.Label(self.root, text=tutorial, font=("Sans", 11, "italic"), bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
         
         frame = tk.Frame(self.root, bg=BG_COLOR)
@@ -100,9 +108,8 @@ class WizardApp:
                   bg=ACCENT_COLOR, fg=BG_COLOR, command=self.save_and_reboot).pack(pady=40)
 
     def run_nmtui(self):
-        # Abrir nmtui en una terminal y dar una pequeña instruccion
-        msg = "En la terminal: Selecciona 'Activate a connection' -> Tu WiFi -> Pon la clave."
-        messagebox.showinfo("Instrucciones WiFi", msg)
+        msg = "En la terminal que se va a abrir:\n1. Selecciona 'Activate a connection'\n2. Busca tu red WiFi y pulsa Enter\n3. Pon la clave y pulsa OK.\n\nUna vez conectado, cierra la terminal."
+        messagebox.showinfo("Tutorial WiFi", msg)
         subprocess.Popen(["xfce4-terminal", "-e", "nmtui"])
 
     def save_and_reboot(self):
@@ -111,6 +118,16 @@ class WizardApp:
             messagebox.showerror("Error", "Rellena todos los campos.")
             return
         
+        # VERIFICAR INTERNET ANTES DE REINICIAR
+        if not self.check_internet():
+            msg = ("No se ha detectado conexión a Internet.\n\n"
+                   "Es MUY RECOMENDABLE configurar el WiFi ahora para que la "
+                   "instalación de software sea automática tras el reinicio.\n\n"
+                   "¿Deseas configurar el WiFi antes de guardar?")
+            if messagebox.askyesno("Internet no detectado", msg):
+                self.run_nmtui()
+                return
+
         # 1. Creacion de usuario real
         subprocess.call(f"sudo bash -c \"useradd -m -s /bin/bash -G sudo,dialout,video,input,plugdev,netdev {user} && echo '{user}:{pwd}' | chpasswd\"", shell=True)
         
@@ -121,15 +138,12 @@ class WizardApp:
         # 3. Actualizar VNC
         subprocess.call(f"sudo sed -i 's/User=astro-setup/User={user}/g' /etc/systemd/system/astro-vnc.service", shell=True)
         
-        # 4. Heredar config del Wizard y Wallpaper (FIX AGRESIVO)
+        # 4. Heredar config del Wizard y Wallpaper
         user_home = f"/home/{user}"
         subprocess.call(f"sudo mkdir -p {user_home}/.config/autostart", shell=True)
         subprocess.call(f"sudo cp /etc/xdg/autostart/astro-wizard.desktop {user_home}/.config/autostart/", shell=True)
-        
-        # Copiar configuraciones de XFCE (incluyendo el wallpaper)
         subprocess.call(f"sudo mkdir -p {user_home}/.config/xfce4/xfconf/xfce-perchannel-xml", shell=True)
         subprocess.call(f"sudo cp -r /home/astro-setup/.config/xfce4/xfconf/xfce-perchannel-xml/* {user_home}/.config/xfce4/xfconf/xfce-perchannel-xml/", shell=True)
-        
         subprocess.call(f"sudo chown -R {user}:{user} {user_home}/.config", shell=True)
         
         # 5. Marcar etapa 1 completada
@@ -141,11 +155,15 @@ class WizardApp:
     def show_stage_2(self):
         self.header("Etapa 2: Instalador de Software")
         
-        # Botón de WiFi de emergencia por si se les olvidó en la fase 1
-        tk.Label(self.root, text="⚠️ Asegúrate de estar conectado a Internet para continuar:", 
-                 bg=BG_COLOR, fg="yellow", font=("Sans", 10, "bold")).pack(pady=5)
-        tk.Button(self.root, text="📶 CONFIGURAR WIFI", font=("Sans", 12), 
-                  bg=BUTTON_COLOR, fg="white", command=self.run_nmtui).pack(pady=5)
+        # Comprobar si hay internet para dar un aviso visual
+        if not self.check_internet():
+            tk.Label(self.root, text="⚠️ SIN INTERNET: Conecta el WiFi para instalar el software", 
+                     bg=BG_COLOR, fg="orange", font=("Sans", 11, "bold")).pack(pady=5)
+            tk.Button(self.root, text="📶 CONFIGURAR WIFI AHORA", font=("Sans", 12), 
+                      bg=BUTTON_COLOR, fg="white", command=self.run_nmtui).pack(pady=5)
+        else:
+            tk.Label(self.root, text="✅ Conexión a Internet detectada", 
+                     bg=BG_COLOR, fg="#4ade80", font=("Sans", 10)).pack(pady=5)
 
         tk.Label(self.root, text="Selecciona el software astronómico a instalar:", bg=BG_COLOR, fg="white").pack(pady=10)
         
