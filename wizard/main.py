@@ -374,7 +374,8 @@ class WizardApp:
             cb.grid(row=i//2, column=i%2, sticky="w", padx=20, pady=5)
             
             if already_installed:
-                cb.config(fg=ACCENT_COLOR) # Visual hint that it's already there
+                cb.config(fg="#00ff00") # Verde para lo que ya está
+                tk.Label(frame, text="(Ya instalado)", bg=BG_COLOR, fg="#00ff00", font=("Sans", 8)).grid(row=i//2, column=i%2, sticky="e", padx=(0, 20))
 
         tk.Button(self.root, text="🚀 INICIAR INSTALACIÓN", command=self.start_install, 
                   bg=ACCENT_COLOR, fg=BG_COLOR, font=("Sans", 14, "bold"), width=30).pack(pady=20)
@@ -402,10 +403,16 @@ class WizardApp:
         if self.vars["ASTAP (Plate Solver)"].get(): cmds.append("wget https://www.hnsky.org/astap_arm64.deb -O /tmp/astap.deb && sudo apt-get install -y /tmp/astap.deb")
         if self.vars["Stellarium"].get(): cmds.append("sudo apt-get install -y stellarium")
         if self.vars["Syncthing"].get(): cmds.append("sudo apt-get install -y syncthing")
+        if self.vars["AstroDMX Capture"].get(): cmds.append("echo '⚠️ AstroDMX requiere descarga manual (.deb) o repositorio específico'")
+        if self.vars["CCDciel"].get(): cmds.append("echo '⚠️ CCDciel requiere descarga manual (.deb) o repositorio específico'")
         
         full_command = " && ".join(cmds)
         # Better terminal message
-        msg_finish = "echo '---------------------------------------------------'; echo '✅ INSTALACIÓN COMPLETADA'; echo 'Pulsa ENTER para cerrar esta ventana y finalizar'; read"
+        msg_finish = "echo '---------------------------------------------------'; " \
+                     "echo '✅ INSTALACIÓN COMPLETADA'; " \
+                     "echo 'Los nuevos programas aparecerán en el menú de Aplicaciones.'; " \
+                     "echo 'Pulsa ENTER para cerrar esta ventana y finalizar.'; " \
+                     "read"
         
         subprocess.call(["xfce4-terminal", "--geometry=90x25", "--title=Progreso de Instalación", "-e", f"bash -c '{full_command}; {msg_finish}'"])
         
