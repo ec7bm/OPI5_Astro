@@ -32,7 +32,7 @@ AstroOrange V2 es un sistema operativo basado en **Ubuntu 22.04 Jammy Server** d
 - Orange Pi 5 Pro
 - Tarjeta microSD de 16GB o superior
 - Fuente de alimentación 5V/4A
-- (Opcional) Cable Ethernet para internet
+- **Cable Ethernet conectado al router** (Muy recomendable para el primer arranque)
 
 ### Proceso de Arranque
 
@@ -46,60 +46,41 @@ AstroOrange V2 es un sistema operativo basado en **Ubuntu 22.04 Jammy Server** d
 
 ## 📡 Conexión al Sistema
 
-### Opción A: Sin Cable Ethernet (Hotspot Automático)
+### Opción A (Recomendada): Con Cable Ethernet
 
-Si no conectas un cable Ethernet, el sistema creará automáticamente una red WiFi:
+1. Conecta la Orange Pi a tu router mediante un cable Ethernet antes de encenderla.
+2. El sistema obtendrá una IP automáticamente.
+3. Desde tu PC/Tablet, accede a: **`http://<ip-de-la-placa>:6080/vnc.html`**
+4. Contraseña del VNC: **`astroorange`**
 
-**Red WiFi:**
+### Opción B: Sin Cable (Hotspot de Rescate)
+
+Si no tienes cable a mano, el sistema activará un Hotspot propio:
 - 📶 **Nombre (SSID):** `AstroOrange-Setup`
 - 🔐 **Contraseña:** `astrosetup`
-
-**Pasos:**
-1. Busca la red `AstroOrange-Setup` en tu móvil/tablet/PC
-2. Conéctate usando la contraseña `astrosetup`
-3. Abre tu navegador web
-4. Accede a: **`http://10.42.0.1:6080/vnc.html`**
-5. Contraseña del VNC: **`astroorange`**
-
-### Opción B: Con Cable Ethernet
-
-Si conectas un cable Ethernet:
-
-1. El sistema obtendrá una IP de tu router automáticamente
-2. Consulta la IP en tu router (busca "orangepi5pro")
-3. Accede a: **`http://IP-DE-TU-ORANGEPI:6080/vnc.html`**
-4. Contraseña del VNC: **`astroorange`**
+- 🌐 **Acceso VNC:** `http://10.42.0.1:6080/vnc.html`
 
 ---
 
-## ⚙️ Configuración Inicial
+Al acceder por primera vez, verás el **AstroOrange Wizard** rediseñado como un asistente paso a paso.
 
-Al acceder por primera vez verás el **AstroOrange Wizard**.
+#### Paso 0: Bienvenida
+Instrucciones básicas. Se recomienda que la placa esté conectada por cable para que el escaneo de redes WiFi sea fiable.
 
-### Etapa 1: Usuario y WiFi
+#### Paso 1: Tu Cuenta
+1. **Nombre de Usuario**: Elige tu nombre (ej: `astro`).
+2. **Contraseña**: Define tu clave de acceso.
+*Estas serán tus credenciales definitivas.*
 
-#### Crear Usuario
-1. **Usuario**: Elige tu nombre de usuario (ej: `astro`, `ec7bm`)
-2. **Contraseña**: Elige una contraseña segura
+#### Paso 2: Red WiFi
+El Wizard escaneará las redes disponibles. Selecciona la tuya de la lista y pulsa Siguiente.
 
-> 💡 **Importante**: Anota estas credenciales, las necesitarás para futuros accesos.
+#### Paso 3: Configuración de Red
+1. Introduce la **contraseña de tu WiFi**.
+2. **IP Estática (Opcional)**: Si marcas esta casilla, podrás fijar la IP, Puerta de enlace y DNS (ideal para observatorios fijos).
 
-#### Configurar WiFi (Opcional)
-Si quieres conectar la Orange Pi a tu red WiFi de casa/observatorio:
-
-1. Haz clic en **"Configurar WiFi (nmtui)"**
-2. Se abrirá una terminal con el gestor de redes
-3. Selecciona **"Activate a connection"**
-4. Elige tu red WiFi
-5. Introduce la contraseña
-6. Presiona `Esc` para salir
-
-> 📶 Si no configuras WiFi, el Hotspot seguirá disponible siempre que no haya internet.
-
-#### Finalizar Etapa 1
-1. Haz clic en **"GUARDAR Y REINICIAR"**
-2. El sistema se reiniciará (espera 30 segundos)
-3. Vuelve a conectarte al VNC con las mismas credenciales
+#### Paso 4: Finalizar
+El sistema aplicará los cambios y se reiniciará automáticamente. Tras el reinicio, la placa se conectará a tu WiFi real y entrará con tu nuevo usuario.
 
 ---
 
