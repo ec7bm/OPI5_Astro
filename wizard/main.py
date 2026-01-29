@@ -93,9 +93,18 @@ class WizardApp:
         
         self.static_ip_var = tk.BooleanVar(value=False)
         
+        import sys
+        is_autostart = "--autostart" in sys.argv
+        is_configured = os.path.exists("/etc/astro-configured")
+        is_finished = os.path.exists("/etc/astro-finished")
+        
+        if is_autostart and is_finished:
+            self.root.destroy()
+            return
+
         self.setup_window()
         
-        if not os.path.exists("/etc/astro-configured"):
+        if not is_configured:
             self.show_step_0() 
         else:
             self.show_stage_2() 
@@ -471,6 +480,7 @@ class WizardApp:
 
         # Limpiar autostart del usuario actual (el nuevo usuario)
         subprocess.call(f"rm -f {os.path.expanduser('~/.config/autostart/astro-wizard.desktop')}", shell=True)
+        subprocess.call("sudo touch /etc/astro-finished", shell=True)
         install_win.destroy()
         messagebox.showinfo("Finalizado", "Proceso completado.\nSi has instalado programas nuevos, ya aparecerán en el menú.")
         self.root.destroy()

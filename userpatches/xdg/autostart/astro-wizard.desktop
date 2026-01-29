@@ -1,5 +1,5 @@
 [Desktop Entry]
 Type=Application
 Name=AstroWizard
-Exec=python3 /opt/astroorange/wizard/main.py
+Exec=python3 /opt/astroorange/wizard/main.py --autostart
 OnlyShowIn=XFCE;
