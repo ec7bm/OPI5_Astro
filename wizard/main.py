@@ -6,16 +6,31 @@ import threading
 import socket
 import shutil
 from glob import glob
+
 try:
     from PIL import Image, ImageTk
 except ImportError:
-    Image = None
-    ImageTk = None
+    Image = ImageTk = None
 
+# --- DESIGN SYSTEM ---
 BG_COLOR = "#0f172a"
+SECONDARY_BG = "#1e293b"
 FG_COLOR = "#e2e8f0"
 ACCENT_COLOR = "#38bdf8"
-BUTTON_COLOR = "#475569"
+SUCCESS_COLOR = "#22c55e"
+BUTTON_COLOR = "#334155"
+BUTTON_HOVER = "#475569"
+
+# --- CONFIGURATION ---
+SOFTWARE_LIST = {
+    "KStars / INDI": {"bin": "kstars", "pkg": "kstars-bleeding indi-full gsc", "ppa": "ppa:mutlaqja/ppa"},
+    "PHD2 Guiding": {"bin": "phd2", "pkg": "phd2", "ppa": "ppa:pch/phd2"},
+    "ASTAP (Plate Solver)": {"bin": "astap", "pkg": "astap", "url": "https://www.hnsky.org/astap_arm64.deb"},
+    "Stellarium": {"bin": "stellarium", "pkg": "stellarium", "ppa": None},
+    "AstroDMX Capture": {"bin": "astrodmx", "pkg": "astrodmxcapture", "deb": True},
+    "CCDciel": {"bin": "ccdciel", "pkg": "ccdciel", "deb": True},
+    "Syncthing": {"bin": "syncthing", "pkg": "syncthing", "ppa": None}
+}
 
 def get_network_defaults():
     try:
@@ -27,303 +42,288 @@ def get_network_defaults():
         if len(parts) == 4:
             base = ".".join(parts[:3])
             return f"{base}.100", f"{base}.1", "8.8.8.8"
-    except:
-        pass
+    except: pass
     return "192.168.1.100", "192.168.1.1", "8.8.8.8"
 
 class ImageCarousel:
-    def __init__(self, parent, image_folder="/opt/astroorange/assets/gallery"):
+    def __init__(self, parent, size=(800, 450)):
         self.parent = parent
         self.images = []
-        self.current_index = 0
-        self.label = None
-        paths = [image_folder, "/usr/share/backgrounds/gallery", "./userpatches/gallery"]
-        actual_path = image_folder
-        for p in paths:
-            if os.path.exists(p) and glob(os.path.join(p, "*.png")):
-                actual_path = p
-                break
-        if Image and ImageTk and os.path.exists(actual_path):
-            try:
-                image_files = sorted(glob(os.path.join(actual_path, "*.png")))
-                for img_path in image_files:
-                    img = Image.open(img_path)
-                    img = img.resize((800, 450), Image.Resampling.LANCZOS)
-                    photo = ImageTk.PhotoImage(img)
-                    self.images.append(photo)
-            except Exception as e:
-                print(f"Error loading carousel: {e}")
+        self.idx = 0
+        self.size = size
+        
+        path = "/usr/share/backgrounds/gallery"
+        if not os.path.exists(path):
+            path = "/opt/astroorange/assets/gallery"
+            
+        if Image and os.path.exists(path):
+            files = sorted(glob(os.path.join(path, "*.png")))
+            for f in files:
+                try:
+                    img = Image.open(f).resize(self.size, Image.Resampling.LANCZOS)
+                    self.images.append(ImageTk.PhotoImage(img))
+                except: continue
+        
         if self.images:
-            self.label = tk.Label(parent, bg=BG_COLOR)
-            self.label.pack(pady=10)
+            self.label = tk.Label(parent, bg=BG_COLOR, bd=2, relief="flat")
+            self.label.pack(pady=20)
             self.animate()
+        else:
+            tk.Label(parent, text="(Cargando vistas del cosmos...)", fg="grey", bg=BG_COLOR).pack(pady=50)
 
     def animate(self):
-        if self.images and self.label and self.parent.winfo_exists():
-            self.label.config(image=self.images[self.current_index])
-            self.current_index = (self.current_index + 1) % len(self.images)
+        if self.images and self.parent.winfo_exists():
+            self.label.config(image=self.images[self.idx])
+            self.idx = (self.idx + 1) % len(self.images)
             self.label.after(5000, self.animate)
 
 class WizardApp:
     def __init__(self, root):
         self.root = root
-        self.wifi_list = []
+        self.u, self.p = "astro", ""
+        self.ssid, self.wp = "", ""
+        self.ip, self.gw, self.dns = get_network_defaults()
+        self.st_var = tk.BooleanVar(value=False)
+        self.software_vars = {}
         
-        # PERSISTENT STATE
-        self.username = "astro"
-        self.password = ""
-        self.selected_ssid = ""
-        self.wifi_password = ""
-        
-        def_ip, def_gw, def_dns = get_network_defaults()
-        self.static_ip_enabled = False
-        self.ip_addr = def_ip
-        self.gateway = def_gw
-        self.dns_server = def_dns
-        
-        self.static_ip_var = tk.BooleanVar(value=False)
-        
-        import sys
-        is_autostart = "--autostart" in sys.argv
-        is_configured = os.path.exists("/etc/astro-configured")
-        is_finished = os.path.exists("/etc/astro-finished")
-        
-        if is_autostart and is_finished:
-            self.root.destroy()
-            return
+        # Check autostart logic
+        if "--autostart" in os.sys.argv and os.path.exists("/etc/astro-finished"):
+            root.destroy(); return
 
-        self.setup_window()
-        self.create_wizard_shortcut()
+        self.setup_ui()
+        self.create_desktop_launcher()
         
-        if not is_configured:
-            self.show_step_0() 
+        if not os.path.exists("/etc/astro-configured"):
+            self.show_welcome()
         else:
-            self.show_stage_2() 
+            self.show_software_installer()
 
-    def setup_window(self):
+    def setup_ui(self):
         self.root.title("AstroOrange V2 - Wizard")
         self.root.geometry("900x750")
         self.root.configure(bg=BG_COLOR)
         
-        self.bg_label = tk.Label(self.root)
-        self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-        self.update_background()
+        # Background management
+        self.bg_canvas = tk.Label(self.root)
+        self.bg_canvas.place(x=0, y=0, relwidth=1, relheight=1)
+        self.load_wallpaper()
 
-    def update_background(self):
-        try:
-            img_path = "/usr/share/backgrounds/astro-wallpaper.png"
-            if not os.path.exists(img_path):
-                img_path = "/opt/astroorange/assets/astro-wallpaper.png"
-            
-            if Image and os.path.exists(img_path):
-                img = Image.open(img_path)
-                img = img.resize((900, 750), Image.Resampling.LANCZOS)
-                self.bg_photo = ImageTk.PhotoImage(img)
-                self.bg_label.config(image=self.bg_photo)
-            else:
-                self.bg_label.config(bg=BG_COLOR)
-        except:
-            self.bg_label.config(bg=BG_COLOR)
+    def load_wallpaper(self):
+        f = "/usr/share/backgrounds/astro-wallpaper.png"
+        if not os.path.exists(f): f = "/opt/astroorange/assets/astro-wallpaper.png"
+        if Image and os.path.exists(f):
+            try:
+                img = Image.open(f).resize((900, 750), Image.Resampling.LANCZOS)
+                self.wallpaper = ImageTk.PhotoImage(img)
+                self.bg_canvas.config(image=self.wallpaper)
+            except: self.bg_canvas.config(bg=BG_COLOR)
+        else: self.bg_canvas.config(bg=BG_COLOR)
 
-    def clear_window(self):
-        for widget in self.root.winfo_children():
-            if widget != self.bg_label:
-                widget.destroy()
+    def clear(self):
+        for w in self.root.winfo_children():
+            if w != self.bg_canvas: w.destroy()
 
     def header(self, title, subtitle=""):
-        tk.Label(self.root, text=title, font=("Sans", 26, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(40, 5))
+        tk.Label(self.root, text=title, font=("Sans", 28, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(50, 5))
         if subtitle:
-            tk.Label(self.root, text=subtitle, font=("Sans", 12, "italic"), bg=BG_COLOR, fg=FG_COLOR).pack(pady=(0, 20))
+            tk.Label(self.root, text=subtitle, font=("Sans", 13, "italic"), bg=BG_COLOR, fg=FG_COLOR).pack(pady=(0, 30))
 
-    def create_wizard_shortcut(self):
+    def nav_buttons(self, next_cmd, back_cmd=None, next_txt="SIGUIENTE ➔"):
+        f = tk.Frame(self.root, bg=BG_COLOR)
+        f.pack(side="bottom", pady=50, fill="x")
+        
+        if back_cmd:
+            b = tk.Button(f, text="⬅ VOLVER", font=("Sans", 12, "bold"), bg=BUTTON_COLOR, fg="white", 
+                          activebackground=BUTTON_HOVER, activeforeground="white", relief="flat", 
+                          padx=20, pady=10, command=back_cmd)
+            b.pack(side="left", padx=50)
+        
+        n = tk.Button(f, text=next_txt, font=("Sans", 14, "bold"), bg=ACCENT_COLOR, fg=BG_COLOR, 
+                      activebackground=FG_COLOR, relief="flat", padx=35, pady=12, command=next_cmd)
+        n.pack(side="right", padx=50)
+
+    def create_desktop_launcher(self):
         try:
-            desktop_dir = os.path.expanduser("~/Desktop")
-            os.makedirs(desktop_dir, exist_ok=True)
-            src = "/usr/share/applications/astro-wizard.desktop"
-            dst = os.path.join(desktop_dir, "astro-wizard.desktop")
-            if os.path.exists(src) and not os.path.exists(dst):
-                shutil.copy(src, dst)
+            d = os.path.expanduser("~/Desktop")
+            os.makedirs(d, exist_ok=True)
+            s = "/usr/share/applications/astro-wizard.desktop"
+            dst = os.path.join(d, "astro-wizard.desktop")
+            if os.path.exists(s) and not os.path.exists(dst):
+                shutil.copy(s, dst)
                 subprocess.call(f"gio set {dst} metadata::trusted true", shell=True)
-                subprocess.call(f"chmod +x {dst}", shell=True)
-        except:
-            pass
+                os.chmod(dst, 0o755)
+        except: pass
 
-    def nav_buttons(self, next_command, back_command=None, next_text="SIGUIENTE ➔"):
-        btn_frame = tk.Frame(self.root, bg=BG_COLOR)
-        btn_frame.pack(side="bottom", pady=40, fill="x")
-        
-        if back_command:
-            tk.Button(btn_frame, text="⬅ VOLVER", font=("Sans", 12, "bold"), bg=BUTTON_COLOR, fg="white",
-                      padx=20, pady=10, command=back_command).pack(side="left", padx=40)
-        
-        tk.Button(btn_frame, text=next_text, font=("Sans", 14, "bold"), bg=ACCENT_COLOR, fg=BG_COLOR, 
-                  padx=30, pady=10, command=next_command).pack(side="right", padx=40)
+    # --- STEPS ---
+    def show_welcome(self):
+        self.clear()
+        self.header("¡Bienvenido a AstroOrange V2!", "Tu portal al cielo profundo")
+        info = "Para garantizar el éxito de la instalación:\n\n1. Conecta el cable ETHERNET si es posible.\n2. No apagues la placa durante el proceso.\n3. Prepárate para descubrir el cosmos."
+        tk.Label(self.root, text=info, font=("Sans", 14), bg=BG_COLOR, fg="white", justify="center").pack(pady=40)
+        self.nav_buttons(self.show_account)
 
-    def show_step_0(self):
-        self.clear_window()
-        self.header("¡Bienvenido! AstroOrange V2", "Configuración Inicial Guiada")
-        info = ("Recomendamos usar cable ETHERNET durante la primera configuración.\n"
-                "Esto asegura estabilidad y permite escanear redes WiFi.")
-        tk.Label(self.root, text=info, font=("Sans", 13), bg=BG_COLOR, fg="white", justify="center").pack(pady=40)
-        self.nav_buttons(next_command=self.show_step_1)
+    def show_account(self):
+        self.clear()
+        self.header("Paso 1: Tu Cuenta", "Define tu identidad en el sistema")
+        f = tk.Frame(self.root, bg=SECONDARY_BG, padx=30, pady=30, rounded=True if hasattr(tk, "rounded") else False)
+        f.pack(pady=20)
+        
+        tk.Label(f, text="Nombre de Usuario:", font=("Sans", 12), bg=SECONDARY_BG, fg=FG_COLOR).grid(row=0, column=0, sticky="e", pady=10)
+        self.eu = tk.Entry(f, font=("Sans", 12), width=25, bg=BG_COLOR, fg="white", insertbackground="white")
+        self.eu.grid(row=0, column=1, padx=10); self.eu.insert(0, self.u)
+        
+        tk.Label(f, text="Nueva Contraseña:", font=("Sans", 12), bg=SECONDARY_BG, fg=FG_COLOR).grid(row=1, column=0, sticky="e", pady=10)
+        self.ep = tk.Entry(f, font=("Sans", 12), width=25, show="*", bg=BG_COLOR, fg="white", insertbackground="white")
+        self.ep.grid(row=1, column=1, padx=10); self.ep.insert(0, self.p)
+        
+        self.Nav(self.val_account, self.show_welcome)
 
-    def show_step_1(self):
-        self.clear_window()
-        self.header("Paso 1: Tu Cuenta", "Crea el usuario principal del sistema")
-        frame = tk.Frame(self.root, bg=BG_COLOR); frame.pack(pady=40)
-        
-        tk.Label(frame, text="Nombre de Usuario:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=0, column=0, pady=10, padx=10, sticky="e")
-        self.entry_user = tk.Entry(frame, font=("Sans", 12), width=25); self.entry_user.grid(row=0, column=1, pady=10, padx=10)
-        self.entry_user.insert(0, self.username)
-        
-        tk.Label(frame, text="Contraseña:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=1, column=0, pady=10, padx=10, sticky="e")
-        self.entry_pass = tk.Entry(frame, show="*", font=("Sans", 12), width=25); self.entry_pass.grid(row=1, column=1, pady=10, padx=10)
-        self.entry_pass.insert(0, self.password)
-        
-        self.nav_buttons(next_command=self.validate_step_1, back_command=self.show_step_0)
+    def val_account(self):
+        self.u, self.p = self.eu.get().strip(), self.ep.get().strip()
+        if self.u and self.p: self.show_wifi_scan()
+        else: messagebox.showerror("Error", "Debes indicar usuario y contraseña.")
 
-    def validate_step_1(self):
-        self.username = self.entry_user.get().strip()
-        self.password = self.entry_pass.get().strip()
-        if not self.username or not self.password:
-            messagebox.showerror("Error", "Usuario y contraseña requeridos.")
-            return
-        self.show_step_2()
+    def show_wifi_scan(self):
+        self.clear()
+        self.header("Paso 2: Conexión WiFi", "Selecciona tu red de confianza")
+        
+        main_f = tk.Frame(self.root, bg=BG_COLOR)
+        main_f.pack(fill="both", expand=True, padx=100)
+        
+        self.lb = tk.Listbox(main_f, font=("Sans", 12), bg=SECONDARY_BG, fg="white", 
+                             selectbackground=ACCENT_COLOR, borderwidth=0, highlightthickness=1)
+        self.lb.pack(fill="both", expand=True, pady=10)
+        self.lb.bind('<Double-Button-1>', lambda e: self.val_wifi_selection())
+        
+        btn_f = tk.Frame(main_f, bg=BG_COLOR)
+        btn_f.pack(fill="x")
+        tk.Button(btn_f, text="🔄 REESCANEAR", bg=BUTTON_COLOR, fg="white", relief="flat", command=self.do_scan).pack(side="left", padx=5)
+        tk.Button(btn_f, text="🔧 CONFIG MANUAL", bg=BUTTON_COLOR, fg="yellow", relief="flat", command=lambda: self.show_net_config(True)).pack(side="left", padx=5)
+        
+        self.do_scan()
+        self.Nav(self.val_wifi_selection, self.show_account)
 
-    def show_step_2(self):
-        self.clear_window()
-        self.header("Paso 2: Red WiFi", "Selecciona tu red inalámbrica")
-        tk.Label(self.root, text="Buscando redes cercanas...", bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
-        
-        self.listbox = tk.Listbox(self.root, font=("Sans", 12), width=50, height=10, bg=BUTTON_COLOR, fg="white", selectbackground=ACCENT_COLOR)
-        self.listbox.pack(pady=10)
-        self.listbox.bind('<Double-Button-1>', lambda e: self.validate_step_2())
-        
-        btn_scan_frame = tk.Frame(self.root, bg=BG_COLOR); btn_scan_frame.pack(pady=5)
-        tk.Button(btn_scan_frame, text="🔄 REESCANEAR", command=self.scan_wifi, bg=BUTTON_COLOR, fg="white").pack(side="left", padx=10)
-        tk.Button(btn_scan_frame, text="🔧 MANUAL", command=lambda: self.show_step_3(manual=True), bg=BUTTON_COLOR, fg="yellow").pack(side="left", padx=10)
-        
-        self.scan_wifi()
-        self.nav_buttons(next_command=self.validate_step_2, back_command=self.show_step_1)
-
-    def scan_wifi(self):
-        self.listbox.delete(0, tk.END)
+    def do_scan(self):
+        self.lb.delete(0, tk.END); self.ssids = []
         try:
-            output = subprocess.check_output(["nmcli", "-t", "-f", "SSID", "device", "wifi", "list"], universal_newlines=True)
-            self.wifi_list = [line.strip() for line in output.splitlines() if line.strip()]
-            for ssid in self.wifi_list:
-                self.listbox.insert(tk.END, f"📶 {ssid}")
-        except:
-            self.listbox.insert(tk.END, "(No se detectó dispositivo WiFi)")
+            o = subprocess.check_output(["nmcli", "-t", "-f", "SSID", "dev", "wifi", "list"], universal_newlines=True)
+            for s in o.splitlines():
+                if s.strip() and s not in self.ssids:
+                    self.ssids.append(s); self.lb.insert(tk.END, f" 📶  {s}")
+        except: self.lb.insert(tk.END, "No se detectó WiFi")
 
-    def validate_step_2(self):
-        idx = self.listbox.curselection()
-        if idx:
-            self.selected_ssid = self.wifi_list[idx[0]]
-            self.show_step_3()
-        else:
-            if messagebox.askyesno("Sin WiFi", "¿Deseas continuar solo con Ethernet?"):
-                self.selected_ssid = ""
-                self.show_step_3()
+    def val_wifi_selection(self):
+        idx = self.lb.curselection()
+        if idx: self.ssid = self.ssids[idx[0]]; self.show_net_config()
+        elif messagebox.askyesno("Confirmar", "¿Continuar solo con Ethernet?"): self.ssid = ""; self.show_net_config()
 
-    def show_step_3(self, manual=False):
-        self.clear_window()
-        self.header("Configuración de Red", "Introduce los datos de conexión")
-        frame = tk.Frame(self.root, bg=BG_COLOR); frame.pack(pady=20)
+    def show_net_config(self, manual=False):
+        self.clear()
+        self.header("Paso 3: Detalles de Red", "Configura el acceso a internet")
+        f = tk.Frame(self.root, bg=SECONDARY_BG, padx=30, pady=20)
+        f.pack(pady=10)
         
-        tk.Label(frame, text="Nombre WiFi (SSID):", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=0, column=0, pady=10, padx=10, sticky="e")
-        self.entry_ssid = tk.Entry(frame, font=("Sans", 12), width=30); self.entry_ssid.grid(row=0, column=1, pady=10, padx=10)
-        self.entry_ssid.insert(0, self.selected_ssid)
-        if not manual and self.selected_ssid: 
-            self.entry_ssid.config(state="readonly")
+        tk.Label(f, text="SSID WiFi:", font=("Sans", 11), bg=SECONDARY_BG, fg=FG_COLOR).grid(row=0, column=0, sticky="e", pady=5)
+        self.es = tk.Entry(f, font=("Sans", 12), width=30, bg=BG_COLOR, fg="white"); self.es.grid(row=0, column=1, padx=10)
+        self.es.insert(0, self.ssid)
         
-        tk.Label(frame, text="Contraseña WiFi:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=1, column=0, pady=10, padx=10, sticky="e")
-        pf = tk.Frame(frame, bg=BG_COLOR); pf.grid(row=1, column=1, pady=10, padx=10, sticky="w")
-        self.wifi_pass = tk.Entry(pf, show="*", font=("Sans", 12), width=25); self.wifi_pass.pack(side=tk.LEFT)
-        self.wifi_pass.insert(0, self.wifi_password)
+        tk.Label(f, text="Contraseña WiFi:", font=("Sans", 11), bg=SECONDARY_BG, fg=FG_COLOR).grid(row=1, column=0, sticky="e", pady=5)
+        pf = tk.Frame(f, bg=SECONDARY_BG); pf.grid(row=1, column=1, sticky="w", padx=10)
+        self.ewp = tk.Entry(pf, font=("Sans", 12), show="*", width=25, bg=BG_COLOR, fg="white"); self.ewp.pack(side="left")
+        self.sv = tk.BooleanVar()
+        tk.Checkbutton(pf, variable=self.sv, bg=SECONDARY_BG, selectcolor=BG_COLOR, command=lambda: self.ewp.config(show="" if self.sv.get() else "*")).pack(side="left")
         
-        self.show_pass_var = tk.BooleanVar(value=False)
-        tk.Checkbutton(pf, variable=self.show_pass_var, command=self.toggle_pass, bg=BG_COLOR, selectcolor=BG_COLOR).pack(side=tk.LEFT, padx=5)
-
-        tk.Checkbutton(frame, text="Configuración IP Estática", variable=self.static_ip_var, bg=BG_COLOR, fg="yellow", command=self.toggle_static_fields).grid(row=2, columnspan=2, pady=20)
+        tk.Checkbutton(f, text="Configuración IP Estática (Avanzado)", variable=self.st_var, font=("Sans", 10, "bold"), 
+                       bg=SECONDARY_BG, fg="yellow", selectcolor=BG_COLOR, command=self.t_st).grid(row=2, columnspan=2, pady=15)
         
-        self.static_frame = tk.Frame(frame, bg=BG_COLOR); self.static_frame.grid(row=3, columnspan=2)
-        tk.Label(self.static_frame, text="IP:", bg=BG_COLOR, fg=FG_COLOR).grid(row=0, column=0, padx=5); self.entry_ip = tk.Entry(self.static_frame, width=15); self.entry_ip.grid(row=0, column=1); self.entry_ip.insert(0, self.ip_addr)
-        tk.Label(self.static_frame, text="GW:", bg=BG_COLOR, fg=FG_COLOR).grid(row=0, column=2, padx=5); self.entry_gw = tk.Entry(self.static_frame, width=15); self.entry_gw.grid(row=0, column=3); self.entry_gw.insert(0, self.gateway)
+        self.sf = tk.Frame(f, bg=SECONDARY_BG); self.sf.grid(row=3, columnspan=2)
+        tk.Label(self.sf, text="IP:", bg=SECONDARY_BG, fg=FG_COLOR).pack(side="left"); self.eip = tk.Entry(self.sf, width=15); self.eip.pack(side="left", padx=5); self.eip.insert(0, self.ip)
+        tk.Label(self.sf, text="Puerta:", bg=SECONDARY_BG, fg=FG_COLOR).pack(side="left"); self.egw = tk.Entry(self.sf, width=15); self.egw.pack(side="left", padx=5); self.egw.insert(0, self.gateway)
         
-        self.toggle_static_fields()
-        self.nav_buttons(next_command=self.finish_setup, back_command=self.show_step_2, next_text="GUARDAR Y FINALIZAR")
+        self.t_st()
+        self.Nav(self.apply_base_config, self.show_wifi_scan, "FINALIZAR CUENTA")
 
-    def toggle_pass(self):
-        self.wifi_pass.config(show="" if self.show_pass_var.get() else "*")
+    def t_st(self):
+        st = "normal" if self.st_var.get() else "disabled"
+        for c in self.sf.winfo_children(): c.config(state=st)
 
-    def toggle_static_fields(self):
-        state = "normal" if self.static_ip_var.get() else "disabled"
-        for child in self.static_frame.winfo_children(): child.configure(state=state)
-
-    def finish_setup(self):
-        # Capture current widgets data BEFORE clear_window
-        self.selected_ssid = self.entry_ssid.get().strip()
-        self.wifi_password = self.wifi_pass.get().strip()
-        self.static_ip_enabled = self.static_ip_var.get()
-        if self.static_ip_enabled:
-            self.ip_addr = self.entry_ip.get().strip()
-            self.gateway = self.entry_gw.get().strip()
-
-        if messagebox.askyesno("Confirmar", "¿Aplicar cambios y reiniciar?"):
-            self.clear_window()
-            tk.Label(self.root, text="Aplicando cambios...", font=("Sans", 18), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=100)
+    def apply_base_config(self):
+        # Store latest data
+        self.u, self.p = self.eu.get().strip(), self.ep.get().strip()
+        self.ssid, self.wp = self.es.get().strip(), self.ewp.get().strip()
+        
+        if messagebox.askyesno("Confirmar", "¿Aplicar cambios y reiniciar?\nSe creará el usuario y se configurará la red."):
+            self.clear()
+            tk.Label(self.root, text="Aplicando configuración del sistema...\nLa placa se reiniciará automáticamente.", 
+                     font=("Sans", 16, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=100)
             self.root.update()
             try:
-                # Use stored self.username and self.password
-                subprocess.call(f"sudo useradd -m -s /bin/bash -G sudo,dialout,video,input,plugdev,netdev {self.username}", shell=True)
-                subprocess.call(f"echo '{self.username}:{self.password}' | sudo chpasswd", shell=True)
-                subprocess.call(f"echo '[Seat:*]\nautologin-user={self.username}\nautologin-session=xfce\n' | sudo tee /etc/lightdm/lightdm.conf.d/90-astro.conf", shell=True)
-                
-                if self.selected_ssid:
-                    subprocess.call(f"sudo nmcli con delete '{self.selected_ssid}' 2>/dev/null || true", shell=True)
-                    cmd = f"sudo nmcli con add type wifi ifname '*' con-name '{self.selected_ssid}' ssid '{self.selected_ssid}' -- 802-11-wireless-security.key-mgmt wpa-psk 802-11-wireless-security.psk '{self.wifi_password}'"
-                    if self.static_ip_enabled:
-                        cmd += f" ipv4.method manual ipv4.addresses '{self.ip_addr}/24' ipv4.gateway '{self.gateway}' ipv4.dns '8.8.8.8'"
-                    else:
-                        cmd += " ipv4.method auto"
-                    subprocess.call(cmd, shell=True); subprocess.Popen(f"sudo nmcli con up '{self.selected_ssid}'", shell=True)
-                
+                # 1. User
+                subprocess.call(f"sudo useradd -m -s /bin/bash -G sudo,dialout,video,input,plugdev,netdev {self.u}", shell=True)
+                subprocess.call(f"echo '{self.u}:{self.p}' | sudo chpasswd", shell=True)
+                # 2. Autologin
+                subprocess.call(f"echo '[Seat:*]\nautologin-user={self.u}\nautologin-session=xfce\n' | sudo tee /etc/lightdm/lightdm.conf.d/90-astro.conf", shell=True)
+                # 3. WiFi
+                if self.ssid:
+                    subprocess.call(f"sudo nmcli con delete '{self.ssid}' 2>/dev/null || true", shell=True)
+                    cmd = f"sudo nmcli con add type wifi ifname '*' con-name '{self.ssid}' ssid '{self.ssid}' -- 802-11-wireless-security.key-mgmt wpa-psk 802-11-wireless-security.psk '{self.wp}'"
+                    if self.st_var.get(): cmd += f" ipv4.method manual ipv4.addresses '{self.eip.get()}/24' ipv4.gateway '{self.egw.get()}' ipv4.dns '8.8.8.8'"
+                    else: cmd += " ipv4.method auto"
+                    subprocess.call(cmd, shell=True); subprocess.Popen(f"sudo nmcli con up '{self.ssid}'", shell=True)
+                # 4. Finish first stage
                 subprocess.call("sudo touch /etc/astro-configured", shell=True)
-                messagebox.showinfo("AstroOrange V2", "¡Listo! Reiniciando...")
                 subprocess.call("sudo reboot", shell=True)
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
+            except Exception as e: messagebox.showerror("Error Critico", str(e))
 
-    def is_installed(self, binary):
-        return shutil.which(binary) or any(os.path.exists(os.path.join(p, binary)) for p in ["/usr/bin", "/usr/local/bin", "/opt/astroorange/bin"])
+    # --- STAGE 2: SOFTWARE ---
+    def show_software_installer(self):
+        self.clear()
+        self.header("Instalador de Software", "Personaliza tu equipo astronómico")
+        
+        f = tk.Frame(self.root, bg=BG_COLOR); f.pack(pady=10)
+        
+        # Mapping apps to binaries for detection
+        row = 0
+        for name, info in SOFTWARE_LIST.items():
+            installed = self.is_installed(info["bin"])
+            v = tk.BooleanVar(value=installed or name in ["KStars / INDI", "PHD2 Guiding", "ASTAP (Plate Solver)"])
+            self.software_vars[name] = v
+            
+            cb = tk.Checkbutton(f, text=name, variable=v, bg=BG_COLOR, font=("Sans", 11), 
+                               fg="white" if not installed else SUCCESS_COLOR, selectcolor=SECONDARY_BG, 
+                               activebackground=BG_COLOR, activeforeground=ACCENT_COLOR)
+            cb.grid(row=row//2, column=row%2, sticky="w", padx=30, pady=8)
+            
+            if installed:
+                tk.Label(f, text="(INSTALADO)", font=("Sans", 8, "bold"), bg=BG_COLOR, fg=SUCCESS_COLOR).grid(row=row//2, column=row%2, sticky="e", padx=(0, 30))
+            row += 1
 
-    def show_stage_2(self):
-        self.clear_window(); self.header("Etapa 2: Aplicaciones", "Instalador de Software")
-        frame = tk.Frame(self.root, bg=BG_COLOR); frame.pack(pady=10)
-        sw_map = {"KStars": "kstars", "PHD2": "phd2", "ASTAP": "astap", "Stellarium": "stellarium", "AstroDMX": "astrodmx", "CCDciel": "ccdciel"}
-        self.vars = {}
-        for i, (name, bin) in enumerate(sw_map.items()):
-            inst = self.is_installed(bin)
-            self.vars[name] = tk.BooleanVar(value=inst or name in ["KStars", "PHD2"])
-            cb = tk.Checkbutton(frame, text=name, variable=self.vars[name], bg=BG_COLOR, fg="white" if not inst else "#00ff00", selectcolor=BG_COLOR, font=("Sans", 11))
-            cb.grid(row=i//2, column=i%2, sticky="w", padx=20, pady=5)
-            if inst: tk.Label(frame, text="(Ya instalado)", bg=BG_COLOR, fg="#00ff00", font=("Sans", 8)).grid(row=i//2, column=i%2, sticky="e")
-        tk.Button(self.root, text="🚀 INICIAR INSTALACIÓN", command=self.start_install, bg=ACCENT_COLOR, fg=BG_COLOR, font=("Sans", 14, "bold"), width=30).pack(pady=20)
+        tk.Button(self.root, text="🚀 INICIAR INSTALACIÓN", font=("Sans", 14, "bold"), bg=ACCENT_COLOR, fg=BG_COLOR, 
+                  activebackground=FG_COLOR, relief="flat", width=30, command=self.start_install_process).pack(pady=30)
 
-    def start_install(self):
-        win = tk.Toplevel(self.root); win.geometry("900x750"); win.configure(bg=BG_COLOR)
-        tk.Label(win, text="🚀 Instalando...", font=("Sans", 16, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=20)
+    def is_installed(self, bin_name):
+        return shutil.which(bin_name) or any(os.path.exists(os.path.join(p, bin_name)) for p in ["/usr/bin", "/usr/local/bin", "/opt/astroorange/bin"])
+
+    def start_install_process(self):
+        win = tk.Toplevel(self.root); win.title("Proceso de Instalación"); win.geometry("900x750"); win.configure(bg=BG_COLOR)
+        tk.Label(win, text="🚀 Instalando... por favor espera", font=("Sans", 20, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=20)
         self.carousel = ImageCarousel(win)
-        threading.Thread(target=self.run_install, args=(win,)).start()
+        threading.Thread(target=self.run_apt_task, args=(win,)).start()
 
-    def run_install(self, win):
+    def run_apt_task(self, win):
         cmds = ["sudo apt-get update"]
-        if self.vars["KStars"].get(): cmds.append("sudo add-apt-repository -y ppa:mutlaqja/ppa && sudo apt-get install -y kstars-bleeding indi-full")
-        if self.vars["PHD2"].get(): cmds.append("sudo add-apt-repository -y ppa:pch/phd2 && sudo apt-get install -y phd2")
-        if self.vars["ASTAP"].get(): cmds.append("wget https://www.hnsky.org/astap_arm64.deb -O /tmp/astap.deb && sudo apt-get install -y /tmp/astap.deb")
-        fcmd = " && ".join(cmds); subprocess.call(["xfce4-terminal", "-e", f"bash -c '{fcmd}; echo \"✅ COMPLETADO. Pulsa ENTER.\"; read'"])
-        subprocess.call("sudo touch /etc/astro-finished", shell=True); win.destroy(); self.root.destroy()
+        for name, info in SOFTWARE_LIST.items():
+            if self.software_vars[name].get() and not self.is_installed(info["bin"]):
+                if info.get("ppa"): cmds.append(f"sudo add-apt-repository -y {info['ppa']}")
+                if info.get("url"): cmds.append(f"wget {info['url']} -O /tmp/pkg.deb && sudo apt-get install -y /tmp/pkg.deb")
+                elif info.get("deb"): cmds.append(f"echo '⚠️ {name} requiere instalador manual o repo externo'")
+                else: cmds.append(f"sudo apt-get install -y {info['pkg']}")
+        
+        full_cmd = " && ".join(cmds)
+        subprocess.call(["xfce4-terminal", "--title=AstroOrange Installer", "-e", f"bash -c '{full_cmd}; echo \"✅ INSTALACIÓN FINALIZADA. Pulsa ENTER para terminar.\"; read'"])
+        subprocess.call("sudo touch /etc/astro-finished", shell=True)
+        win.destroy(); self.root.destroy()
+        messagebox.showinfo("Finalizado", "Tus aplicaciones están listas en el Menú de Inicio.")
 
 if __name__ == "__main__":
     root = tk.Tk(); app = WizardApp(root); root.mainloop()
