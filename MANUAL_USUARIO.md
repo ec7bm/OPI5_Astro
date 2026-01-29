@@ -105,12 +105,14 @@ Selecciona los programas que necesites:
 
 ### Proceso de Instalación
 
-1. **Marca** los programas que quieres instalar
-2. Haz clic en **"🚀 Iniciar Instalación"**
-3. Confirma la instalación
-4. **Espera 10-20 minutos** - Se abrirá una terminal mostrando el progreso
-5. Cuando termine, presiona `Enter` para cerrar la terminal
-6. El Wizard se cerrará automáticamente
+1. **Selecciona** los programas que quieres instalar.
+   - Si un programa ya está instalado, aparecerá la etiqueta **(INSTALADO)**.
+   - Si seleccionas un programa ya instalado, el Wizard te preguntará si deseas **REINSTALAR / REPARAR**.
+2. Haz clic en **"SIGUIENTE"** para pasar a la pantalla de ejecución.
+3. Haz clic en **"🚀 Iniciar Instalación"**.
+4. **Progreso en vivo**: Se abrirá una consola integrada mostrando el progreso de `apt-get`.
+5. **Abortar**: Si necesitas detener el proceso, puedes usar el botón rojo **"ABORTAR INSTALACION"**.
+6. Cuando termine, el botón cambiará a **"LISTO - SALIR"**.
 
 > ⏱️ **Tiempo estimado**: 10-15 minutos dependiendo de tu conexión a internet.
 
