@@ -153,7 +153,16 @@ cp "$UP_SRC/overlay/etc/X11/xorg.conf.d/99-dummy-display.conf" /etc/X11/xorg.con
 # Ensure NetworkManager manages everything
 sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf || true
 
-# --- D. Permissions & Sudoers ---
+# --- D. Fixes for Headless / Resolution ---
+echo "   🖥️  Hardening Headless Resolution..."
+rm -f /etc/X11/xorg.conf.d/20-modesetting.conf || true
+
+# --- E. Visuals & Themes ---
+echo "   🎨 Deploying AstroOrange Style..."
+mkdir -p /usr/share/backgrounds
+cp "$UP_SRC/overlay/usr/share/backgrounds/astro-wallpaper.png" /usr/share/backgrounds/ || true
+
+# --- F. Permissions & Sudoers ---
 echo "   🔑 Configuring Permissions..."
 echo "%sudo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-astro-users
 chmod 440 /etc/sudoers.d/90-astro-users
