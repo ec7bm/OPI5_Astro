@@ -4,6 +4,7 @@ import subprocess
 import os
 import threading
 import socket
+import shutil
 from glob import glob
 try:
     from PIL import Image, ImageTk
@@ -314,24 +315,43 @@ class WizardApp:
             except Exception as e:
                 messagebox.showerror("Error Critico", f"Error al configurar: {e}")
 
+    def is_installed(self, binary):
+        """Checks if a binary is available in the system PATH"""
+        return shutil.which(binary) is not None
+
     # --- ETAPA 2: INSTALADOR ---
     def show_stage_2(self):
         self.clear_window()
         self.header("Etapa 2: Instalador de Software", "Personaliza tu estación astronómica")
         
         frame = tk.Frame(self.root, bg=BG_COLOR); frame.pack(pady=10)
-        self.vars = {
-            "KStars / INDI": tk.BooleanVar(value=True),
-            "PHD2 Guiding": tk.BooleanVar(value=True),
-            "ASTAP (Plate Solver)": tk.BooleanVar(value=True),
-            "Stellarium": tk.BooleanVar(value=False),
-            "AstroDMX Capture": tk.BooleanVar(value=False),
-            "CCDciel": tk.BooleanVar(value=False),
-            "Syncthing": tk.BooleanVar(value=False)
-        }
-        for i, (name, var) in enumerate(self.vars.items()):
-            tk.Checkbutton(frame, text=name, variable=var, bg=BG_COLOR, fg="white", selectcolor=BG_COLOR, font=("Sans", 11)).grid(row=i//2, column=i%2, sticky="w", padx=20, pady=5)
         
+        # Mapping names to binaries to check if they are already installed
+        software_map = {
+            "KStars / INDI": "kstars",
+            "PHD2 Guiding": "phd2",
+            "ASTAP (Plate Solver)": "astap",
+            "Stellarium": "stellarium",
+            "AstroDMX Capture": "astrodmxcapture",
+            "CCDciel": "ccdciel",
+            "Syncthing": "syncthing"
+        }
+
+        self.vars = {}
+        for i, (name, binary) in enumerate(software_map.items()):
+            already_installed = self.is_installed(binary)
+            # Default to True for kstars/phd/astap if not installed, otherwise reflect system state
+            initial_val = True if name in ["KStars / INDI", "PHD2 Guiding", "ASTAP (Plate Solver)"] and not already_installed else already_installed
+            
+            self.vars[name] = tk.BooleanVar(value=initial_val)
+            
+            cb = tk.Checkbutton(frame, text=name, variable=self.vars[name], bg=BG_COLOR, fg="white", 
+                               selectcolor=BG_COLOR, font=("Sans", 11))
+            cb.grid(row=i//2, column=i%2, sticky="w", padx=20, pady=5)
+            
+            if already_installed:
+                cb.config(fg=ACCENT_COLOR) # Visual hint that it's already there
+
         tk.Button(self.root, text="🚀 INICIAR INSTALACIÓN", command=self.start_install, 
                   bg=ACCENT_COLOR, fg=BG_COLOR, font=("Sans", 14, "bold"), width=30).pack(pady=20)
 
@@ -360,12 +380,14 @@ class WizardApp:
         if self.vars["Syncthing"].get(): cmds.append("sudo apt-get install -y syncthing")
         
         full_command = " && ".join(cmds)
-        # Reduced terminal size (geometry)
-        subprocess.call(["xfce4-terminal", "--geometry=90x25", "--title=Progreso de Instalación", "-e", f"bash -c '{full_command}; echo Finalizado; read'"])
+        # Better terminal message
+        msg_finish = "echo '---------------------------------------------------'; echo '✅ INSTALACIÓN COMPLETADA'; echo 'Pulsa ENTER para cerrar esta ventana y finalizar'; read"
+        
+        subprocess.call(["xfce4-terminal", "--geometry=90x25", "--title=Progreso de Instalación", "-e", f"bash -c '{full_command}; {msg_finish}'"])
         
         subprocess.call("rm -f ~/.config/autostart/astro-wizard.desktop", shell=True)
         install_win.destroy()
-        messagebox.showinfo("Finalizado", "Software instalado correctamente.\nYa puedes empezar a usar tu AstroOrange V2.")
+        messagebox.showinfo("Finalizado", "Proceso completado.\nSi has instalado programas nuevos, ya aparecerán en el menú.")
         self.root.destroy()
 
 if __name__ == "__main__":
