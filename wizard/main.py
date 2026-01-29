@@ -260,12 +260,6 @@ class WizardApp:
         tk.Checkbutton(password_frame, variable=self.show_pass_var, command=self.toggle_pass,
                        bg=BG_COLOR, selectcolor=BG_COLOR).pack(side=tk.LEFT, padx=5)
 
-    def toggle_pass(self):
-        if self.show_pass_var.get():
-            self.wifi_pass.config(show="")
-        else:
-            self.wifi_pass.config(show="*")
-        
         tk.Checkbutton(frame, text="Configuración IP Avanzada (Estática)", variable=self.static_ip_var,
                        bg=BG_COLOR, fg="yellow", selectcolor=BG_COLOR, command=self.toggle_static_fields).grid(row=2, columnspan=2, pady=20)
         
@@ -285,6 +279,12 @@ class WizardApp:
         
         self.toggle_static_fields()
         self.nav_buttons(next_command=self.finish_setup, back_command=self.show_step_2, next_text="GUARDAR Y FINALIZAR")
+
+    def toggle_pass(self):
+        if self.show_pass_var.get():
+            self.wifi_pass.config(show="")
+        else:
+            self.wifi_pass.config(show="*")
 
     def toggle_static_fields(self):
         state = "normal" if self.static_ip_var.get() else "disabled"
