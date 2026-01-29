@@ -240,8 +240,22 @@ class WizardApp:
         
         # Password Row
         tk.Label(frame, text="Contraseña WiFi:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=1, column=0, pady=10, padx=10, sticky="e")
-        self.wifi_pass = tk.Entry(frame, show="*", font=("Sans", 12), width=30); self.wifi_pass.grid(row=1, column=1, pady=10, padx=10)
+        password_frame = tk.Frame(frame, bg=BG_COLOR)
+        password_frame.grid(row=1, column=1, pady=10, padx=10, sticky="w")
+        
+        self.wifi_pass = tk.Entry(password_frame, show="*", font=("Sans", 12), width=25)
+        self.wifi_pass.pack(side=tk.LEFT)
         self.wifi_pass.insert(0, self.wifi_password)
+        
+        self.show_pass_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(password_frame, variable=self.show_pass_var, command=self.toggle_pass,
+                       bg=BG_COLOR, selectcolor=BG_COLOR).pack(side=tk.LEFT, padx=5)
+
+    def toggle_pass(self):
+        if self.show_pass_var.get():
+            self.wifi_pass.config(show="")
+        else:
+            self.wifi_pass.config(show="*")
         
         tk.Checkbutton(frame, text="Configuración IP Avanzada (Estática)", variable=self.static_ip_var,
                        bg=BG_COLOR, fg="yellow", selectcolor=BG_COLOR, command=self.toggle_static_fields).grid(row=2, columnspan=2, pady=20)
@@ -268,15 +282,25 @@ class WizardApp:
         for child in self.static_frame.winfo_children():
             child.configure(state=state)
 
+    def is_valid_ip(self, ip):
+        import re
+        return bool(re.match(r"^(\d{1,3}\.){3}\d{1,3}$", ip))
+
     def finish_setup(self):
         # Save state before proceeding
-        self.selected_ssid = self.entry_ssid.get()
-        self.wifi_password = self.wifi_pass.get()
+        self.selected_ssid = self.entry_ssid.get().strip()
+        self.wifi_password = self.wifi_pass.get().strip()
         self.static_ip_enabled = self.static_ip_var.get()
+        
         if self.static_ip_enabled:
-            self.ip_addr = self.entry_ip.get()
-            self.gateway = self.entry_gw.get()
-            self.dns_server = self.entry_dns.get()
+            self.ip_addr = self.entry_ip.get().strip()
+            self.gateway = self.entry_gw.get().strip()
+            self.dns_server = self.entry_dns.get().strip()
+            
+            # Validación simple
+            if not self.is_valid_ip(self.ip_addr) or not self.is_valid_ip(self.gateway):
+                messagebox.showerror("Error", "La IP o la Puerta de Enlace no son válidas.\nEjemplo: 192.168.1.50")
+                return
 
         if messagebox.askyesno("Confirmar", "¿Aplicar configuración y reiniciar?"):
             self.clear_window()
@@ -308,11 +332,10 @@ class WizardApp:
                     base_cmd = f"sudo nmcli dev wifi connect '{ssid}' password '{wpwd}' name '{ssid}'"
                     if self.static_ip_enabled:
                         # Prioridad 50 para que Ethernet (100) mande si está conectado
-                        subprocess.call(f"{base_cmd} ipv4.method manual ipv4.addresses {self.ip_addr}/24 ipv4.gateway {self.gateway} ipv4.dns {self.dns_server} connection.autoconnect yes connection.autoconnect-priority 50", shell=True)
+                        # Quitamos el autoconnect yes redundante ya que nmcli connect lo pone por defecto
+                        subprocess.call(f"{base_cmd} ipv4.method manual ipv4.addresses '{self.ip_addr}/24' ipv4.gateway '{self.gateway}' ipv4.dns '{self.dns_server}' connection.autoconnect-priority 50", shell=True)
                     else:
-                        subprocess.call(f"{base_cmd} connection.autoconnect yes connection.autoconnect-priority 50", shell=True)
-                    
-                    # Quitamos el 'nmcli connection up' forzado para que NM decida según prioridad
+                        subprocess.call(f"{base_cmd} connection.autoconnect-priority 50", shell=True)
                 
                 # 4. Heredar config y Accesos Directos
                 user_home = f"/home/{self.username}"
