@@ -35,11 +35,9 @@ Tienes **dos opciones** para instalar AstroOrange V2:
    - **Windows/Mac/Linux**: Usa [balenaEtcher](https://www.balena.io/etcher/)
    - **Linux**: Usa `dd` o [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
 
-3. **Inserta la SD** en tu Orange Pi 5 Pro y enciéndela
-
-4. **Conéctate al Hotspot** `AstroOrange-Setup` (contraseña: `astrosetup`)
-
-5. **Accede al VNC** en tu navegador: `http://10.42.0.1:6080/vnc.html`
+3. **Conecta un cable Ethernet** a tu Orange Pi 5 Pro (Recomendado para la configuración inicial).
+4. **Enciende la placa** y accede al VNC en tu navegador: `http://<ip-de-la-placa>:6080/vnc.html`
+   - *Nota: Si no usas cable, el sistema activará el Hotspot `AstroOrange-Setup` (clave: `astrosetup`) como método de rescate.*
 
 📖 **Manual completo**: [MANUAL_USUARIO.md](MANUAL_USUARIO.md)
 
@@ -201,6 +199,18 @@ Este proyecto está licenciado bajo GPL v3 - ver el archivo [LICENSE](LICENSE) p
 - **Autor**: EC7BM
 - **GitHub**: [@ec7bm](https://github.com/ec7bm)
 - **Proyecto**: [OPI5_Astro](https://github.com/ec7bm/OPI5_Astro)
+
+---
+
+## ☕ Apoya el Proyecto
+
+Si AstroOrange te ha ayudado en tus noches de astrofotografía y quieres agradecer el trabajo detrás de esta distribución, puedes invitarme a un café. Tu apoyo ayuda a mantener vivo el desarrollo y el soporte de herramientas para la comunidad.
+
+<div align="center">
+  <a href="TU_LINK_DE_PAYPAL_AQUI">
+    <img src="assets/donation/paypal-donate.gif" alt="Donar con PayPal" />
+  </a>
+</div>
 
 ---
 
