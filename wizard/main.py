@@ -379,8 +379,15 @@ class WizardApp:
                 messagebox.showerror("Error Critico", f"Error al configurar: {e}")
 
     def is_installed(self, binary):
-        """Checks if a binary is available in the system PATH"""
-        return shutil.which(binary) is not None
+        """Checks if a binary is available in PATH or common install dirs"""
+        if shutil.which(binary):
+            return True
+        # Fallback for common astro paths
+        extra_paths = ["/usr/bin", "/usr/local/bin", "/opt/astroorange/bin"]
+        for p in extra_paths:
+            if os.path.exists(os.path.join(p, binary)):
+                return True
+        return False
 
     # --- ETAPA 2: INSTALADOR ---
     def show_stage_2(self):
@@ -395,7 +402,7 @@ class WizardApp:
             "PHD2 Guiding": "phd2",
             "ASTAP (Plate Solver)": "astap",
             "Stellarium": "stellarium",
-            "AstroDMX Capture": "astrodmxcapture",
+            "AstroDMX Capture": "astrodmx",
             "CCDciel": "ccdciel",
             "Syncthing": "syncthing"
         }
