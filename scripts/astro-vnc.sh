@@ -15,29 +15,51 @@ for i in {1..60}; do
     sleep 1
 done
 
-# 2. Detectar usuario activo y su .Xauthority
-# Buscamos quién es el dueño del proceso Xorg
-X_USER=$(ps aux | grep Xorg | grep -v grep | awk '{print $1}' | head -n 1)
-[ -z "$X_USER" ] && X_USER="astro-setup" # Fallback
+# 2. Detectar el archivo Xauthority de LightDM (Más robusto)
+echo "Searching for Xauthority..."
+XAUTH=$(find /var/run/lightdm -name ":0*" 2>/dev/null | head -n 1)
 
-echo "Active user detected: $X_USER"
-XAUTH="/home/$X_USER/.Xauthority"
-[ ! -f "$XAUTH" ] && XAUTH="/run/user/$(id -u $X_USER)/.mutter-Xwaylandauth.*" # Para Wayland si aplica
+if [ -z "$XAUTH" ]; then
+    # Fallback al usuario que posee Xorg
+    X_USER=$(ps aux | grep Xorg | grep -v grep | awk '{print $1}' | head -n 1)
+    [ -z "$X_USER" ] && X_USER="root"
+    XAUTH="/home/$X_USER/.Xauthority"
+    [ "$X_USER" == "root" ] && XAUTH="/root/.Xauthority"
+fi
 
-# 3. Configurar entorno para el VNC
+echo "Using XAUTHORITY: $XAUTH"
 export XAUTHORITY=$XAUTH
 
-# 4. VNC Password Fija
-mkdir -p /home/$X_USER/.vnc
-x11vnc -storepasswd "astroorange" /home/$X_USER/.vnc/passwd
-chown $X_USER:$X_USER /home/$X_USER/.vnc/passwd
+# 3. VNC Password Fija (Siempre en /etc/shadow-vnc para ser independiente del usuario)
+VNC_PASS_FILE="/etc/x11vnc.pass"
+if [ ! -f "$VNC_PASS_FILE" ]; then
+    x11vnc -storepasswd "astroorange" "$VNC_PASS_FILE"
+    chmod 600 "$VNC_PASS_FILE"
+fi
 
-# 5. Lanzar VNC y noVNC
-echo "Starting VNC for $X_USER..."
-# Matar instancias previas para evitar bloqueos
+# 4. Lanzar VNC y noVNC
+echo "Starting VNC..."
 pkill x11vnc || true
-x11vnc -auth $XAUTH -display :0 -forever -rfbauth /home/$X_USER/.vnc/passwd -shared -bg -xkb -noxrecord -noxfixes -noxdamage &
+x11vnc -auth "$XAUTH" -display :0 -forever -rfbauth "$VNC_PASS_FILE" -shared -bg -xkb -noxrecord -noxfixes -noxdamage &
 
-# Lanzar noVNC (siempre en puerto 6080)
-pkill -f launch.sh || true
-/usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080
+# Intentar localizar noVNC launch.sh en rutas comunes
+NOVNC_LAUNCH=""
+for p in "/usr/share/novnc/utils/launch.sh" "/usr/bin/novnc_proxy"; do
+    if [ -f "$p" ]; then
+        NOVNC_LAUNCH="$p"
+        break
+    fi
+done
+
+if [ -n "$NOVNC_LAUNCH" ]; then
+    echo "Starting noVNC with $NOVNC_LAUNCH..."
+    pkill -f "$(basename "$NOVNC_LAUNCH")" || true
+    if [[ "$NOVNC_LAUNCH" == *"launch.sh"* ]]; then
+        "$NOVNC_LAUNCH" --vnc localhost:5900 --listen 6080 &
+    else
+        "$NOVNC_LAUNCH" --vnc localhost:5900 --listen 6080
+    fi
+else
+    echo "ERROR: noVNC launch script not found!"
+    exit 1
+fi
