@@ -73,7 +73,8 @@ Instrucciones básicas. Se recomienda que la placa esté conectada por cable par
 *Estas serán tus credenciales definitivas.*
 
 #### Paso 2: Red WiFi
-El Wizard escaneará las redes disponibles. Selecciona la tuya de la lista y pulsa Siguiente.
+1. El Wizard escaneará las redes disponibles. Selecciona la tuya de la lista.
+2. **Configuración Manual**: Si tu red es oculta o no aparece, haz clic en el botón amarillo **"CONFIGURACIÓN MANUAL"** para escribir el nombre (SSID) tú mismo.
 
 #### Paso 3: Configuración de Red
 1. Introduce la **contraseña de tu WiFi**.

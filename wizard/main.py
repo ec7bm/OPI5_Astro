@@ -141,15 +141,22 @@ class WizardApp:
                                  bg=BUTTON_COLOR, fg="white", selectbackground=ACCENT_COLOR)
         self.listbox.pack(pady=10)
         
-        tk.Button(self.root, text="🔄 REESCANEAR", command=self.scan_wifi, bg=BUTTON_COLOR, fg="white").pack(pady=5)
-        self.scan_wifi()
+        btn_frame = tk.Frame(self.root, bg=BG_COLOR)
+        btn_frame.pack(pady=5)
         
+        tk.Button(btn_frame, text="🔄 REESCANEAR", command=self.scan_wifi, bg=BUTTON_COLOR, fg="white").pack(side="left", padx=10)
+        tk.Button(btn_frame, text="🔧 CONFIGURACIÓN MANUAL", command=self.show_manual_wifi, bg=BUTTON_COLOR, fg="yellow").pack(side="left", padx=10)
+        
+        self.scan_wifi()
         self.next_button(command=self.show_step_3)
+
+    def show_manual_wifi(self):
+        self.selected_ssid = ""
+        self.show_step_3(manual=True)
 
     def scan_wifi(self):
         self.listbox.delete(0, tk.END)
         try:
-            # Descomentar en hardware real. En VM fallará pero no romperá el Wizard
             output = subprocess.check_output(["nmcli", "-t", "-f", "SSID,SIGNAL", "device", "wifi", "list"], universal_newlines=True)
             self.wifi_list = []
             for line in output.splitlines():
@@ -162,26 +169,35 @@ class WizardApp:
             self.listbox.insert(tk.END, "(No se detectó dispositivo WiFi)")
 
     # --- PASO 3: CONFIG WIFI ---
-    def show_step_3(self):
-        idx = self.listbox.curselection()
-        self.selected_ssid = self.wifi_list[idx[0]] if idx else ""
+    def show_step_3(self, manual=False):
+        if not manual:
+            idx = self.listbox.curselection()
+            self.selected_ssid = self.wifi_list[idx[0]] if idx else ""
         
         self.clear_window()
-        self.header(f"Conectar a: {self.selected_ssid}" if self.selected_ssid else "Configuración de Red")
+        self.header("Configuración de Red", "Introduce los datos de conexión")
         
         frame = tk.Frame(self.root, bg=BG_COLOR)
         frame.pack(pady=20)
         
+        # SSID Row
+        tk.Label(frame, text="Nombre WiFi (SSID):", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=0, column=0, pady=10, padx=10, sticky="e")
+        self.entry_ssid = tk.Entry(frame, font=("Sans", 12), width=30)
+        self.entry_ssid.grid(row=0, column=1, pady=10, padx=10)
         if self.selected_ssid:
-            tk.Label(frame, text="Contraseña WiFi:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=0, column=0, pady=10, padx=10)
-            self.wifi_pass = tk.Entry(frame, show="*", font=("Sans", 12), width=30)
-            self.wifi_pass.grid(row=0, column=1, pady=10, padx=10)
+            self.entry_ssid.insert(0, self.selected_ssid)
+            self.entry_ssid.config(state="readonly")
+        
+        # Password Row
+        tk.Label(frame, text="Contraseña WiFi:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=1, column=0, pady=10, padx=10, sticky="e")
+        self.wifi_pass = tk.Entry(frame, show="*", font=("Sans", 12), width=30)
+        self.wifi_pass.grid(row=1, column=1, pady=10, padx=10)
         
         tk.Checkbutton(frame, text="Configuración IP Avanzada (Estática)", variable=self.static_ip_var,
-                       bg=BG_COLOR, fg="yellow", selectcolor=BG_COLOR, command=self.toggle_static_fields).grid(row=1, columnspan=2, pady=20)
+                       bg=BG_COLOR, fg="yellow", selectcolor=BG_COLOR, command=self.toggle_static_fields).grid(row=2, columnspan=2, pady=20)
         
         self.static_frame = tk.Frame(frame, bg=BG_COLOR)
-        self.static_frame.grid(row=2, columnspan=2)
+        self.static_frame.grid(row=3, columnspan=2)
         
         tk.Label(self.static_frame, text="IP Estática:", bg=BG_COLOR, fg=FG_COLOR).grid(row=0, column=0, padx=5, pady=2)
         self.entry_ip = tk.Entry(self.static_frame, width=20); self.entry_ip.grid(row=0, column=1, padx=5, pady=2)
@@ -203,9 +219,11 @@ class WizardApp:
         for child in self.static_frame.winfo_children():
             child.configure(state=state)
 
+    # --- FINALIZATION ---
     def finish_setup(self):
         user = self.entry_user.get()
         pwd = self.entry_pass.get()
+        ssid = self.entry_ssid.get()
         
         if not user or not pwd:
             messagebox.showerror("Error", "El usuario y contraseña son obligatorios.")
@@ -219,10 +237,10 @@ class WizardApp:
         subprocess.call(f"echo '[Seat:*]\nautologin-user={user}\nautologin-session=xfce\n' | sudo tee /etc/lightdm/lightdm.conf.d/50-astro.conf", shell=True)
         subprocess.call("sudo rm -f /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
         
-        # 3. Configurar WiFi e IP
-        if self.selected_ssid:
+        # 3. Configurar WiFi e IP si hay SSID
+        if ssid:
             wpwd = self.wifi_pass.get()
-            base_cmd = f"sudo nmcli dev wifi connect '{self.selected_ssid}' password '{wpwd}'"
+            base_cmd = f"sudo nmcli dev wifi connect '{ssid}' password '{wpwd}'"
             if self.static_ip_var.get():
                 ip, gw, dns = self.entry_ip.get(), self.entry_gw.get(), self.entry_dns.get()
                 subprocess.call(f"{base_cmd} ipv4.method manual ipv4.addresses {ip}/24 ipv4.gateway {gw} ipv4.dns {dns}", shell=True)
