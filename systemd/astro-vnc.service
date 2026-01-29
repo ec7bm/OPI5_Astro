@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=astro-setup
+# Ejecutar como root para poder leer el .Xauthority de cualquier usuario
 ExecStart=/opt/astroorange/bin/astro-vnc.sh
 Restart=always
 

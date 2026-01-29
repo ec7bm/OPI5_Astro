@@ -307,13 +307,12 @@ class WizardApp:
                     
                     base_cmd = f"sudo nmcli dev wifi connect '{ssid}' password '{wpwd}' name '{ssid}'"
                     if self.static_ip_enabled:
-                        # Asegurar que la IP estática sobreescribe bien
-                        subprocess.call(f"{base_cmd} ipv4.method manual ipv4.addresses {self.ip_addr}/24 ipv4.gateway {self.gateway} ipv4.dns {self.dns_server} connection.autoconnect yes connection.autoconnect-priority 100", shell=True)
+                        # Prioridad 50 para que Ethernet (100) mande si está conectado
+                        subprocess.call(f"{base_cmd} ipv4.method manual ipv4.addresses {self.ip_addr}/24 ipv4.gateway {self.gateway} ipv4.dns {self.dns_server} connection.autoconnect yes connection.autoconnect-priority 50", shell=True)
                     else:
-                        subprocess.call(f"{base_cmd} connection.autoconnect yes", shell=True)
+                        subprocess.call(f"{base_cmd} connection.autoconnect yes connection.autoconnect-priority 50", shell=True)
                     
-                    # Forzar levantamiento de la conexión
-                    subprocess.call(f"sudo nmcli connection up '{ssid}'", shell=True)
+                    # Quitamos el 'nmcli connection up' forzado para que NM decida según prioridad
                 
                 # 4. Heredar config
                 user_home = f"/home/{self.username}"
