@@ -139,4 +139,12 @@ cp "$UP_SRC/xdg/autostart/astro-wizard.desktop" /etc/xdg/autostart/
 mkdir -p /usr/share/applications
 cp "$UP_SRC/xdg/applications/astro-wizard.desktop" /usr/share/applications/
 
+# --- C. Headless & Networking Fixes ---
+echo "   🖥️ Configuring Headless Support & Networking..."
+mkdir -p /etc/X11/xorg.conf.d
+cp "$UP_SRC/overlay/etc/X11/xorg.conf.d/99-dummy-display.conf" /etc/X11/xorg.conf.d/
+
+# Ensure NetworkManager manages everything
+sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf || true
+
 echo -e "${GREEN}✅ Base Distro Ready! (CLEAN)${NC}"
