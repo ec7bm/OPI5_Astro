@@ -314,13 +314,24 @@ class WizardApp:
                     
                     # Quitamos el 'nmcli connection up' forzado para que NM decida según prioridad
                 
-                # 4. Heredar config
+                # 4. Heredar config y Accesos Directos
                 user_home = f"/home/{self.username}"
+                desktop_dir = f"{user_home}/Desktop"
                 subprocess.call(f"sudo mkdir -p {user_home}/.config/autostart", shell=True)
-                subprocess.call(f"sudo cp /etc/xdg/autostart/astro-wizard.desktop {user_home}/.config/autostart/", shell=True)
+                subprocess.call(f"sudo mkdir -p {desktop_dir}", shell=True)
+                
+                # Copiar el wizard al autostart y al escritorio
+                subprocess.call(f"sudo cp /usr/share/applications/astro-wizard.desktop {user_home}/.config/autostart/", shell=True)
+                subprocess.call(f"sudo cp /usr/share/applications/astro-wizard.desktop {desktop_dir}/", shell=True)
+                
+                # Configuración de XFCE
                 subprocess.call(f"sudo mkdir -p {user_home}/.config/xfce4/xfconf/xfce-perchannel-xml", shell=True)
                 subprocess.call(f"sudo cp -r /home/astro-setup/.config/xfce4/xfconf/xfce-perchannel-xml/* {user_home}/.config/xfce4/xfconf/xfce-perchannel-xml/", shell=True)
+                
+                # Permisos y confianza del desktop file
                 subprocess.call(f"sudo chown -R {self.username}:{self.username} {user_home}", shell=True)
+                subprocess.call(f"sudo -u {self.username} gio set {desktop_dir}/astro-wizard.desktop metadata::trusted true", shell=True)
+                subprocess.call(f"sudo chmod +x {desktop_dir}/astro-wizard.desktop", shell=True)
                 
                 subprocess.call("sudo touch /etc/astro-configured", shell=True)
                 messagebox.showinfo("AstroOrange V2", "Configuración completada. Reiniciando...")
@@ -398,6 +409,29 @@ class WizardApp:
         
         subprocess.call(["xfce4-terminal", "--geometry=90x25", "--title=Progreso de Instalación", "-e", f"bash -c '{full_command}; {msg_finish}'"])
         
+        # Crear accesos directos en el escritorio para lo instalado
+        desktop_dir = os.path.expanduser("~/Desktop")
+        os.makedirs(desktop_dir, exist_ok=True)
+        
+        desktop_files = {
+            "KStars / INDI": "org.kde.kstars.desktop",
+            "PHD2 Guiding": "phd2.desktop",
+            "ASTAP (Plate Solver)": "astap.desktop",
+            "Stellarium": "stellarium.desktop",
+            "AstroDMX Capture": "astrodmxcapture.desktop",
+            "CCDciel": "ccdciel.desktop",
+            "Syncthing": "syncthing-start.desktop"
+        }
+        
+        for name, desktop_file in desktop_files.items():
+            if self.vars.get(name) and self.vars[name].get():
+                src = f"/usr/share/applications/{desktop_file}"
+                dst = os.path.join(desktop_dir, desktop_file)
+                if os.path.exists(src):
+                    subprocess.call(f"cp {src} {dst}", shell=True)
+                    subprocess.call(f"gio set {dst} metadata::trusted true", shell=True)
+                    subprocess.call(f"chmod +x {dst}", shell=True)
+
         subprocess.call("rm -f ~/.config/autostart/astro-wizard.desktop", shell=True)
         install_win.destroy()
         messagebox.showinfo("Finalizado", "Proceso completado.\nSi has instalado programas nuevos, ya aparecerán en el menú.")
