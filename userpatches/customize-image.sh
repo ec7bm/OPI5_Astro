@@ -39,9 +39,9 @@ apt-get install $APT_OPTS \
     openssh-server \
     xserver-xorg-video-dummy \
     python3-pil python3-pil.imagetk \
-    libglib2.0-bin
+    libglib2.0-bin \
     x11vnc xvfb novnc websockify \
-    python3 python3-pip python3-tk python3-pil \
+    python3 python3-pip python3-tk \
     curl wget git nano htop \
     firefox \
     dbus-x11 \
