@@ -134,26 +134,9 @@ class WizardApp:
         self.sf = tk.Frame(f, bg=SECONDARY_BG); self.sf.grid(row=3, columnspan=2); self.eip = tk.Entry(self.sf, width=15); self.eip.pack(side="left"); self.eip.insert(0, self.ip)
         self.egw = tk.Entry(self.sf, width=15); self.egw.pack(side="left"); self.egw.insert(0, self.gw); self.t_st(); self.Nav(self.finish_conf, self.step2, "REINICIAR")
 
-    def t_st(self):
-        s = "normal" if self.st_var.get() else "disabled"
-        for c in self.sf.winfo_children(): c.config(state=s)
-
-    def finish_conf(self):
-        if messagebox.askyesno("Confirmar", "¿Reiniciar y aplicar?"):
-            self.clean(); tk.Label(self.main_content, text="Aplicando cambios...", font=("Sans",22), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=100); self.root.update()
-            try:
-                u, p = self.u, self.p
-                subprocess.call(f"sudo useradd -m -s /bin/bash -G sudo,dialout,video,input,plugdev,netdev {u}", shell=True); subprocess.call(f"echo '{u}:{p}' | sudo chpasswd", shell=True)
-                subprocess.call(f"echo '[Seat:*]\nautologin-user={u}\nautologin-session=xfce\n' | sudo tee /etc/lightdm/lightdm.conf.d/90-astro.conf", shell=True)
-                if self.es.get():
-                    subprocess.call(f"sudo nmcli con delete '{self.es.get()}' 2>/dev/null || true"); cmd = f"sudo nmcli con add type wifi ifname '*' con-name '{self.es.get()}' ssid '{self.es.get()}' -- 802-11-wireless-security.key-mgmt wpa-psk 802-11-wireless-security.psk '{self.ewp.get()}'"
-                    subprocess.call(cmd, shell=True); subprocess.Popen(f"sudo nmcli con up '{self.es.get()}'", shell=True)
-                subprocess.call("sudo touch /etc/astro-configured", shell=True); subprocess.call("sudo reboot", shell=True)
-            except Exception as e: self.head("Error", str(e))
-
     # --- ETAPA DE SOFTWARE ---
     def stage2(self):
-        self.clean(); self.head("Instalador Software", "Deteccion V4.2 ASCII")
+        self.clean(); self.head("Instalador Software", "")
         self.reinstall_list = []
         f = tk.Frame(self.main_content, bg=BG_COLOR); f.pack(pady=10)
         for i, (n, info) in enumerate(SOFTWARE.items()):
@@ -168,11 +151,12 @@ class WizardApp:
                         else: self.sw_vars[name].set(False)
                     elif name in self.reinstall_list: self.reinstall_list.remove(name)
 
-            # Usamos indicatoron=False para que parezcan botones que se quedan pulsados
-            cb = tk.Checkbutton(f, text=n, variable=self.sw_vars[n], bg=SECONDARY_BG, fg="white", selectcolor=ACCENT_COLOR, 
-                               font=("Sans",12), padx=20, pady=5, indicatoron=False, command=on_sw_click)
-            cb.grid(row=i//2, column=i%2, sticky="ew", padx=10, pady=10)
-            if inst: tk.Label(f, text="(INSTALADO)", font=("Sans",8,"bold"), bg=BG_COLOR, fg=SUCCESS_COLOR).grid(row=i//2, column=i%2, sticky="e", padx=(0,5))
+            # Toggle Buttons - Unificando estado "Instalado" en el texto para evitar solapamientos
+            txt = n + (" (INSTALADO)" if inst else "")
+            cb = tk.Checkbutton(f, text=txt, variable=self.sw_vars[n], bg=SECONDARY_BG, fg="white", 
+                               selectcolor=ACCENT_COLOR, font=("Sans",11), padx=20, pady=10, 
+                               indicatoron=False, command=on_sw_click, width=25)
+            cb.grid(row=i//2, column=i%2, padx=10, pady=10, sticky="ew")
             
         tk.Button(self.main_content, text="INICIAR INSTALACION", font=("Sans",15,"bold"), bg=ACCENT_COLOR, fg=BG_COLOR, width=30, command=self.start_install).pack(pady=30)
         tk.Button(self.main_content, text="CERRAR", command=self.root.destroy, bg=BUTTON_COLOR, fg="white", padx=15, pady=5).pack()
