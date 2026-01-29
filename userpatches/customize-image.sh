@@ -158,9 +158,19 @@ echo "   🖥️  Hardening Headless Resolution..."
 rm -f /etc/X11/xorg.conf.d/20-modesetting.conf || true
 
 # --- E. Visuals & Themes ---
-echo "   🎨 Deploying AstroOrange Style..."
+echo -e "${GREEN}[5/5] Deploying AstroOrange Style...${NC}"
 mkdir -p /usr/share/backgrounds
-cp "$UP_SRC/overlay/usr/share/backgrounds/astro-wallpaper.png" /usr/share/backgrounds/ || true
+cp "$UP_SRC/astro-wallpaper.png" /usr/share/backgrounds/ || true
+
+# System-wide XFCE Defaults (for any new user)
+mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
+cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/
+
+# LightDM Background
+if [ -f "/etc/lightdm/lightdm-gtk-greeter.conf" ]; then
+    sed -i 's|^#background=.*|background=/usr/share/backgrounds/astro-wallpaper.png|' /etc/lightdm/lightdm-gtk-greeter.conf
+    sed -i 's|^background=.*|background=/usr/share/backgrounds/astro-wallpaper.png|' /etc/lightdm/lightdm-gtk-greeter.conf
+fi
 
 # --- F. Permissions & Sudoers ---
 echo "   🔑 Configuring Permissions..."
