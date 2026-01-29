@@ -80,6 +80,12 @@ class WizardApp:
 
     def show_stage_1(self):
         self.header("Etapa 1: Usuario y WiFi")
+        
+        # Tutorial de WiFi
+        tutorial = ("Para descargar el software en la siguiente etapa,\n"
+                    "necesitas conectar la placa a Internet ahora.")
+        tk.Label(self.root, text=tutorial, font=("Sans", 11, "italic"), bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
+        
         frame = tk.Frame(self.root, bg=BG_COLOR)
         frame.pack(pady=10)
         tk.Label(frame, text="Usuario:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=0, column=0, pady=10, padx=10)
@@ -87,13 +93,16 @@ class WizardApp:
         tk.Label(frame, text="Password:", bg=BG_COLOR, fg="white", font=("Sans", 12)).grid(row=1, column=0, pady=10, padx=10)
         self.entry_pass = tk.Entry(frame, show="*", font=("Sans", 12)); self.entry_pass.grid(row=1, column=1, pady=10, padx=10)
         
-        tk.Button(self.root, text="Configurar WiFi (nmtui)", font=("Sans", 14), 
+        tk.Button(self.root, text="📶 CONFIGURAR WIFI (nmtui)", font=("Sans", 14), 
                   bg=BUTTON_COLOR, fg="white", command=self.run_nmtui).pack(pady=10)
         
         tk.Button(self.root, text="GUARDAR Y REINICIAR", font=("Sans", 16, "bold"), 
                   bg=ACCENT_COLOR, fg=BG_COLOR, command=self.save_and_reboot).pack(pady=40)
 
     def run_nmtui(self):
+        # Abrir nmtui en una terminal y dar una pequeña instruccion
+        msg = "En la terminal: Selecciona 'Activate a connection' -> Tu WiFi -> Pon la clave."
+        messagebox.showinfo("Instrucciones WiFi", msg)
         subprocess.Popen(["xfce4-terminal", "-e", "nmtui"])
 
     def save_and_reboot(self):
@@ -101,25 +110,44 @@ class WizardApp:
         if not user or not pwd:
             messagebox.showerror("Error", "Rellena todos los campos.")
             return
-        # Creacion de usuario real con grupos necesarios incluyendo 'input'
+        
+        # 1. Creacion de usuario real
         subprocess.call(f"sudo bash -c \"useradd -m -s /bin/bash -G sudo,dialout,video,input,plugdev,netdev {user} && echo '{user}:{pwd}' | chpasswd\"", shell=True)
-        # Configurar autologin para el nuevo usuario
+        
+        # 2. Configurar autologin
         subprocess.call(f"echo '[Seat:*]\nautologin-user={user}\nautologin-session=xfce\n' | sudo tee /etc/lightdm/lightdm.conf.d/50-astro.conf", shell=True)
         subprocess.call("sudo rm -f /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
-        # Actualizar servicio VNC para que corra como el nuevo usuario
+        
+        # 3. Actualizar VNC
         subprocess.call(f"sudo sed -i 's/User=astro-setup/User={user}/g' /etc/systemd/system/astro-vnc.service", shell=True)
-        # Asegurar que el wizard salte para el nuevo usuario
-        subprocess.call(f"sudo mkdir -p /home/{user}/.config/autostart", shell=True)
-        subprocess.call(f"sudo cp /etc/xdg/autostart/astro-wizard.desktop /home/{user}/.config/autostart/", shell=True)
-        subprocess.call(f"sudo chown -R {user}:{user} /home/{user}/.config", shell=True)
-        # Marcar etapa 1 como completada
+        
+        # 4. Heredar config del Wizard y Wallpaper (FIX AGRESIVO)
+        user_home = f"/home/{user}"
+        subprocess.call(f"sudo mkdir -p {user_home}/.config/autostart", shell=True)
+        subprocess.call(f"sudo cp /etc/xdg/autostart/astro-wizard.desktop {user_home}/.config/autostart/", shell=True)
+        
+        # Copiar configuraciones de XFCE (incluyendo el wallpaper)
+        subprocess.call(f"sudo mkdir -p {user_home}/.config/xfce4/xfconf/xfce-perchannel-xml", shell=True)
+        subprocess.call(f"sudo cp -r /home/astro-setup/.config/xfce4/xfconf/xfce-perchannel-xml/* {user_home}/.config/xfce4/xfconf/xfce-perchannel-xml/", shell=True)
+        
+        subprocess.call(f"sudo chown -R {user}:{user} {user_home}/.config", shell=True)
+        
+        # 5. Marcar etapa 1 completada
         subprocess.call("sudo touch /etc/astro-configured", shell=True)
+        
         messagebox.showinfo("OK", "Usuario creado. El sistema se reiniciará.")
         subprocess.call("sudo reboot", shell=True)
 
     def show_stage_2(self):
         self.header("Etapa 2: Instalador de Software")
-        tk.Label(self.root, text="Selecciona el software astronómico a instalar:", bg=BG_COLOR, fg="white").pack()
+        
+        # Botón de WiFi de emergencia por si se les olvidó en la fase 1
+        tk.Label(self.root, text="⚠️ Asegúrate de estar conectado a Internet para continuar:", 
+                 bg=BG_COLOR, fg="yellow", font=("Sans", 10, "bold")).pack(pady=5)
+        tk.Button(self.root, text="📶 CONFIGURAR WIFI", font=("Sans", 12), 
+                  bg=BUTTON_COLOR, fg="white", command=self.run_nmtui).pack(pady=5)
+
+        tk.Label(self.root, text="Selecciona el software astronómico a instalar:", bg=BG_COLOR, fg="white").pack(pady=10)
         
         frame = tk.Frame(self.root, bg=BG_COLOR); frame.pack(pady=10)
         self.vars = {
