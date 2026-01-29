@@ -290,8 +290,13 @@ class WizardApp:
                 subprocess.call(f"echo '{self.username}:{self.password}' | sudo chpasswd", shell=True)
                 
                 # 2. Configurar Autologin
-                subprocess.call(f"echo '[Seat:*]\nautologin-user={self.username}\nautologin-session=xfce\n' | sudo tee /etc/lightdm/lightdm.conf.d/50-astro.conf", shell=True)
+                # Usamos 90-astro.conf para asegurar que sobreescribe cualquier otra config previa
+                username_clean = self.username.strip()
+                subprocess.call(f"echo '[Seat:*]\nautologin-user={username_clean}\nautologin-session=xfce\n' | sudo tee /etc/lightdm/lightdm.conf.d/90-astro.conf", shell=True)
+                
+                # Intentar limpiar cualquier rastro de autologin previo
                 subprocess.call("sudo rm -f /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+                subprocess.call("sudo rm -f /etc/lightdm/lightdm.conf.d/50-astro.conf", shell=True)
                 
                 # 3. Configurar WiFi
                 if self.selected_ssid:
