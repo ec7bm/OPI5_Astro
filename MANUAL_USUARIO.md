@@ -62,59 +62,42 @@ Si no tienes cable a mano, el sistema activará un Hotspot propio:
 
 ---
 
-Al acceder por primera vez, verás el **AstroOrange Wizard** rediseñado como un asistente paso a paso.
+Al acceder por primera vez, verás el **AstroSetup** (Asistente Inicial) que te guiará por las tres herramientas modulares:
 
-#### Paso 0: Bienvenida
-Instrucciones básicas. Se recomienda que la placa esté conectada por cable para que el escaneo de redes WiFi sea fiable.
+### 👤 1. AstroUser (Gestión de Usuarios)
+- Crea tu nombre de usuario y contraseña principal.
+- Configura los permisos de administrador automáticamente.
 
-#### Paso 1: Tu Cuenta
-1. **Nombre de Usuario**: Elige tu nombre (ej: `astro`).
-2. **Contraseña**: Define tu clave de acceso.
-*Estas serán tus credenciales definitivas.*
+### 📡 2. AstroNetwork (Gestión de Red)
+- Escanea redes WiFi con un clic.
+- **Botón "Modo Campo"**: Si no tienes WiFi, puedes omitir este paso y seguir configurando.
+- **Detección Automática**: Si ya tienes cable Ethernet con internet, te preguntará si quieres saltar este paso.
 
-#### Paso 2: Red WiFi
-1. El Wizard escaneará las redes disponibles. Selecciona la tuya de la lista.
-2. **Configuración Manual**: Si tu red es oculta o no aparece, haz clic en el botón amarillo **"CONFIGURACIÓN MANUAL"** para escribir el nombre (SSID) tú mismo.
+### 🔭 3. AstroSoftware (Instalación de Aplicaciones)
+Tras el primer arranque, podrás abrir el instalador cuando quieras para añadir:
 
-#### Paso 3: Configuración de Red
-1. Introduce la **contraseña de tu WiFi**.
-2. **IP Estática (Opcional)**: Si marcas esta casilla, podrás fijar la IP, Puerta de enlace y DNS (ideal para observatorios fijos).
-
-#### Paso 4: Finalizar
-El sistema aplicará los cambios y se reiniciará automáticamente. Tras el reinicio, la placa se conectará a tu WiFi real y entrará con tu nuevo usuario.
+| Software | Descripción |
+|----------|-------------|
+| **KStars + INDI** | Planetario y control de hardware |
+| **PHD2 Guiding** | Autoguiado profesional |
+| **ASTAP** | Plate Solving rápido |
+| **Stellarium** | Atlas estelar visual |
+| **AstroDMX** | Captura de imágenes planetaria/cielo profundo |
+| **CCDciel** | Captura avanzada |
+| **Syncthing** | Copia de seguridad automática de fotos |
 
 ---
 
-## 📦 Instalación de Software
+## 🍱 Herramientas en el Escritorio
 
-Tras el reinicio verás la **Etapa 2: Instalador de Software**.
+Gracias a la **Arquitectura V5.0**, tienes 4 iconos independientes en tu escritorio con alta visibilidad:
 
-### Software Disponible
+1.  ⚡ **AstroSetup**: Lanza la configuración completa (ideal para el primer uso).
+2.  📶 **Red (WiFi)**: Abre el gestor de redes en cualquier momento.
+3.  👤 **Usuarios**: Gestiona o añade cuentas de operador.
+4.  🔭 **Instalador Software**: Añade o repara tus programas de astronomía.
 
-Selecciona los programas que necesites:
-
-| Software | Descripción | Recomendado |
-|----------|-------------|-------------|
-| **KStars + INDI** | Planetario y control de telescopios/cámaras | ✅ Sí |
-| **PHD2 Guiding** | Sistema de guiado automático | ✅ Sí |
-| **ASTAP** | Resolución de placas (Plate Solving) | ✅ Sí |
-| **Stellarium** | Planetario visual realista | ⭐ Opcional |
-| **AstroDMX** | Captura profesional de imágenes | ⭐ Opcional |
-| **CCDciel** | Control avanzado de cámaras CCD | ⭐ Opcional |
-| **Syncthing** | Sincronización automática de fotos con tu PC | ⭐ Opcional |
-
-### Proceso de Instalación
-
-1. **Selecciona** los programas que quieres instalar.
-   - Si un programa ya está instalado, aparecerá la etiqueta **(INSTALADO)**.
-   - Si seleccionas un programa ya instalado, el Wizard te preguntará si deseas **REINSTALAR / REPARAR**.
-2. Haz clic en **"SIGUIENTE"** para pasar a la pantalla de ejecución.
-3. Haz clic en **"🚀 Iniciar Instalación"**.
-4. **Progreso en vivo**: Se abrirá una consola integrada mostrando el progreso de `apt-get`.
-5. **Abortar**: Si necesitas detener el proceso, puedes usar el botón rojo **"ABORTAR INSTALACION"**.
-6. Cuando termine, el botón cambiará a **"LISTO - SALIR"**.
-
-> ⏱️ **Tiempo estimado**: 10-15 minutos dependiendo de tu conexión a internet.
+---
 
 ---
 

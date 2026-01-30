@@ -133,17 +133,20 @@ systemctl enable astro-vnc.service
 systemctl enable lightdm
 systemctl enable ssh
 
-# --- B. Wizard de Configuración ---
-echo "   🧙 Installing Wizard..."
+# --- B. Wizard de Configuración (MODULAR V5.0) ---
+echo "   🧙 Installing Modular Wizards..."
 cp -r "$REM_SRC/wizard/"* "$OPT_DIR/wizard/"
 
-# Autostart del Wizard
+# Autostart del setup inicial
 mkdir -p /etc/xdg/autostart
 cp "$UP_SRC/xdg/autostart/astro-wizard.desktop" /etc/xdg/autostart/
 
-# Permanent Menu Entry
+# Menu Entries (Modular Tools)
 mkdir -p /usr/share/applications
-cp "$UP_SRC/xdg/applications/astro-wizard.desktop" /usr/share/applications/
+cp "$UP_SRC/xdg/applications/astro-network.desktop" /usr/share/applications/
+cp "$UP_SRC/xdg/applications/astro-user.desktop" /usr/share/applications/
+cp "$UP_SRC/xdg/applications/astro-software.desktop" /usr/share/applications/
+cp "$UP_SRC/xdg/applications/astro-setup.desktop" /usr/share/applications/
 
 # --- C. Headless & Networking Fixes ---
 echo "   🖥️ Configuring Headless Support & Networking..."

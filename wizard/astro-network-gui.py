@@ -51,6 +51,8 @@ class NetWizard:
     def scan(self):
         self.lb.delete(0, tk.END); self.ssids = []
         try:
+            # Forzar un escaneo nuevo para que no salga la lista vieja/vacía
+            subprocess.run(["nmcli", "dev", "wifi", "rescan"], stderr=subprocess.DEVNULL)
             o = subprocess.check_output(["nmcli","-t","-f","SSID","dev","wifi","list"], universal_newlines=True)
             for l in o.splitlines():
                 if l and l not in self.ssids: 

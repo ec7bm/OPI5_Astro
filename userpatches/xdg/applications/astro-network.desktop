@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Red (WiFi)
+Comment=Gestionar redes inalámbricas
+Exec=sudo python3 /opt/astroorange/wizard/astro-network-gui.py
+Icon=network-wireless-hotspot
+Categories=AstroOrange;System;Network;
+Terminal=false

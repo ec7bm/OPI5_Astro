@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Setup Inicial
+Comment=Configuración de primer arranque
+Exec=sudo python3 /opt/astroorange/wizard/astro-setup-wizard.py
+Icon=system-installer
+Categories=AstroOrange;System;
+Terminal=false
