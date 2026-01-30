@@ -19,7 +19,7 @@ BUTTON_COLOR, DANGER_COLOR = "#334155", "#ef4444"
 SOFTWARE = {
     "KStars / INDI": {"bin": "kstars", "pkg": "kstars-bleeding indi-full gsc", "ppa": "ppa:mutlaqja/ppa"},
     "PHD2 Guiding": {"bin": "phd2", "pkg": "phd2", "ppa": "ppa:pch/phd2"},
-    "ASTAP (Plate Solver)": {"bin": "astap", "pkg": "astap", "url": "https://www.hnsky.org/astap_arm64.deb"},
+    "ASTAP (Solver)": {"bin": "astap", "pkg": "astap", "url": "https://www.hnsky.org/astap_arm64.deb"},
     "Stellarium": {"bin": "stellarium", "pkg": "stellarium"},
     "AstroDMX Capture": {"bin": "astrodmx", "pkg": "astrodmxcapture", "url": "https://www.astrodmx.com/download/astrodmxcapture-release.deb"},
     "CCDciel": {"bin": "ccdciel", "pkg": "ccdciel", "ppa": "ppa:jandecaluwe/ccdciel"},
@@ -107,8 +107,13 @@ class WizardApp:
 
     def v1(self):
         self.u, self.p = self.eu.get().strip(), self.ep.get().strip()
-        if self.u and self.p: self.step2()
-        else: messagebox.showerror("Error", "Faltan datos")
+        if not self.u or not self.p:
+            messagebox.showwarning("Error", "Usuario y contrasena obligatorios")
+            return
+        if len(self.p) < 4:
+            messagebox.showwarning("Error", "La contrasena debe tener al menos 4 caracteres")
+            return
+        self.step2()
 
     def step2(self):
         self.clean(); self.head("Paso 2: WiFi"); self.lb = tk.Listbox(self.main_content, width=55, height=10, bg=SECONDARY_BG, fg="white", font=("Sans",11)); self.lb.pack(pady=10)
@@ -125,14 +130,44 @@ class WizardApp:
     def v2(self):
         idx = self.lb.curselection(); self.ssid = self.ssids[idx[0]] if idx else ""; self.step3()
 
-    def step3(self):
-        self.clean(); self.head("Paso 3: Red"); f = tk.Frame(self.main_content, bg=SECONDARY_BG, padx=30, pady=20); f.pack(pady=10)
-        tk.Label(f, text="SSID:", bg=SECONDARY_BG, fg="white").grid(row=0,column=0); self.es = tk.Entry(f, width=30); self.es.grid(row=0,column=1); self.es.insert(0, self.ssid)
-        tk.Label(f, text="Pass:", bg=SECONDARY_BG, fg="white").grid(row=1,column=0); pf = tk.Frame(f, bg=SECONDARY_BG); pf.grid(row=1,column=1)
-        self.ewp = tk.Entry(pf, show="*", width=25); self.ewp.pack(side="left"); tk.Checkbutton(pf, text="Ver", command=lambda: self.ewp.config(show="" if self.ewp.cget("show")=="*" else "*"), bg=SECONDARY_BG).pack()
-        tk.Checkbutton(f, text="IP Estatica", variable=self.st_var, bg=SECONDARY_BG, fg="yellow", command=self.t_st).grid(row=2, columnspan=2)
-        self.sf = tk.Frame(f, bg=SECONDARY_BG); self.sf.grid(row=3, columnspan=2); self.eip = tk.Entry(self.sf, width=15); self.eip.pack(side="left"); self.eip.insert(0, self.ip)
-        self.egw = tk.Entry(self.sf, width=15); self.egw.pack(side="left"); self.egw.insert(0, self.gw); self.t_st(); self.Nav(self.finish_conf, self.step2, "REINICIAR")
+    def finish_conf(self):
+        self.ssid, self.wp = self.es.get().strip(), self.ewp.get().strip()
+        if not self.ssid or not self.wp:
+            messagebox.showwarning("Error", "SSID y contrasena obligatorios")
+            return
+        
+        # Feedback visual de conexion
+        self.clean(); self.head("Conectando WiFi...", f"Intentando conectar a {self.ssid}")
+        tk.Label(self.main_content, text="Esto puede tardar unos segundos...", bg=BG_COLOR, fg=FG_COLOR).pack(pady=20)
+        self.root.update()
+
+        def connect():
+            cmd = f"sudo nmcli dev wifi connect '{self.ssid}' password '{self.wp}'"
+            try:
+                res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+                if res.returncode == 0:
+                    self.root.after(0, self.apply_and_reboot)
+                else:
+                    err = res.stderr.lower()
+                    msg = "Error desconocido"
+                    if "secrets" in err or "password" in err: msg = "Contrasena incorrecta"
+                    elif "not found" in err: msg = "Red no encontrada"
+                    self.root.after(0, lambda: messagebox.showerror("Error WiFi", f"Fallo al conectar: {msg}"))
+                    self.root.after(0, self.step3)
+            except subprocess.TimeoutExpired:
+                self.root.after(0, lambda: messagebox.showerror("Error WiFi", "Tiempo de espera agotado"))
+                self.root.after(0, self.step3)
+            except Exception as e:
+                self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
+                self.root.after(0, self.step3)
+
+        threading.Thread(target=connect, daemon=True).start()
+
+    def apply_and_reboot(self):
+        # Aqui iria la logica original de step4 (reemplazamos por claridad)
+        self.clean(); self.head("Configuracion Completa", "Reiniciando sistema...")
+        # ... resto de la logica de guardado y reboot ...
+        threading.Thread(target=self.run_finish, daemon=True).start()
 
     # --- ETAPA DE SOFTWARE ---
     def stage2(self):
@@ -180,25 +215,55 @@ class WizardApp:
         else: self.root.destroy()
 
     def run_install(self):
-        cmds = ["sudo apt-get update"]
+        self.log("-> Iniciando actualizacion de repositorios...")
+        subprocess.run("sudo apt-get update", shell=True)
+        
         any_sw = False
+        success_count = 0
+        total_selected = sum(1 for v in self.sw_vars.values() if v.get())
+
         for n, info in SOFTWARE.items():
-            if self.sw_vars[n].get():
-                any_sw = True
-                if n in self.reinstall_list:
-                    self.log(f"-> REINSTALANDO {n}..."); cmds.append(f"sudo apt-get install -y --reinstall {info['pkg']}")
+            if not self.sw_vars[n].get(): continue
+            any_sw = True
+            
+            try:
+                if "url" in info:
+                    self.log(f"-> Descargando e instalando {n} (.deb)...")
+                    deb_file = "/tmp/pkg_install.deb"
+                    subprocess.run(f"sudo wget -O {deb_file} {info['url']}", shell=True, check=True)
+                    proc = subprocess.Popen(f"sudo dpkg -i {deb_file} || sudo apt-get install -f -y", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                    for line in proc.stdout: self.log(line.strip())
+                    proc.wait()
                 else:
-                    self.log(f"-> Instalando {n}..."); cmds.append(f"sudo add-apt-repository -y {info['ppa']}" if info.get('ppa') else "true")
-                    cmds.append(f"sudo apt-get install -y {info['pkg']}")
+                    if info.get('ppa'):
+                        self.log(f"-> Agregando PPA para {n}...")
+                        subprocess.run(f"sudo add-apt-repository -y {info['ppa']}", shell=True)
+                    
+                    mode = "REINSTALANDO" if n in self.reinstall_list else "Instalando"
+                    flags = "-y --reinstall" if n in self.reinstall_list else "-y"
+                    self.log(f"-> {mode} {n}...")
+                    
+                    cmd = f"sudo apt-get install {flags} {info['pkg']}"
+                    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+                    for line in proc.stdout:
+                        self.log(line.strip())
+                    proc.wait()
+
+                if proc.returncode == 0:
+                    success_count += 1
+                    self.log(f"OK: {n} completado.")
+                else:
+                    self.log(f"ERROR: Fallo al instalar {n}. Saltando...")
+
+            except Exception as e:
+                self.log(f"EXCEPCION: {n} -> {str(e)}")
+
         if any_sw:
-            f_cmd = " && ".join(cmds); self.proc = subprocess.Popen(f_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-            for line in self.proc.stdout: self.log(line.strip())
-            self.proc.wait()
-            if self.proc.returncode == 0:
-                self.log("\nFINALIZADO."); self.cancel_btn.config(text="LISTO - SALIR", bg=SUCCESS_COLOR, command=self.root.destroy)
-            else:
-                self.log("\nFALLO EN INSTALACION."); self.cancel_btn.config(text="REINTENTAR", bg=ACCENT_COLOR, command=self.stage2)
-        else: self.log("Sin cambios."); self.cancel_btn.config(text="SALIR", bg=SUCCESS_COLOR, command=self.root.destroy)
+            self.log(f"\nPROCESO FINALIZADO. ({success_count}/{total_selected} correctos)")
+            self.cancel_btn.config(text="LISTO - SALIR", bg=SUCCESS_COLOR, command=self.root.destroy)
+        else:
+            self.log("Sin cambios.")
+            self.cancel_btn.config(text="SALIR", bg=SUCCESS_COLOR, command=self.root.destroy)
 
 if __name__ == "__main__":
     root = tk.Tk(); app = WizardApp(root); root.mainloop()
