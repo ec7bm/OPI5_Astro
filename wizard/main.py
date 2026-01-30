@@ -164,10 +164,31 @@ class WizardApp:
         threading.Thread(target=connect, daemon=True).start()
 
     def apply_and_reboot(self):
-        # Aqui iria la logica original de step4 (reemplazamos por claridad)
-        self.clean(); self.head("Configuracion Completa", "Reiniciando sistema...")
-        # ... resto de la logica de guardado y reboot ...
+        self.clean(); self.head("Configuracion Final", "Creando usuario y finalizando...")
+        self.log_lbl = tk.Label(self.main_content, text="Por favor, espera. El sistema se reiniciara pronto.", bg=BG_COLOR, fg=FG_COLOR)
+        self.log_lbl.pack(pady=20)
+        self.root.update()
         threading.Thread(target=self.run_finish, daemon=True).start()
+
+    def run_finish(self):
+        # 1. Crear usuario definitivo con todos los permisos necesarios
+        groups = "sudo,dialout,video,input,plugdev,audio,bluetooth,lpadmin,scanner"
+        self.root.after(0, lambda: print(f"[INFO] Creando usuario {self.u}..."))
+        subprocess.run(f"sudo useradd -m -s /bin/bash -G {groups} {self.u}", shell=True)
+        subprocess.run(f"echo '{self.u}:{self.p}' | sudo chpasswd", shell=True)
+        
+        # 2. Configurar Autologin en LightDM para el nuevo usuario
+        cfg_content = f"[Seat:*]\nautologin-user={self.u}\nautologin-session=xfce\n"
+        with open("/tmp/50-astro.conf", "w") as f:
+            f.write(cfg_content)
+        subprocess.run("sudo cp /tmp/50-astro.conf /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+        
+        # 3. Crear el archivo sentinel para indicar que ya esta configurado
+        subprocess.run("sudo touch /etc/astro-configured", shell=True)
+        
+        # 4. Feedback final y Reinicio
+        self.root.after(0, lambda: messagebox.showinfo("Exito", "Configuracion completada. El sistema se reiniciara ahora."))
+        subprocess.run("sudo reboot", shell=True)
 
     # --- ETAPA DE SOFTWARE ---
     def stage2(self):
