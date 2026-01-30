@@ -33,6 +33,12 @@ def get_net():
         b = ".".join(ip.split(".")[:3]); return f"{b}.100", f"{b}.1", "8.8.8.8"
     except: return "192.168.1.100", "192.168.1.1", "8.8.8.8"
 
+def check_ping():
+    try:
+        subprocess.check_output(["ping", "-c", "1", "-W", "1", "8.8.8.8"])
+        return True
+    except: return False
+
 class ImageCarousel:
     def __init__(self, parent):
         self.p, self.imgs, self.idx = parent, [], 0
@@ -113,11 +119,32 @@ class WizardApp:
         if len(self.p) < 4:
             messagebox.showwarning("Error", "La contrasena debe tener al menos 4 caracteres")
             return
-        self.step2()
+        
+        # Si ya hay internet (Ethernet), preguntar si quiere saltar el WiFi
+        if check_ping():
+            if messagebox.askyesno("Red Detectada", "Ya tienes Internet (Ethernet). ¿Quieres configurar WiFi de todos modos?"):
+                self.step2()
+            else:
+                self.ssid, self.wp = "skipped", "skipped"
+                self.apply_and_reboot()
+        else:
+            self.step2()
 
     def step2(self):
-        self.clean(); self.head("Paso 2: WiFi"); self.lb = tk.Listbox(self.main_content, width=55, height=10, bg=SECONDARY_BG, fg="white", font=("Sans",11)); self.lb.pack(pady=10)
-        tk.Button(self.main_content, text="ESCANEAR", command=self.scan, bg=BUTTON_COLOR, fg="white").pack(); self.scan(); self.Nav(self.v2, self.step1)
+        self.clean(); self.head("Paso 2: WiFi"); 
+        msg = "Selecciona una red o pulsa 'OMITIR' si vas al campo (Modo Offline)"
+        tk.Label(self.main_content, text=msg, bg=BG_COLOR, fg="yellow").pack()
+        
+        self.lb = tk.Listbox(self.main_content, width=55, height=10, bg=SECONDARY_BG, fg="white", font=("Sans",11)); self.lb.pack(pady=10)
+        btn_f = tk.Frame(self.main_content, bg=BG_COLOR); btn_f.pack()
+        tk.Button(btn_f, text="ESCANEAR", command=self.scan, bg=BUTTON_COLOR, fg="white", padx=10).pack(side="left", padx=5)
+        tk.Button(btn_f, text="OMITIR / MODO CAMPO", command=self.skip_net, bg=DANGER_COLOR, fg="white", padx=10).pack(side="left", padx=5)
+        self.scan(); self.Nav(self.v2, self.step1)
+
+    def skip_net(self):
+        if messagebox.askyesno("Omitir Red", "¿Configurar usuario sin conectar WiFi?"):
+            self.ssid, self.wp = "skipped", "skipped"
+            self.apply_and_reboot()
 
     def scan(self):
         self.lb.delete(0, tk.END); self.ssids = []
@@ -146,7 +173,11 @@ class WizardApp:
             try:
                 res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
                 if res.returncode == 0:
-                    self.root.after(0, self.apply_and_reboot)
+                    # Si ya estabamos configurados (venimos de stage2), volver ahi
+                    if os.path.exists("/etc/astro-configured"):
+                        self.root.after(0, self.stage2)
+                    else:
+                        self.root.after(0, self.apply_and_reboot)
                 else:
                     err = res.stderr.lower()
                     msg = "Error desconocido"
@@ -194,6 +225,13 @@ class WizardApp:
     def stage2(self):
         self.clean(); self.head("Instalador Software", "")
         self.reinstall_list = []
+        
+        # Alerta de Internet
+        online = check_ping()
+        if not online:
+            tk.Label(self.main_content, text="!!! SIN INTERNET - CONECTATE PARA INSTALAR !!!", 
+                     bg=DANGER_COLOR, fg="white", font=("Sans",12,"bold"), padx=10, pady=5).pack(pady=5)
+        
         f = tk.Frame(self.main_content, bg=BG_COLOR); f.pack(pady=10)
         for i, (n, info) in enumerate(SOFTWARE.items()):
             inst = bool(shutil.which(info["bin"]) or os.path.exists(f"/usr/bin/{info['bin']}"))
@@ -214,8 +252,11 @@ class WizardApp:
                                indicatoron=False, command=on_sw_click, width=25)
             cb.grid(row=i//2, column=i%2, padx=10, pady=10, sticky="ew")
             
-        tk.Button(self.main_content, text="INICIAR INSTALACION", font=("Sans",15,"bold"), bg=ACCENT_COLOR, fg=BG_COLOR, width=30, command=self.start_install).pack(pady=30)
-        tk.Button(self.main_content, text="CERRAR", command=self.root.destroy, bg=BUTTON_COLOR, fg="white", padx=15, pady=5).pack()
+        tk.Button(self.main_content, text="INICIAR INSTALACION", font=("Sans",15,"bold"), bg=ACCENT_COLOR, fg=BG_COLOR, width=30, command=self.start_install).pack(pady=10)
+        
+        btn_f = tk.Frame(self.main_content, bg=BG_COLOR); btn_f.pack(pady=5)
+        tk.Button(btn_f, text="🔧 CONFIGURAR WIFI", command=self.step2, bg=BUTTON_COLOR, fg="white", padx=15).pack(side="left", padx=5)
+        tk.Button(btn_f, text="SALIR", command=self.root.destroy, bg=BUTTON_COLOR, fg="white", padx=15).pack(side="left", padx=5)
 
     def start_install(self):
         self.clean(); self.head("Instalando...", "Procesando paquetes")
