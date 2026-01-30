@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
-import subprocess, os, threading, socket, shutil
+import subprocess, os, threading, socket, shutil, sys
 from glob import glob
 
 try:
@@ -281,10 +281,19 @@ class WizardApp:
 
         if any_sw:
             self.log(f"\nPROCESO FINALIZADO. ({success_count}/{total_selected} correctos)")
-            self.cancel_btn.config(text="LISTO - SALIR", bg=SUCCESS_COLOR, command=self.root.destroy)
+            self.cancel_btn.config(text="LISTO - SALIR", bg=SUCCESS_COLOR, command=self.finish_all)
         else:
             self.log("Sin cambios.")
-            self.cancel_btn.config(text="SALIR", bg=SUCCESS_COLOR, command=self.root.destroy)
+            self.cancel_btn.config(text="SALIR", bg=SUCCESS_COLOR, command=self.finish_all)
+
+    def finish_all(self):
+        # Marcar como totalmente configurado para que no autoinicie mas
+        subprocess.run("sudo touch /etc/astro-wizard-done", shell=True)
+        self.root.destroy()
 
 if __name__ == "__main__":
+    # Si viene con --autostart y ya se ha completado todo (software incluido), salir silenciosamente
+    if "--autostart" in sys.argv and os.path.exists("/etc/astro-wizard-done"):
+        sys.exit(0)
+        
     root = tk.Tk(); app = WizardApp(root); root.mainloop()
