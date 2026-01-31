@@ -90,6 +90,10 @@ class SetupOrchestrator:
         self.root.geometry(f"+{x}+{y}")
 
 if __name__ == "__main__":
+    # V6.6: Check if user disabled autostart
+    if os.path.exists("/etc/astro-wizard-done"):
+        sys.exit(0)  # Exit silently if wizard was disabled
+    
     root = tk.Tk()
     app = SetupOrchestrator(root)
     # V6.4: Use system theme icons
