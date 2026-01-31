@@ -11,10 +11,14 @@
 AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server** optimizada para astrofotografía. Diseñada para funcionar en **Orange Pi 5 Pro**, proporciona un entorno completo y listo para usar con:
 
 - 🛰️ **Hotspot de rescate automático** - Acceso garantizado sin WiFi
-- 🖥️ **Escritorio remoto VNC** - Control desde navegador web
-- 🧙 **Wizard de configuración** - Setup guiado en español
-- 🔭 **Software astronómico modular** - KStars, INDI, PHD2, ASTAP, y más
+- 🖥️ **Escritorio remoto VNC** - Control desde navegador web (noVNC)
+- 🧙 **Wizard de configuración V6.5** - Setup guiado en español con UI premium
+  - Configuración de usuario con validación
+  - Gestor de red WiFi con recomendación de IP fija
+  - Instalador de software astronómico con carrusel visual
+- 🔭 **Software astronómico modular** - KStars, INDI, PHD2, ASTAP, Stellarium, CCDciel, Syncthing
 - 🎨 **Interfaz moderna** - Tema Arc-Dark con iconos Papirus
+
 
 ---
 

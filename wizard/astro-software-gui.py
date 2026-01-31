@@ -17,6 +17,13 @@ SOFTWARE = {
     "Syncthing": {"bin": "syncthing", "pkg": "syncthing"}
 }
 
+# Imágenes de ejemplo para el carrusel (iconos del sistema)
+CAROUSEL_IMAGES = [
+    "/usr/share/icons/Papirus/64x64/apps/kstars.png",
+    "/usr/share/icons/Papirus/64x64/apps/stellarium.png",
+    "/usr/share/pixmaps/syncthing.png"
+]
+
 def check_ping():
     try:
         subprocess.check_output(["ping", "-c", "1", "-W", "1", "8.8.8.8"])
@@ -26,7 +33,7 @@ def check_ping():
 class SoftWizard:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange Software Installer")
+        self.root.title("AstroOrange Software Installer V6.5")
         self.root.geometry("900x750")
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
@@ -34,6 +41,8 @@ class SoftWizard:
         self.sw_vars = {}
         self.reinstall_list = []
         self.proc = None
+        self.carousel_index = 0
+        self.carousel_images = []
         
         self.main_content = tk.Frame(self.root, bg=BG_COLOR)
         self.main_content.pack(expand=True, fill="both")
@@ -44,8 +53,8 @@ class SoftWizard:
         for w in self.main_content.winfo_children(): w.destroy()
 
     def head(self, t, s=""):
-        tk.Label(self.main_content, text="🔭 " + t, font=("Sans", 32, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(60, 5))
-        if s: tk.Label(self.main_content, text=s, font=("Sans", 14), bg=BG_COLOR, fg=FG_COLOR).pack(pady=(0, 40))
+        tk.Label(self.main_content, text="🔭 " + t, font=("Sans", 32, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(20, 5))
+        if s: tk.Label(self.main_content, text=s, font=("Sans", 14), bg=BG_COLOR, fg=FG_COLOR).pack(pady=(0, 10))
 
     def btn(self, text, cmd, color=BUTTON_COLOR, width=20, bold=True):
         f = "bold" if bold else "normal"
@@ -62,7 +71,11 @@ class SoftWizard:
         
         grid = tk.Frame(self.main_content, bg=BG_COLOR); grid.pack(pady=10)
         for i, (n, info) in enumerate(SOFTWARE.items()):
-            inst = bool(shutil.which(info["bin"]) or os.path.exists(f"/usr/bin/{info['bin']}"))
+            # V6.5 FIX: Extract bin name first to avoid f-string backslash issue
+            bin_name = info["bin"]
+            bin_path = f"/usr/bin/{bin_name}"
+            inst = bool(shutil.which(bin_name) or os.path.exists(bin_path))
+            
             self.sw_vars[n] = tk.BooleanVar(value=not inst and n in ["KStars / INDI", "PHD2 Guiding"])
             txt = n + (" (INSTALADO)" if inst else "")
             cb = tk.Checkbutton(grid, text=txt, variable=self.sw_vars[n], bg=SECONDARY_BG, fg="white", 
@@ -76,20 +89,49 @@ class SoftWizard:
         tk.Button(ctrl, text="SALIR", command=self.root.destroy, bg=BUTTON_COLOR, fg="white", font=("Sans",11), relief="flat", padx=30, pady=8).pack()
 
     def on_sw_click(self, name):
-        if bool(shutil.which(SOFTWARE[name]["bin"]) or os.path.exists(f"/usr/bin/{SOFTWARE[name]['bin']}")):
+        bin_name = SOFTWARE[name]["bin"]
+        bin_path = f"/usr/bin/{bin_name}"
+        if bool(shutil.which(bin_name) or os.path.exists(bin_path)):
             if self.sw_vars[name].get():
                 if messagebox.askyesno("Reinstalar", f"¿Reinstalar {name}?"): self.reinstall_list.append(name)
                 else: self.sw_vars[name].set(False)
 
+    def load_carousel_images(self):
+        """Carga imágenes para el carrusel"""
+        for img_path in CAROUSEL_IMAGES:
+            if os.path.exists(img_path):
+                try:
+                    img = tk.PhotoImage(file=img_path)
+                    self.carousel_images.append(img)
+                except: pass
+
+    def update_carousel(self):
+        """Actualiza la imagen del carrusel"""
+        if self.carousel_images and hasattr(self, 'carousel_label'):
+            self.carousel_label.config(image=self.carousel_images[self.carousel_index])
+            self.carousel_index = (self.carousel_index + 1) % len(self.carousel_images)
+            self.root.after(2000, self.update_carousel)
+
     def start_install(self):
         self.clean(); self.head("Procesando...", "Instalando paquetes seleccionados")
         
-        self.cancel_btn = tk.Button(self.main_content, text="ABORTAR INSTALACIÓN", command=self.stop_install, bg=DANGER_COLOR, fg="white", font=("Sans",11,"bold"), relief="flat", padx=25, pady=10)
-        self.cancel_btn.pack(pady=20)
+        # V6.5: Carrusel de imágenes en la parte superior
+        self.load_carousel_images()
+        if self.carousel_images:
+            carousel_frame = tk.Frame(self.main_content, bg=BG_COLOR, height=100)
+            carousel_frame.pack(pady=10)
+            self.carousel_label = tk.Label(carousel_frame, image=self.carousel_images[0], bg=BG_COLOR)
+            self.carousel_label.pack()
+            self.update_carousel()
         
-        t_frm = tk.Frame(self.main_content, bg="black", bd=2); t_frm.pack(fill="both", expand=True, padx=50, pady=10)
-        self.console = scrolledtext.ScrolledText(t_frm, bg="black", fg="#00ff00", font=("Monospace", 10), state="disabled", borderwidth=0)
-        self.console.pack(fill="both", expand=True)
+        self.cancel_btn = tk.Button(self.main_content, text="ABORTAR INSTALACIÓN", command=self.stop_install, bg=DANGER_COLOR, fg="white", font=("Sans",11,"bold"), relief="flat", padx=25, pady=10)
+        self.cancel_btn.pack(pady=10)
+        
+        # V6.5: Terminal más pequeño (height=8 en vez de expandirse)
+        t_frm = tk.Frame(self.main_content, bg="black", bd=2)
+        t_frm.pack(fill="x", padx=50, pady=10)
+        self.console = scrolledtext.ScrolledText(t_frm, bg="black", fg="#00ff00", font=("Monospace", 9), state="disabled", borderwidth=0, height=8)
+        self.console.pack(fill="x")
         threading.Thread(target=self.run_install, daemon=True).start()
 
     def log(self, t):

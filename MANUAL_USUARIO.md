@@ -19,9 +19,12 @@
 AstroOrange V2 es un sistema operativo basado en **Ubuntu 22.04 Jammy Server** diseñado específicamente para astrofotografía. Incluye:
 
 - ✅ **Hotspot de rescate automático** - Siempre accesible sin WiFi
-- ✅ **Escritorio remoto VNC** - Control desde cualquier dispositivo
-- ✅ **Wizard de instalación** - Configuración guiada en español
-- ✅ **Software astronómico modular** - Instala solo lo que necesites
+- ✅ **Escritorio remoto VNC (noVNC)** - Control desde cualquier navegador
+- ✅ **Wizard de configuración V6.5** - Setup guiado en español con interfaz premium
+  - **Paso 1**: Creación de usuario con validación de contraseña
+  - **Paso 2**: Gestor de red WiFi con escaneo automático y recomendación de IP fija
+  - **Paso 3**: Instalador de software astronómico con carrusel visual
+- ✅ **Software astronómico modular** - KStars/INDI, PHD2, ASTAP, Stellarium, CCDciel, Syncthing
 - ✅ **Interfaz moderna** - Tema Arc-Dark con iconos Papirus
 
 ---
@@ -93,9 +96,9 @@ Tras el primer arranque, podrás abrir el instalador cuando quieras para añadir
 Gracias a la **Arquitectura V5.0**, tienes 4 iconos independientes en tu escritorio con alta visibilidad:
 
 1.  ⚡ **AstroSetup**: Lanza la configuración completa (ideal para el primer uso).
-2.  📶 **Red (WiFi)**: Abre el gestor de redes en cualquier momento.
+2.  📶 **Red (WiFi)**: Abre el gestor de redes en cualquier momento con recomendación de IP fija para uso astronómico.
 3.  👤 **Usuarios**: Gestiona o añade cuentas de operador.
-4.  🔭 **Instalador Software**: Añade o repara tus programas de astronomía.
+4.  🔭 **Instalador Software V6.5**: Añade o repara tus programas de astronomía con carrusel visual y terminal de progreso compacto.
 
 ---
 
