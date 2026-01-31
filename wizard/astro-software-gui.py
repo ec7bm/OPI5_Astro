@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
 import subprocess, os, threading, shutil, sys
+from PIL import Image, ImageTk
 
 # --- CONFIGURACIÓN ESTÉTICA PREMIUM ---
 BG_COLOR, SECONDARY_BG, FG_COLOR = "#0f172a", "#1e293b", "#e2e8f0"
@@ -29,7 +30,7 @@ def check_ping():
 class SoftWizard:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange Software Installer V6.5")
+        self.root.title("AstroOrange Software Installer V6.6")
         self.root.geometry("900x750")
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
@@ -38,6 +39,12 @@ class SoftWizard:
         self.reinstall_list = []
         self.proc = None
         self.carousel_index = 0
+        self.carousel_images = []
+        self.carousel_mode = "emoji"  # "emoji" or "images"
+        
+        # Determinar el directorio del wizard
+        self.wizard_dir = os.path.dirname(os.path.abspath(__file__))
+        self.gallery_dir = os.path.join(self.wizard_dir, "gallery")
         
         self.main_content = tk.Frame(self.root, bg=BG_COLOR)
         self.main_content.pack(expand=True, fill="both")
@@ -66,7 +73,6 @@ class SoftWizard:
         
         grid = tk.Frame(self.main_content, bg=BG_COLOR); grid.pack(pady=10)
         for i, (n, info) in enumerate(SOFTWARE.items()):
-            # V6.5 FIX: Extract bin name first to avoid f-string backslash issue
             bin_name = info["bin"]
             bin_path = f"/usr/bin/{bin_name}"
             inst = bool(shutil.which(bin_name) or os.path.exists(bin_path))
@@ -91,31 +97,68 @@ class SoftWizard:
                 if messagebox.askyesno("Reinstalar", f"¿Reinstalar {name}?"): self.reinstall_list.append(name)
                 else: self.sw_vars[name].set(False)
 
+    def load_local_images(self):
+        """Carga imágenes desde el directorio gallery"""
+        if not os.path.exists(self.gallery_dir):
+            return
+        
+        image_files = ["andromeda.png", "spiral_galaxy.png", "carina_nebula.png", 
+                      "orion_nebula.png", "pillars.png"]
+        
+        for img_file in image_files:
+            img_path = os.path.join(self.gallery_dir, img_file)
+            if os.path.exists(img_path):
+                try:
+                    img = Image.open(img_path)
+                    img.thumbnail((350, 200), Image.Resampling.LANCZOS)
+                    photo = ImageTk.PhotoImage(img)
+                    self.carousel_images.append(photo)
+                except Exception as e:
+                    print(f"[GALLERY] Error cargando {img_file}: {e}")
+        
+        if self.carousel_images:
+            self.carousel_mode = "images"
+            print(f"[GALLERY] {len(self.carousel_images)} imágenes cargadas")
+
     def update_carousel(self):
-        """Actualiza el emoji del carrusel"""
+        """Actualiza el carrusel (imágenes locales o emojis)"""
         if hasattr(self, 'carousel_label'):
-            emoji = CAROUSEL_EMOJIS[self.carousel_index]
-            self.carousel_label.config(text=emoji)
-            self.carousel_index = (self.carousel_index + 1) % len(CAROUSEL_EMOJIS)
-            self.root.after(2000, self.update_carousel)
+            if self.carousel_mode == "images" and self.carousel_images:
+                self.carousel_label.config(image=self.carousel_images[self.carousel_index], text="")
+                self.carousel_index = (self.carousel_index + 1) % len(self.carousel_images)
+            else:
+                # Fallback a emojis
+                emoji = CAROUSEL_EMOJIS[self.carousel_index]
+                self.carousel_label.config(text=emoji, image="")
+                self.carousel_index = (self.carousel_index + 1) % len(CAROUSEL_EMOJIS)
+            
+            self.root.after(3000, self.update_carousel)
 
     def start_install(self):
         self.clean(); self.head("Procesando...", "Instalando paquetes seleccionados")
         
-        # V6.5: Carrusel de emojis astronómicos
-        carousel_frame = tk.Frame(self.main_content, bg=BG_COLOR, height=120)
+        # V6.6: Cargar imágenes del gallery
+        self.load_local_images()
+        
+        # Carrusel (inicia con emoji si no hay imágenes)
+        carousel_frame = tk.Frame(self.main_content, bg=BG_COLOR, height=220)
         carousel_frame.pack(pady=10)
-        self.carousel_label = tk.Label(carousel_frame, text=CAROUSEL_EMOJIS[0], font=("Sans", 72), bg=BG_COLOR, fg=ACCENT_COLOR)
+        
+        if self.carousel_mode == "images" and self.carousel_images:
+            self.carousel_label = tk.Label(carousel_frame, image=self.carousel_images[0], bg=BG_COLOR)
+        else:
+            self.carousel_label = tk.Label(carousel_frame, text=CAROUSEL_EMOJIS[0], font=("Sans", 72), bg=BG_COLOR, fg=ACCENT_COLOR)
+        
         self.carousel_label.pack()
         self.update_carousel()
         
         self.cancel_btn = tk.Button(self.main_content, text="ABORTAR INSTALACIÓN", command=self.stop_install, bg=DANGER_COLOR, fg="white", font=("Sans",11,"bold"), relief="flat", padx=25, pady=10)
         self.cancel_btn.pack(pady=10)
         
-        # V6.5: Terminal más pequeño (height=8)
+        # Terminal compacto
         t_frm = tk.Frame(self.main_content, bg="black", bd=2)
         t_frm.pack(fill="x", padx=50, pady=10)
-        self.console = scrolledtext.ScrolledText(t_frm, bg="black", fg="#00ff00", font=("Monospace", 9), state="disabled", borderwidth=0, height=8)
+        self.console = scrolledtext.ScrolledText(t_frm, bg="black", fg="#00ff00", font=("Monospace", 9), state="disabled", borderwidth=0, height=6)
         self.console.pack(fill="x")
         threading.Thread(target=self.run_install, daemon=True).start()
 
