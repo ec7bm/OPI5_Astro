@@ -8,7 +8,7 @@ ACCENT_COLOR = "#38bdf8"
 class SetupOrchestrator:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange Setup V6.2")
+        self.root.title("AstroOrange Setup V6.4")
         self.root.geometry("600x500")
         self.root.configure(bg=BG_COLOR)
         self.wizard_dir = "/opt/astroorange/wizard"
@@ -64,8 +64,18 @@ class SetupOrchestrator:
     def run_soft_step(self):
         response = messagebox.askquestion("Paso 3: Software", "¿Deseas abrir el instalador de software astronómico?", icon='question')
         if response == 'yes':
-            # Wait for software wizard to complete
-            subprocess.run([sys.executable, f"{self.wizard_dir}/astro-software-gui.py"])
+            # V6.4: Check if file exists before running
+            soft_path = f"{self.wizard_dir}/astro-software-gui.py"
+            if not os.path.exists(soft_path):
+                messagebox.showerror("Error", f"No se encuentra: {soft_path}")
+            else:
+                # Hide main window while software wizard is open
+                self.root.withdraw()
+                result = subprocess.run([sys.executable, soft_path])
+                self.root.deiconify()
+                
+                if result.returncode != 0:
+                    messagebox.showwarning("Aviso", "El instalador de software se cerró inesperadamente.")
         
         # Only show "Finalizado" AFTER software wizard closes
         messagebox.showinfo("✅ Finalizado", "¡Configuración completada!\nDisfruta de AstroOrange.")
@@ -82,6 +92,14 @@ class SetupOrchestrator:
 if __name__ == "__main__":
     root = tk.Tk()
     app = SetupOrchestrator(root)
-    try: root.iconphoto(False, tk.PhotoImage(file="/usr/share/icons/Papirus/32x32/apps/system-installer.png"))
-    except: pass
+    # V6.4: Use system theme icons
+    icon_paths = [
+        "/usr/share/icons/Papirus/48x48/apps/preferences-system.png",
+        "/usr/share/icons/hicolor/48x48/apps/system-installer.png",
+        "/usr/share/pixmaps/gdebi.png"
+    ]
+    for p in icon_paths:
+        if os.path.exists(p):
+            try: root.iconphoto(False, tk.PhotoImage(file=p)); break
+            except: pass
     root.mainloop()
