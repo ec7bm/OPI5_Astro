@@ -89,8 +89,12 @@ class NetWizard:
         self.btn(nav, "CONECTAR", self.connect, ACCENT_COLOR, width=15).pack(side="left", padx=20)
 
     def toggle_ip(self):
-        if self.static_ip_var.get(): self.ip_frame.pack(fill="x", pady=10)
-        else: self.ip_frame.pack_forget()
+        if self.static_ip_var.get(): 
+            self.ip_frame.pack(fill="x", pady=10)
+            self.root.geometry("800x800") # More height for static IP fields
+        else: 
+            self.ip_frame.pack_forget()
+            self.root.geometry("800x650")
 
     def connect(self):
         pw = self.ep.get().strip()
@@ -108,9 +112,13 @@ class NetWizard:
         tk.Label(self.main_content, text="Deteniendo Hotspot y aplicando cambios...\n(Esto puede tardar hasta 45s)", bg=BG_COLOR, fg=FG_COLOR, font=("Sans", 11)).pack(pady=30); self.root.update()
         
         def run():
+            import time
             # 1. CRITICAL: Stop Hotspot/Network-Script to prevent conflicts/loops
             subprocess.run("sudo systemctl stop astro-network.service", shell=True)
             subprocess.run("sudo nmcli con down AstroOrange-Setup 2>/dev/null", shell=True)
+            
+            # SAFETY DELAY: Wait 5s for WiFi chip to reset/clean buffer and avoid Router Freeze
+            time.sleep(5)
             
             # 2. Connect
             res = subprocess.run(cmd, shell=True, capture_output=True, timeout=60)
@@ -135,9 +143,19 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = NetWizard(root)
     app.center_window()
-    # Try to set icon if available
-    try: 
-        img = tk.PhotoImage(file="/usr/share/icons/Papirus/32x32/apps/network-wireless-hotspot.png")
-        root.iconphoto(False, img)
-    except: pass
+    
+    # Robust Icon Loading
+    icon_paths = [
+        "/usr/share/icons/Papirus/32x32/apps/network-wireless-hotspot.png",
+        "/usr/share/icons/hicolor/48x48/apps/nm-device-wireless.png",
+        "/usr/share/pixmaps/nm-signal-100.png"
+    ]
+    for p in icon_paths:
+        if os.path.exists(p):
+            try:
+                img = tk.PhotoImage(file=p)
+                root.iconphoto(False, img)
+                break
+            except: pass
+            
     root.mainloop()

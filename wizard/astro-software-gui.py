@@ -136,8 +136,19 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SoftWizard(root)
     app.center_window()
-    try: 
-        img = tk.PhotoImage(file="/usr/share/icons/Papirus/32x32/apps/kstars.png")
-        root.iconphoto(False, img)
-    except: pass
+    
+    # Robust Icon Loading
+    icon_paths = [
+        "/usr/share/icons/Papirus/32x32/apps/kstars.png",
+        "/usr/share/icons/hicolor/48x48/apps/kstars.png",
+        "/usr/share/pixmaps/kstars.png"
+    ]
+    for p in icon_paths:
+        if os.path.exists(p):
+            try:
+                img = tk.PhotoImage(file=p)
+                root.iconphoto(False, img)
+                break
+            except: pass
+            
     root.mainloop()
