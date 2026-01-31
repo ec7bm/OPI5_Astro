@@ -90,9 +90,12 @@ class SetupOrchestrator:
         self.root.geometry(f"+{x}+{y}")
 
 if __name__ == "__main__":
-    # V6.6: Check if user disabled autostart
-    if os.path.exists("/etc/astro-wizard-done"):
-        sys.exit(0)  # Exit silently if wizard was disabled
+    # V6.6: Check if user disabled autostart (ONLY when launched from autostart)
+    # Manual launches from desktop icons should ALWAYS work
+    is_autostart = "--autostart" in sys.argv
+    
+    if is_autostart and os.path.exists("/etc/astro-wizard-done"):
+        sys.exit(0)  # Exit silently if wizard was disabled AND running from autostart
     
     root = tk.Tk()
     app = SetupOrchestrator(root)
