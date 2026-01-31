@@ -65,28 +65,79 @@ class NetWizard:
         self.ssid = self.ssids[idx[0]]
         
         self.clean(); self.head("Seguridad Red", f"Conectando a: {self.ssid}")
-        f = tk.Frame(self.main_content, bg=SECONDARY_BG, padx=50, pady=50); f.pack(pady=20)
+        f = tk.Frame(self.main_content, bg=SECONDARY_BG, padx=40, pady=30); f.pack(pady=10)
+        
+        # Password Field
         tk.Label(f, text="CONTRASEÑA WIFI", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
         self.ep = tk.Entry(f, show="*", width=35, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
-        self.ep.pack(pady=(15, 0), ipady=10)
+        self.ep.pack(pady=(5, 20), ipady=8)
+
+        # Static IP Toggle
+        self.static_ip_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(f, text="Configuración IP Manual (Avanzado)", variable=self.static_ip_var, command=self.toggle_ip,
+                       bg=SECONDARY_BG, fg="white", selectcolor=BG_COLOR, font=("Sans", 10)).pack(anchor="w", pady=5)
         
-        nav = tk.Frame(self.main_content, bg=BG_COLOR); nav.pack(side="bottom", pady=50)
-        self.btn(nav, "VOLVER", self.step_list, BUTTON_COLOR, width=10).pack(side="left", padx=25)
-        self.btn(nav, "CONECTAR", self.connect, ACCENT_COLOR, width=15).pack(side="left", padx=25)
+        self.ip_frame = tk.Frame(f, bg=SECONDARY_BG)
+        self.entries = {}
+        for lbl in ["Dirección IP (ej: 192.168.1.50/24)", "Puerta de Enlace (ej: 192.168.1.1)", "DNS (ej: 8.8.8.8)"]:
+            tk.Label(self.ip_frame, text=lbl, bg=SECONDARY_BG, fg=FG_COLOR, font=("Sans", 9)).pack(anchor="w")
+            e = tk.Entry(self.ip_frame, width=35, bg=BG_COLOR, fg="white", bd=0, insertbackground="white"); e.pack(pady=(0, 10), ipady=5)
+            self.entries[lbl] = e
+        
+        nav = tk.Frame(self.main_content, bg=BG_COLOR); nav.pack(side="bottom", pady=40)
+        self.btn(nav, "VOLVER", self.step_list, BUTTON_COLOR, width=10).pack(side="left", padx=20)
+        self.btn(nav, "CONECTAR", self.connect, ACCENT_COLOR, width=15).pack(side="left", padx=20)
+
+    def toggle_ip(self):
+        if self.static_ip_var.get(): self.ip_frame.pack(fill="x", pady=10)
+        else: self.ip_frame.pack_forget()
 
     def connect(self):
-        pw = self.ep.get().strip(); self.clean()
-        self.head("Conectando...", f"Estableciendo enlace con {self.ssid}")
-        tk.Label(self.main_content, text="Por favor, espera unos segundos...", bg=BG_COLOR, fg=FG_COLOR, font=("Sans", 12)).pack(pady=30); self.root.update()
+        pw = self.ep.get().strip()
+        cmd = f"sudo nmcli dev wifi connect '{self.ssid}' password '{pw}'"
+        
+        # Static IP Logic
+        if self.static_ip_var.get():
+            ip = self.entries["Dirección IP (ej: 192.168.1.50/24)"].get().strip()
+            gw = self.entries["Puerta de Enlace (ej: 192.168.1.1)"].get().strip()
+            dns = self.entries["DNS (ej: 8.8.8.8)"].get().strip()
+            if not ip or not gw: messagebox.showwarning("Error IP", "IP y Puerta de Enlace obligatorias"); return
+            cmd += f" ipv4.method manual ipv4.addresses {ip} ipv4.gateway {gw} ipv4.dns {dns}"
+
+        self.clean(); self.head("Conectando...", f"Estableciendo enlace con {self.ssid}")
+        tk.Label(self.main_content, text="Deteniendo Hotspot y aplicando cambios...\n(Esto puede tardar hasta 45s)", bg=BG_COLOR, fg=FG_COLOR, font=("Sans", 11)).pack(pady=30); self.root.update()
         
         def run():
-            res = subprocess.run(f"sudo nmcli dev wifi connect '{self.ssid}' password '{pw}'", shell=True, capture_output=True, timeout=35)
+            # 1. CRITICAL: Stop Hotspot/Network-Script to prevent conflicts/loops
+            subprocess.run("sudo systemctl stop astro-network.service", shell=True)
+            subprocess.run("sudo nmcli con down AstroOrange-Setup 2>/dev/null", shell=True)
+            
+            # 2. Connect
+            res = subprocess.run(cmd, shell=True, capture_output=True, timeout=60)
             if res.returncode == 0:
-                self.root.after(0, lambda: messagebox.showinfo("Éxito", f"Conectado correctamente a {self.ssid}"))
+                self.root.after(0, lambda: messagebox.showinfo("Éxito", f"Conectado a {self.ssid}"))
                 self.root.after(0, self.root.destroy)
             else:
-                self.root.after(0, lambda: messagebox.showerror("Error de Red", "No se pudo conectar. Verifica la contraseña.")); self.root.after(0, self.step_list)
+                err_msg = res.stderr.decode().strip() or "Error desconocido"
+                self.root.after(0, lambda: messagebox.showerror("Error Conexión", f"Fallo al conectar:\n{err_msg}"))
+                self.root.after(0, self.step_list)
+
         threading.Thread(target=run, daemon=True).start()
 
+    def center_window(self):
+        self.root.update_idletasks()
+        w, h = self.root.winfo_width(), self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (w // 2)
+        y = (self.root.winfo_screenheight() // 2) - (h // 2)
+        self.root.geometry(f"+{x}+{y}")
+
 if __name__ == "__main__":
-    root = tk.Tk(); app = NetWizard(root); root.mainloop()
+    root = tk.Tk()
+    app = NetWizard(root)
+    app.center_window()
+    # Try to set icon if available
+    try: 
+        img = tk.PhotoImage(file="/usr/share/icons/Papirus/32x32/apps/network-wireless-hotspot.png")
+        root.iconphoto(False, img)
+    except: pass
+    root.mainloop()

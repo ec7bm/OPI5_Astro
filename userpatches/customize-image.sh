@@ -141,12 +141,21 @@ cp -r "$REM_SRC/wizard/"* "$OPT_DIR/wizard/"
 mkdir -p /etc/xdg/autostart
 cp "$UP_SRC/xdg/autostart/astro-wizard.desktop" /etc/xdg/autostart/
 
-# Menu Entries (Modular Tools)
+# Menu Entries (Modular Tools) -- ALL of them into System Menu
 mkdir -p /usr/share/applications
 cp "$UP_SRC/xdg/applications/astro-network.desktop" /usr/share/applications/
 cp "$UP_SRC/xdg/applications/astro-user.desktop" /usr/share/applications/
 cp "$UP_SRC/xdg/applications/astro-software.desktop" /usr/share/applications/
 cp "$UP_SRC/xdg/applications/astro-setup.desktop" /usr/share/applications/
+
+# Desktop Shortcuts (Exclude Setup)
+# Setup is only for first run or menu access, keeping desktop clean
+mkdir -p /home/$SETUP_USER/Desktop
+cp "$UP_SRC/xdg/applications/astro-network.desktop" /home/$SETUP_USER/Desktop/
+cp "$UP_SRC/xdg/applications/astro-user.desktop" /home/$SETUP_USER/Desktop/
+cp "$UP_SRC/xdg/applications/astro-software.desktop" /home/$SETUP_USER/Desktop/
+chmod +x /home/$SETUP_USER/Desktop/*.desktop
+chown -R $SETUP_USER:$SETUP_USER /home/$SETUP_USER/Desktop
 
 # --- C. Headless & Networking Fixes ---
 echo "   🖥️ Configuring Headless Support & Networking..."

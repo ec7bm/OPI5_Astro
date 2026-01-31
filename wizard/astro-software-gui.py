@@ -125,5 +125,19 @@ class SoftWizard:
         self.log(f"\nCOMPLETADO: {count}/{total}")
         self.cancel_btn.config(text="CERRAR Y FINALIZAR", bg=SUCCESS_COLOR, command=self.root.destroy)
 
+    def center_window(self):
+        self.root.update_idletasks()
+        w, h = self.root.winfo_width(), self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (w // 2)
+        y = (self.root.winfo_screenheight() // 2) - (h // 2)
+        self.root.geometry(f"+{x}+{y}")
+
 if __name__ == "__main__":
-    root = tk.Tk(); app = SoftWizard(root); root.mainloop()
+    root = tk.Tk()
+    app = SoftWizard(root)
+    app.center_window()
+    try: 
+        img = tk.PhotoImage(file="/usr/share/icons/Papirus/32x32/apps/kstars.png")
+        root.iconphoto(False, img)
+    except: pass
+    root.mainloop()
