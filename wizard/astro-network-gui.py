@@ -103,6 +103,14 @@ class NetWizard:
         self.eh.pack(pady=(5, 15), ipady=8)
 
         self.static_ip_var = tk.BooleanVar(value=False)
+        
+        # V6.3: Static IP Recommendation
+        rec_frame = tk.Frame(f, bg="#1e40af", padx=10, pady=8)
+        rec_frame.pack(fill="x", pady=(10, 5))
+        tk.Label(rec_frame, text="💡 RECOMENDACIÓN", bg="#1e40af", fg="white", font=("Sans", 9, "bold")).pack(anchor="w")
+        tk.Label(rec_frame, text="Para uso astronómico, se recomienda IP FIJA para conexión estable.", 
+                 bg="#1e40af", fg="white", font=("Sans", 9), wraplength=400, justify="left").pack(anchor="w")
+        
         tk.Checkbutton(f, text="Configuración IP Manual (Avanzado)", variable=self.static_ip_var, command=self.toggle_ip,
                        bg=SECONDARY_BG, fg="white", selectcolor=BG_COLOR, activebackground=SECONDARY_BG, font=("Sans", 10)).pack(anchor="w", pady=5)
         

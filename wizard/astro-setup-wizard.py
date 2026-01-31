@@ -64,8 +64,10 @@ class SetupOrchestrator:
     def run_soft_step(self):
         response = messagebox.askquestion("Paso 3: Software", "¿Deseas abrir el instalador de software astronómico?", icon='question')
         if response == 'yes':
-             subprocess.run([sys.executable, f"{self.wizard_dir}/astro-software-gui.py"])
+            # Wait for software wizard to complete
+            subprocess.run([sys.executable, f"{self.wizard_dir}/astro-software-gui.py"])
         
+        # Only show "Finalizado" AFTER software wizard closes
         messagebox.showinfo("✅ Finalizado", "¡Configuración completada!\nDisfruta de AstroOrange.")
         self.root.destroy()
         sys.exit(0)
