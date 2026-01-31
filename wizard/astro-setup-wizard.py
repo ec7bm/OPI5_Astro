@@ -1,73 +1,74 @@
 import tkinter as tk
 from tkinter import messagebox
-import subprocess, os, sys
+import subprocess, sys, os
 
-# Estilo Premium AstroOrange
-BG_COLOR, SECONDARY_BG, FG_COLOR = "#0f172a", "#1e293b", "#e2e8f0"
-ACCENT_COLOR, SUCCESS_COLOR, DANGER_COLOR = "#38bdf8", "#22c55e", "#ef4444"
-BUTTON_COLOR = "#334155"
+BG_COLOR = "#0f172a"
+ACCENT_COLOR = "#38bdf8"
 
 class SetupOrchestrator:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange V2 - Configuración Inicial")
-        self.root.geometry("850x600")
+        self.root.title("AstroOrange Setup V6.2")
+        self.root.geometry("600x500")
         self.root.configure(bg=BG_COLOR)
-        self.root.resizable(False, False)
-        
         self.wizard_dir = "/opt/astroorange/wizard"
-        if not os.path.exists(self.wizard_dir):
-            self.wizard_dir = "." # Fallback para desarrollo local
-            
         self.main_content = tk.Frame(self.root, bg=BG_COLOR)
         self.main_content.pack(expand=True, fill="both")
-        
         self.show_welcome()
-
-    def clean(self):
-        for w in self.main_content.winfo_children(): w.destroy()
+        self.center_window()
 
     def show_welcome(self):
-        self.clean()
-        tk.Label(self.main_content, text="🍊 AstroOrange V2", font=("Sans", 36, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(60, 10))
-        tk.Label(self.main_content, text="Bienvenido a tu nueva estación de astrofotografía", font=("Sans", 15), bg=BG_COLOR, fg=FG_COLOR).pack(pady=(0, 40))
+        for w in self.main_content.winfo_children(): w.destroy()
+        tk.Label(self.main_content, text="🚀", font=("Sans", 60), bg=BG_COLOR).pack(pady=(40, 10))
+        tk.Label(self.main_content, text="Bienvenido a AstroOrange", font=("Sans", 24, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=10)
+        tk.Label(self.main_content, text="Vamos a configurar tu observatorio.", font=("Sans", 12), bg=BG_COLOR, fg="white").pack(pady=5)
         
-        info = "Este asistente te ayudará a configurar tu usuario,\nconectar el WiFi e instalar el software necesario."
-        tk.Label(self.main_content, text=info, font=("Sans", 13), bg=BG_COLOR, fg=FG_COLOR, justify="center").pack(pady=20)
+        nav = tk.Frame(self.main_content, bg=BG_COLOR)
+        nav.pack(side="bottom", pady=40)
         
-        # Don't show again checkbox
         self.chk_nomore = tk.BooleanVar(value=False)
         tk.Checkbutton(self.main_content, text="No volver a mostrar este asistente al inicio", variable=self.chk_nomore,
                        bg=BG_COLOR, fg="white", selectcolor=BG_COLOR, font=("Sans", 11), activebackground=BG_COLOR).pack(pady=10)
 
-        tk.Button(self.main_content, text="COMENZAR CONFIGURACIÓN", command=self.run_user_step, 
-                  bg=ACCENT_COLOR, fg=BG_COLOR, font=("Sans", 14, "bold"), relief="flat", padx=40, pady=15, cursor="hand2").pack(pady=40)
+        tk.Button(nav, text="COMENZAR", command=self.run_user_step, bg=ACCENT_COLOR, fg="black", font=("Sans", 12, "bold"), padx=30, pady=10).pack()
 
     def run_user_step(self):
-        # Handle "Don't show again" logic immediately if checked
         if self.chk_nomore.get():
              subprocess.run("sudo touch /etc/astro-wizard-done", shell=True)
-
-        # Lanzar el paso de usuario
-        res = subprocess.run([sys.executable, f"{self.wizard_dir}/astro-user-gui.py"])
+        subprocess.run([sys.executable, f"{self.wizard_dir}/astro-user-gui.py"])
         self.run_net_step()
 
     def run_net_step(self):
-        if messagebox.askyesno("Paso 2: Red", "¿Deseas configurar una red WiFi ahora mismo?"):
-            subprocess.run([sys.executable, f"{self.wizard_dir}/astro-network-gui.py"])
-        
+        response = messagebox.askquestion("Paso 2: Red", "¿Deseas configurar una red WiFi ahora?", icon='question')
+        if response == 'yes':
+            self.run_network_step()
         self.run_soft_step()
 
+    def run_network_step(self):
+        splash = tk.Toplevel(self.root)
+        splash.geometry("400x150")
+        splash.title("Cargando...")
+        splash.configure(bg=BG_COLOR)
+        w, h = 400, 150
+        x = (self.root.winfo_screenwidth() // 2) - (w // 2)
+        y = (self.root.winfo_screenheight() // 2) - (h // 2)
+        splash.geometry(f"+{x}+{y}")
+        
+        tk.Label(splash, text="⏱️", font=("Sans", 40), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(20, 5))
+        tk.Label(splash, text="Iniciando Gestor de Red...", font=("Sans", 12, "bold"), bg=BG_COLOR, fg="white").pack(pady=10)
+        splash.update()
+        
+        subprocess.run([sys.executable, f"{self.wizard_dir}/astro-network-gui.py"])
+        splash.destroy()
+
     def run_soft_step(self):
-        # Force software installer if potential updates/installs needed, or just ask
-        if messagebox.askyesno("Paso 3: Software", "¿Deseas abrir el instalador de software de astronomía?"):
+        response = messagebox.askquestion("Paso 3: Software", "¿Deseas abrir el instalador de software astronómico?", icon='question')
+        if response == 'yes':
              subprocess.run([sys.executable, f"{self.wizard_dir}/astro-software-gui.py"])
         
-        self.finish()
-
-    def finish(self):
-        messagebox.showinfo("Completado", "La configuración inicial ha finalizado.\nPuedes volver a abrir estos asistentes desde el menú del sistema.")
+        messagebox.showinfo("✅ Finalizado", "¡Configuración completada!\nDisfruta de AstroOrange.")
         self.root.destroy()
+        sys.exit(0)
 
     def center_window(self):
         self.root.update_idletasks()
@@ -77,26 +78,8 @@ class SetupOrchestrator:
         self.root.geometry(f"+{x}+{y}")
 
 if __name__ == "__main__":
-    # Autostart check
-    if "--autostart" in sys.argv and os.path.exists("/etc/astro-wizard-done"):
-        sys.exit(0)
-        
     root = tk.Tk()
     app = SetupOrchestrator(root)
-    app.center_window()
-    
-    # Robust Icon Loading
-    icon_paths = [
-        "/usr/share/icons/Papirus/32x32/apps/system-installer.png",
-        "/usr/share/icons/hicolor/48x48/apps/system-installer.png",
-        "/usr/share/icons/Adwaita/48x48/emblems/emblem-system.png"
-    ]
-    for p in icon_paths:
-        if os.path.exists(p):
-            try:
-                img = tk.PhotoImage(file=p)
-                root.iconphoto(False, img)
-                break
-            except: pass
-            
+    try: root.iconphoto(False, tk.PhotoImage(file="/usr/share/icons/Papirus/32x32/apps/system-installer.png"))
+    except: pass
     root.mainloop()
