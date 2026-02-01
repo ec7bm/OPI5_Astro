@@ -29,11 +29,10 @@ def check_ping():
         return True
     except: return False
 
-class SoftWizard:
     def __init__(self, root):
-        print("[DEBUG] Iniciando SoftWizard V6.8...")
+        print("[DEBUG] Iniciando SoftWizard V6.9...")
         self.root = root
-        self.root.title("AstroOrange Software Installer V6.8")
+        self.root.title("AstroOrange Software Installer V6.9")
         self.root.geometry("900x750")
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
@@ -43,7 +42,8 @@ class SoftWizard:
         self.proc = None
         self.carousel_index = 0
         self.carousel_images = []
-        self.carousel_mode = "emoji"  # "emoji" or "images"
+        self.carousel_mode = "emoji"
+        self.temp_nasa_files = [] # Para limpieza
         
         # Determinar el directorio del wizard
         self.wizard_dir = os.path.dirname(os.path.abspath(__file__))
@@ -52,7 +52,12 @@ class SoftWizard:
         self.main_content = tk.Frame(self.root, bg=BG_COLOR)
         self.main_content.pack(expand=True, fill="both")
         
+        # Bind close event for cleanup
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        
         self.draw_main()
+
+    # ... (clean, head, btn, draw_main methods remain the same) ...
 
     def clean(self):
         for w in self.main_content.winfo_children(): w.destroy()
@@ -90,7 +95,7 @@ class SoftWizard:
         self.btn("🚀 INICIAR INSTALACIÓN", self.start_install, ACCENT_COLOR, width=40).pack(pady=30)
         
         ctrl = tk.Frame(self.main_content, bg=BG_COLOR); ctrl.pack()
-        tk.Button(ctrl, text="SALIR", command=self.root.destroy, bg=BUTTON_COLOR, fg="white", font=("Sans",11), relief="flat", padx=30, pady=8).pack()
+        tk.Button(ctrl, text="SALIR", command=self.on_close, bg=BUTTON_COLOR, fg="white", font=("Sans",11), relief="flat", padx=30, pady=8).pack()
 
     def on_sw_click(self, name):
         bin_name = SOFTWARE[name]["bin"]
@@ -101,63 +106,81 @@ class SoftWizard:
                 else: self.sw_vars[name].set(False)
 
     def safe_resize(self, img, size):
-        """Redimensiona imagen de forma compatible con Pillow viejo y nuevo"""
         try:
-            # Pillow >= 10.0.0
             return img.resize(size, Image.Resampling.LANCZOS)
         except AttributeError:
-            # Pillow < 10.0.0
             return img.resize(size, Image.ANTIALIAS)
 
     def load_local_images(self):
-        """Carga imágenes desde gallery/ + intenta descargar 1 de NASA"""
-        print(f"[DEBUG] Buscando imágenes en: {self.gallery_dir}")
-        self.carousel_images = [] # Reset
+        """Carga imágenes gallery/ + 5 random NASA APOD"""
+        print(f"[DEBUG] Buscando imágenes...")
+        self.carousel_images = [] 
+        self.temp_nasa_files = [] 
 
-        # 1. Intentar descargar imagen de NASA APOD si hay internet
+        # 1. Descargar 5 imágenes NASA APOD
         if check_ping():
             try:
-                print("[DEBUG] Descargando imagen del día de NASA APOD...")
-                url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY"
-                with urllib.request.urlopen(url, timeout=3) as response:
+                print("[DEBUG] Descargando 5 imágenes de NASA APOD...")
+                # count=5 para obtener 5 aleatorias
+                url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=5"
+                with urllib.request.urlopen(url, timeout=5) as response:
                     data = json.loads(response.read().decode())
-                    if data.get('media_type') == 'image':
-                        img_url = data.get('url')
-                        nasa_path = "/tmp/nasa_apod.jpg"
-                        urllib.request.urlretrieve(img_url, nasa_path)
-                        
-                        img = Image.open(nasa_path)
-                        img = self.safe_resize(img, (350, 200)) # Usando función segura
-                        photo = ImageTk.PhotoImage(img)
-                        self.carousel_images.append(photo)
-                        print("[DEBUG] ✅ Imagen NASA APOD descargada!")
+                    
+                    for i, item in enumerate(data):
+                        if item.get('media_type') == 'image':
+                            img_url = item.get('url')
+                            nasa_path = f"/tmp/nasa_apod_{i}.jpg"
+                            urllib.request.urlretrieve(img_url, nasa_path)
+                            self.temp_nasa_files.append(nasa_path)
+                            
+                            try:
+                                img = Image.open(nasa_path)
+                                img = self.safe_resize(img, (350, 200))
+                                photo = ImageTk.PhotoImage(img)
+                                self.carousel_images.append(photo)
+                                print(f"[DEBUG] ✅ NASA img {i+1} descargada")
+                            except: pass
             except Exception as e:
-                print(f"[DEBUG] No se pudo descargar NASA: {e}")
+                print(f"[DEBUG] Error descargando NASA: {e}")
         
         # 2. Cargar imágenes locales
-        if not os.path.exists(self.gallery_dir):
-            print(f"[DEBUG] No existe {self.gallery_dir}, usando emojis")
-            return
-        
         image_files = ["andromeda.png", "spiral_galaxy.png", "carina_nebula.png", 
                       "orion_nebula.png", "pillars.png"]
         
-        for img_file in image_files:
-            img_path = os.path.join(self.gallery_dir, img_file)
-            if os.path.exists(img_path):
-                try:
-                    print(f"[DEBUG] Cargando: {img_file}")
-                    img = Image.open(img_path)
-                    img = self.safe_resize(img, (350, 200)) # Usando función segura
-                    photo = ImageTk.PhotoImage(img)
-                    self.carousel_images.append(photo)
-                    print(f"[DEBUG] ✅ {img_file} cargada")
-                except Exception as e:
-                    print(f"[DEBUG] ❌ Error con {img_file}: {e}")
+        if os.path.exists(self.gallery_dir):
+            for img_file in image_files:
+                img_path = os.path.join(self.gallery_dir, img_file)
+                if os.path.exists(img_path):
+                    try:
+                        img = Image.open(img_path)
+                        img = self.safe_resize(img, (350, 200))
+                        photo = ImageTk.PhotoImage(img)
+                        self.carousel_images.append(photo)
+                    except: pass
         
         if self.carousel_images:
             self.carousel_mode = "images"
-            print(f"[GALLERY] {len(self.carousel_images)} imágenes cargadas")
+            # Mezclar un poco para que no salgan todas las de la NASA juntas
+            import random
+            random.shuffle(self.carousel_images)
+            print(f"[GALLERY] {len(self.carousel_images)} imágenes cargadas total")
+
+    def cleanup(self):
+        """Borra imágenes temporales"""
+        if self.temp_nasa_files:
+            print(f"[DEBUG] Limpiando {len(self.temp_nasa_files)} archivos temporales...")
+            for f in self.temp_nasa_files:
+                if os.path.exists(f):
+                    try: os.remove(f); print(f"[CLEAN] Borrado {f}")
+                    except: pass
+            self.temp_nasa_files = []
+
+    def on_close(self):
+        self.cleanup()
+        self.root.destroy()
+        sys.exit(0)
+
+    # ... (update_carousel, start_install, log, create_shortcut, stop_install, run_install, center_window) ...
 
     def update_carousel(self):
         """Actualiza el carrusel (imágenes locales o emojis)"""
@@ -166,7 +189,6 @@ class SoftWizard:
                 self.carousel_label.config(image=self.carousel_images[self.carousel_index], text="")
                 self.carousel_index = (self.carousel_index + 1) % len(self.carousel_images)
             else:
-                # Fallback a emojis
                 emoji = CAROUSEL_EMOJIS[self.carousel_index]
                 self.carousel_label.config(text=emoji, image="")
                 self.carousel_index = (self.carousel_index + 1) % len(CAROUSEL_EMOJIS)
@@ -175,11 +197,8 @@ class SoftWizard:
 
     def start_install(self):
         self.clean(); self.head("Procesando...", "Instalando paquetes seleccionados")
-        
-        # V6.8: Cargar imágenes
         self.load_local_images()
         
-        # Carrusel (inicia con emoji si no hay imágenes)
         carousel_frame = tk.Frame(self.main_content, bg=BG_COLOR, height=220)
         carousel_frame.pack(pady=10)
         
@@ -194,7 +213,6 @@ class SoftWizard:
         self.cancel_btn = tk.Button(self.main_content, text="ABORTAR INSTALACIÓN", command=self.stop_install, bg=DANGER_COLOR, fg="white", font=("Sans",11,"bold"), relief="flat", padx=25, pady=10)
         self.cancel_btn.pack(pady=10)
         
-        # Terminal compacto
         t_frm = tk.Frame(self.main_content, bg="black", bd=2)
         t_frm.pack(fill="x", padx=50, pady=10)
         self.console = scrolledtext.ScrolledText(t_frm, bg="black", fg="#00ff00", font=("Monospace", 9), state="disabled", borderwidth=0, height=6)
@@ -231,7 +249,7 @@ class SoftWizard:
         if self.proc and self.proc.poll() is None:
             if messagebox.askyesno("Confirmar", "¿Deseas interrumpir?"):
                 self.proc.terminate(); self.log("\n>>> INSTALACIÓN INTERRUMPIDA.")
-        else: self.root.destroy()
+        else: self.on_close() # Use on_close for cleanup
 
     def run_install(self):
         subprocess.run("sudo apt-get update", shell=True)
@@ -252,13 +270,12 @@ class SoftWizard:
                 if self.proc.returncode == 0: 
                     count += 1
                     self.log(f"OK: {n}")
-                    # CREAR ACCESO DIRECTO
                     self.create_shortcut(n, info['bin'])
                 else: self.log(f"ERROR: {n}")
             except Exception as e: self.log(f"EXCEPCIÓN: {str(e)}")
         
         self.log(f"\nCOMPLETADO: {count}/{total}")
-        self.cancel_btn.config(text="CERRAR Y FINALIZAR", bg=SUCCESS_COLOR, command=self.root.destroy)
+        self.cancel_btn.config(text="CERRAR Y FINALIZAR", bg=SUCCESS_COLOR, command=self.on_close) # Call on_close
 
     def center_window(self):
         self.root.update_idletasks()
@@ -272,10 +289,9 @@ if __name__ == "__main__":
     app = SoftWizard(root)
     app.center_window()
     
-    # Robust Icon Loading
     icon_paths = [
-        "/usr/share/icons/Papirus/32x32/apps/kstars.png",
-        "/usr/share/icons/hicolor/48x48/apps/kstars.png",
+        "/usr/share/icons/Papirus/32x32/apps/kstars.png", 
+        "/usr/share/icons/hicolor/48x48/apps/kstars.png", 
         "/usr/share/pixmaps/kstars.png"
     ]
     for p in icon_paths:
