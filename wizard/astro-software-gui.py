@@ -20,7 +20,6 @@ SOFTWARE = {
     "Syncthing": {"bin": "syncthing", "pkg": "syncthing"}
 }
 
-# Emojis para carrusel (fallback)
 CAROUSEL_EMOJIS = ["🔭", "🌌", "⭐", "🪐", "🌠"]
 
 def check_ping():
@@ -29,6 +28,7 @@ def check_ping():
         return True
     except: return False
 
+class SoftWizard:
     def __init__(self, root):
         print("[DEBUG] Iniciando SoftWizard V6.9...")
         self.root = root
@@ -43,21 +43,17 @@ def check_ping():
         self.carousel_index = 0
         self.carousel_images = []
         self.carousel_mode = "emoji"
-        self.temp_nasa_files = [] # Para limpieza
+        self.temp_nasa_files = [] 
         
-        # Determinar el directorio del wizard
         self.wizard_dir = os.path.dirname(os.path.abspath(__file__))
         self.gallery_dir = os.path.join(self.wizard_dir, "gallery")
         
         self.main_content = tk.Frame(self.root, bg=BG_COLOR)
         self.main_content.pack(expand=True, fill="both")
         
-        # Bind close event for cleanup
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         
         self.draw_main()
-
-    # ... (clean, head, btn, draw_main methods remain the same) ...
 
     def clean(self):
         for w in self.main_content.winfo_children(): w.destroy()
@@ -112,27 +108,22 @@ def check_ping():
             return img.resize(size, Image.ANTIALIAS)
 
     def load_local_images(self):
-        """Carga imágenes gallery/ + 5 random NASA APOD"""
         print(f"[DEBUG] Buscando imágenes...")
         self.carousel_images = [] 
         self.temp_nasa_files = [] 
 
-        # 1. Descargar 5 imágenes NASA APOD
         if check_ping():
             try:
                 print("[DEBUG] Descargando 5 imágenes de NASA APOD...")
-                # count=5 para obtener 5 aleatorias
                 url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=5"
                 with urllib.request.urlopen(url, timeout=5) as response:
                     data = json.loads(response.read().decode())
-                    
                     for i, item in enumerate(data):
                         if item.get('media_type') == 'image':
                             img_url = item.get('url')
                             nasa_path = f"/tmp/nasa_apod_{i}.jpg"
                             urllib.request.urlretrieve(img_url, nasa_path)
                             self.temp_nasa_files.append(nasa_path)
-                            
                             try:
                                 img = Image.open(nasa_path)
                                 img = self.safe_resize(img, (350, 200))
@@ -143,10 +134,7 @@ def check_ping():
             except Exception as e:
                 print(f"[DEBUG] Error descargando NASA: {e}")
         
-        # 2. Cargar imágenes locales
-        image_files = ["andromeda.png", "spiral_galaxy.png", "carina_nebula.png", 
-                      "orion_nebula.png", "pillars.png"]
-        
+        image_files = ["andromeda.png", "spiral_galaxy.png", "carina_nebula.png", "orion_nebula.png", "pillars.png"]
         if os.path.exists(self.gallery_dir):
             for img_file in image_files:
                 img_path = os.path.join(self.gallery_dir, img_file)
@@ -160,13 +148,11 @@ def check_ping():
         
         if self.carousel_images:
             self.carousel_mode = "images"
-            # Mezclar un poco para que no salgan todas las de la NASA juntas
             import random
             random.shuffle(self.carousel_images)
             print(f"[GALLERY] {len(self.carousel_images)} imágenes cargadas total")
 
     def cleanup(self):
-        """Borra imágenes temporales"""
         if self.temp_nasa_files:
             print(f"[DEBUG] Limpiando {len(self.temp_nasa_files)} archivos temporales...")
             for f in self.temp_nasa_files:
@@ -180,10 +166,7 @@ def check_ping():
         self.root.destroy()
         sys.exit(0)
 
-    # ... (update_carousel, start_install, log, create_shortcut, stop_install, run_install, center_window) ...
-
     def update_carousel(self):
-        """Actualiza el carrusel (imágenes locales o emojis)"""
         if hasattr(self, 'carousel_label'):
             if self.carousel_mode == "images" and self.carousel_images:
                 self.carousel_label.config(image=self.carousel_images[self.carousel_index], text="")
@@ -192,7 +175,6 @@ def check_ping():
                 emoji = CAROUSEL_EMOJIS[self.carousel_index]
                 self.carousel_label.config(text=emoji, image="")
                 self.carousel_index = (self.carousel_index + 1) % len(CAROUSEL_EMOJIS)
-            
             self.root.after(3000, self.update_carousel)
 
     def start_install(self):
@@ -227,18 +209,10 @@ def check_ping():
         try:
             desktop_dir = "/home/orangepi/Desktop"
             if not os.path.exists(desktop_dir): return
-            
             filename = f"{bin_name}.desktop"
             path = os.path.join(desktop_dir, filename)
-            
             with open(path, "w") as f:
-                f.write("[Desktop Entry]\n")
-                f.write("Type=Application\n")
-                f.write(f"Name={name}\n")
-                f.write(f"Exec={bin_name}\n")
-                f.write(f"Icon={bin_name}\n")
-                f.write("Terminal=false\n")
-            
+                f.write(f"[Desktop Entry]\nType=Application\nName={name}\nExec={bin_name}\nIcon={bin_name}\nTerminal=false\n")
             os.chmod(path, 0o755)
             shutil.chown(path, user="orangepi", group="orangepi")
             self.log(f"✨ Icono creado en escritorio: {name}")
@@ -249,7 +223,7 @@ def check_ping():
         if self.proc and self.proc.poll() is None:
             if messagebox.askyesno("Confirmar", "¿Deseas interrumpir?"):
                 self.proc.terminate(); self.log("\n>>> INSTALACIÓN INTERRUMPIDA.")
-        else: self.on_close() # Use on_close for cleanup
+        else: self.on_close()
 
     def run_install(self):
         subprocess.run("sudo apt-get update", shell=True)
@@ -263,7 +237,6 @@ def check_ping():
                 else:
                     if info.get('ppa'): subprocess.run(f"sudo add-apt-repository -y {info['ppa']}", shell=True)
                     f = "--reinstall" if n in self.reinstall_list else ""; cmd = f"sudo apt-get install -y {f} {info['pkg']}"
-                
                 self.proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                 for line in self.proc.stdout: self.log(line.strip())
                 self.proc.wait()
@@ -273,9 +246,8 @@ def check_ping():
                     self.create_shortcut(n, info['bin'])
                 else: self.log(f"ERROR: {n}")
             except Exception as e: self.log(f"EXCEPCIÓN: {str(e)}")
-        
         self.log(f"\nCOMPLETADO: {count}/{total}")
-        self.cancel_btn.config(text="CERRAR Y FINALIZAR", bg=SUCCESS_COLOR, command=self.on_close) # Call on_close
+        self.cancel_btn.config(text="CERRAR Y FINALIZAR", bg=SUCCESS_COLOR, command=self.on_close)
 
     def center_window(self):
         self.root.update_idletasks()
@@ -288,18 +260,9 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SoftWizard(root)
     app.center_window()
-    
-    icon_paths = [
-        "/usr/share/icons/Papirus/32x32/apps/kstars.png", 
-        "/usr/share/icons/hicolor/48x48/apps/kstars.png", 
-        "/usr/share/pixmaps/kstars.png"
-    ]
+    icon_paths = ["/usr/share/icons/Papirus/32x32/apps/kstars.png", "/usr/share/icons/hicolor/48x48/apps/kstars.png", "/usr/share/pixmaps/kstars.png"]
     for p in icon_paths:
         if os.path.exists(p):
-            try:
-                img = tk.PhotoImage(file=p)
-                root.iconphoto(False, img)
-                break
+            try: root.iconphoto(False, tk.PhotoImage(file=p)); break
             except: pass
-            
     root.mainloop()
