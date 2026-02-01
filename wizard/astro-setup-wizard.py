@@ -11,11 +11,11 @@ BTN_FG = "#e2e8f0"      # Color de texto de botones secundarios
 class SetupOrchestrator:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange Setup V6.9")
-        self.root.geometry("600x600") # Más alto para que todo quepa bien
+        self.root.title("AstroOrange Setup V7.1")
+        self.root.geometry("600x650") 
         self.root.configure(bg=BG_COLOR)
         self.wizard_dir = "/opt/astroorange/wizard"
-        self.icons = {} # Cache de iconos
+        self.icons = {} 
         
         self.main_content = tk.Frame(self.root, bg=BG_COLOR)
         self.main_content.pack(expand=True, fill="both", padx=20, pady=20)
@@ -23,32 +23,38 @@ class SetupOrchestrator:
         self.show_welcome()
         self.center_window()
 
-    def load_icon(self, name, size=32):
-        """Intenta cargar un icono del sistema"""
-        paths = [
-            f"/usr/share/icons/Papirus/{size}x{size}/apps/{name}.png",
-            f"/usr/share/icons/hicolor/{size}x{size}/apps/{name}.png",
-            f"/usr/share/pixmaps/{name}.png"
-        ]
-        for p in paths:
-            if os.path.exists(p):
-                try:
-                    return tk.PhotoImage(file=p)
-                except: pass
+    def load_icon(self, names, size=32):
+        """Carga el primer icono encontrado de una lista de nombres"""
+        if isinstance(names, str): names = [names]
+        
+        for name in names:
+            paths = [
+                f"/usr/share/icons/Papirus/{size}x{size}/apps/{name}.png",
+                f"/usr/share/icons/Papirus/{size}x{size}/categories/{name}.png",
+                f"/usr/share/icons/Papirus/{size}x{size}/devices/{name}.png",
+                f"/usr/share/icons/hicolor/{size}x{size}/apps/{name}.png",
+                f"/usr/share/pixmaps/{name}.png"
+            ]
+            for p in paths:
+                if os.path.exists(p):
+                    try: return tk.PhotoImage(file=p)
+                    except: pass
         return None
 
     def show_welcome(self):
         for w in self.main_content.winfo_children(): w.destroy()
         
         # --- HEADER ---
-        # Icono principal (Logo AstroOrange simulado con KStars si existe)
-        logo = self.load_icon("kstars", 64)
+        # Icono Telescope o Science
+        logo = self.load_icon(["telescope", "applications-science", "kstars"], 64)
         if logo:
             lbl_logo = tk.Label(self.main_content, image=logo, bg=BG_COLOR)
             lbl_logo.image = logo
             lbl_logo.pack(pady=(10, 5))
+        else:
+            tk.Label(self.main_content, text="🔭", font=("Sans", 48), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(10,5))
         
-        tk.Label(self.main_content, text="AstroOrange", font=("Sans", 26, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack()
+        tk.Label(self.main_content, text="AstroOrange", font=("Sans", 28, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack()
         tk.Label(self.main_content, text="Panel de Configuración", font=("Sans", 14), bg=BG_COLOR, fg="#94a3b8").pack(pady=(0, 20))
         
         # --- SECCIÓN GUIADA ---
@@ -64,10 +70,10 @@ class SetupOrchestrator:
         # --- SECCIÓN HERRAMIENTAS ---
         tk.Label(self.main_content, text="Herramientas Individuales:", font=("Sans", 10, "bold"), bg=BG_COLOR, fg="white").pack(anchor="w", pady=(20, 5))
         
-        # Cargar iconos para botones
-        self.icons['user'] = self.load_icon("system-users", 24)
-        self.icons['wifi'] = self.load_icon("network-wireless", 24)
-        self.icons['soft'] = self.load_icon("applications-science", 24) # O kstars
+        # Cargar iconos específicos
+        self.icons['user'] = self.load_icon(["avatar-default", "system-users", "preferences-desktop-user"], 24)
+        self.icons['wifi'] = self.load_icon(["network-wireless", "preferences-system-network"], 24)
+        self.icons['soft'] = self.load_icon(["system-software-install", "applications-science", "synaptic"], 24)
         
         # Grid de botones
         frm_tools = tk.Frame(self.main_content, bg=BG_COLOR)
