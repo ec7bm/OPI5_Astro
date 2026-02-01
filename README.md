@@ -22,48 +22,29 @@ AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server*
 
 ---
 
-## 🚀 Instalación Rápida
+## 🚀 Formas de Instalación
 
-Tienes **dos opciones** para instalar AstroOrange V2:
+Tienes **dos opciones** para disfrutar de AstroOrange V2:
 
-### Opción A: Imagen Pre-construida (Recomendada)
-
-**La forma más rápida de empezar:**
-
+### Opción A: Imagen Completa (Recomendada)
+**Ideal para empezar de cero.** Flashea la imagen y tendrás el sistema listo.
 1. **Descarga la imagen** desde [Releases](https://github.com/ec7bm/OPI5_Astro/releases)
-   ```
-   AstroOrange-YYYYMMDD.img.xz
-   ```
+2. **Flashea** en tu microSD con [balenaEtcher](https://www.balena.io/etcher/)
+3. **Arranca** y disfruta.
 
-2. **Flashea la imagen** en una microSD (16GB o superior)
-   - **Windows/Mac/Linux**: Usa [balenaEtcher](https://www.balena.io/etcher/)
-   - **Linux**: Usa `dd` o [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
+### Opción B: Instalación por Script (Universal)
+**Ideal si ya tienes un sistema Linux instalado** (Armbian, Ubuntu, Debian) y quieres añadir las herramientas de AstroOrange sin formatear.
 
-3. **Conecta un cable Ethernet** a tu Orange Pi 5 Pro (Recomendado para la configuración inicial).
-4. **Enciende la placa** y accede al VNC en tu navegador: `http://<ip-de-la-placa>:6080/vnc.html`
-   - *Nota: Si no usas cable, el sistema activará el Hotspot `AstroOrange-Setup` (clave: `astrosetup`) como método de rescate.*
-
-📖 **Manual completo**: [MANUAL_USUARIO.md](MANUAL_USUARIO.md)
-
----
-
-### Opción B: Transformación desde Imagen Oficial (Live Setup)
-
-**Si ya tienes la imagen oficial instalada y quieres "AstroOrangizarla" en segundos:**
-
-1. **Descarga e instala la imagen oficial** en tu Orange Pi:
-   - **URL**: [Google Drive (Oficial OPi5 Pro)](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link)
-2. **Arranca tu Orange Pi** y conéctate a internet (Ethernet recomendado).
-3. **Clona y ejecuta el script de transformación**:
+1. **Clona el repositorio**:
    ```bash
    git clone https://github.com/ec7bm/OPI5_Astro.git
    cd OPI5_Astro
-   git checkout v2-release
-   sudo chmod +x setup-live.sh
-   sudo ./setup-live.sh
    ```
-4. El script instalará automáticamente todos los temas, servicios y el Wizard.
-5. Al finalizar, el sistema se reiniciará directamente en el **AstroOrange Wizard**.
+2. **Ejecuta el instalador**:
+   ```bash
+   sudo ./install.sh
+   ```
+3. **Listo**: Encontrarás "AstroOrange Setup" en tu menú de aplicaciones.
 
 ---
 

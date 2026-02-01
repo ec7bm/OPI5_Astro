@@ -30,10 +30,10 @@ def check_ping():
 
 class SoftWizard:
     def __init__(self, root):
-        print("[DEBUG] Iniciando SoftWizard V6.9...")
+        print("[DEBUG] Iniciando SoftWizard V7.0...")
         self.root = root
-        self.root.title("AstroOrange Software Installer V6.9")
-        self.root.geometry("900x750")
+        self.root.title("AstroOrange Software Installer V7.0")
+        self.root.geometry("900x800") # Un poco más alto para acomodar imagen grande + terminal
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
         
@@ -111,6 +111,9 @@ class SoftWizard:
         print(f"[DEBUG] Buscando imágenes...")
         self.carousel_images = [] 
         self.temp_nasa_files = [] 
+        
+        # Tamaño más grande para V7.0
+        TARGET_SIZE = (500, 300)
 
         if check_ping():
             try:
@@ -126,7 +129,7 @@ class SoftWizard:
                             self.temp_nasa_files.append(nasa_path)
                             try:
                                 img = Image.open(nasa_path)
-                                img = self.safe_resize(img, (350, 200))
+                                img = self.safe_resize(img, TARGET_SIZE)
                                 photo = ImageTk.PhotoImage(img)
                                 self.carousel_images.append(photo)
                                 print(f"[DEBUG] ✅ NASA img {i+1} descargada")
@@ -141,7 +144,7 @@ class SoftWizard:
                 if os.path.exists(img_path):
                     try:
                         img = Image.open(img_path)
-                        img = self.safe_resize(img, (350, 200))
+                        img = self.safe_resize(img, TARGET_SIZE)
                         photo = ImageTk.PhotoImage(img)
                         self.carousel_images.append(photo)
                     except: pass
@@ -181,7 +184,8 @@ class SoftWizard:
         self.clean(); self.head("Procesando...", "Instalando paquetes seleccionados")
         self.load_local_images()
         
-        carousel_frame = tk.Frame(self.main_content, bg=BG_COLOR, height=220)
+        # Frame más alto para imagen grande (320px)
+        carousel_frame = tk.Frame(self.main_content, bg=BG_COLOR, height=320)
         carousel_frame.pack(pady=10)
         
         if self.carousel_mode == "images" and self.carousel_images:
@@ -197,7 +201,8 @@ class SoftWizard:
         
         t_frm = tk.Frame(self.main_content, bg="black", bd=2)
         t_frm.pack(fill="x", padx=50, pady=10)
-        self.console = scrolledtext.ScrolledText(t_frm, bg="black", fg="#00ff00", font=("Monospace", 9), state="disabled", borderwidth=0, height=6)
+        # Terminal más alta (height=10)
+        self.console = scrolledtext.ScrolledText(t_frm, bg="black", fg="#00ff00", font=("Monospace", 9), state="disabled", borderwidth=0, height=10)
         self.console.pack(fill="x")
         threading.Thread(target=self.run_install, daemon=True).start()
 
@@ -260,7 +265,14 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SoftWizard(root)
     app.center_window()
-    icon_paths = ["/usr/share/icons/Papirus/32x32/apps/kstars.png", "/usr/share/icons/hicolor/48x48/apps/kstars.png", "/usr/share/pixmaps/kstars.png"]
+    
+    # SYSTEM ICONS (Generic)
+    icon_paths = [
+        "/usr/share/icons/Papirus/32x32/apps/system-software-install.png",
+        "/usr/share/icons/hicolor/48x48/apps/system-software-install.png",
+        "/usr/share/icons/Papirus/32x32/categories/applications-science.png", 
+        "/usr/share/pixmaps/synaptic.png"
+    ]
     for p in icon_paths:
         if os.path.exists(p):
             try: root.iconphoto(False, tk.PhotoImage(file=p)); break

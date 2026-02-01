@@ -44,7 +44,7 @@ class UserWizard:
         tk.Label(f, text="CONTRASEÑA", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
         self.ep = tk.Entry(f, show="*", width=35, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
         self.ep.pack(pady=(10, 0), ipady=10)
-        
+
         # Auto-login Toggle
         self.chk_autologin = tk.BooleanVar(value=True)
         tk.Checkbutton(f, text="Iniciar sesión automáticamente", variable=self.chk_autologin,
@@ -56,20 +56,21 @@ class UserWizard:
 
     def create(self):
         u, p = self.eu.get().strip(), self.ep.get().strip()
-        if len(u) < 3 or len(p) < 4: 
-            messagebox.showwarning("Error", "El nombre debe tener mín. 3 caracteres y la clave mín. 4."); return
-        
-        # Comprobar si el usuario existe
-        try:
-            subprocess.check_call(["id", "-u", u], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            messagebox.showerror("Error", f"El usuario '{u}' ya existe."); return
+        if len(u) < 3 or len(p) < 4: messagebox.showwarning("Error", "Mínimo 3 chars nombre y 4 pass"); return
+        try: subprocess.check_call(["id", "-u", u], stdout=subprocess.DEVNULL); messagebox.showerror("Error", f"Usuario {u} existe"); return
         except: pass
-
+        
+        # Create User
         groups = "sudo,dialout,video,input,plugdev,audio,bluetooth,lpadmin,scanner"
         subprocess.run(f"sudo useradd -m -s /bin/bash -G {groups} {u}", shell=True)
         subprocess.run(f"echo '{u}:{p}' | sudo chpasswd", shell=True)
         
-        messagebox.showinfo("Éxito", f"Usuario '{u}' creado correctamente.\nYa puedes iniciar sesión con él.")
+        if self.chk_autologin.get():
+            cfg = f"[Seat:*]\nautologin-user={u}\nautologin-session=xfce\n"
+            with open("/tmp/50-astro.conf", "w") as f: f.write(cfg)
+            subprocess.run("sudo mv /tmp/50-astro.conf /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+        
+        messagebox.showinfo("Éxito", f"Usuario '{u}' creado correctamente.")
         self.root.destroy()
 
 if __name__ == "__main__":
