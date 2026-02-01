@@ -2,81 +2,124 @@ import tkinter as tk
 from tkinter import messagebox
 import subprocess, sys, os
 
-# --- V6.8: CONFIGURACIÓN SETUP INTEGRAL ---
+# --- V6.9: SETUP UI PROFESIONAL (SIN EMOJIS ROTOS) ---
 BG_COLOR = "#0f172a"
 ACCENT_COLOR = "#38bdf8"
-FG_COLOR = "white"
+BTN_BG = "#1e293b"      # Color de fondo de botones secundarios
+BTN_FG = "#e2e8f0"      # Color de texto de botones secundarios
 
 class SetupOrchestrator:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange Setup V6.8")
-        self.root.geometry("600x550") # Un poco más alto para los botones
+        self.root.title("AstroOrange Setup V6.9")
+        self.root.geometry("600x600") # Más alto para que todo quepa bien
         self.root.configure(bg=BG_COLOR)
         self.wizard_dir = "/opt/astroorange/wizard"
+        self.icons = {} # Cache de iconos
+        
         self.main_content = tk.Frame(self.root, bg=BG_COLOR)
-        self.main_content.pack(expand=True, fill="both")
+        self.main_content.pack(expand=True, fill="both", padx=20, pady=20)
+        
         self.show_welcome()
         self.center_window()
+
+    def load_icon(self, name, size=32):
+        """Intenta cargar un icono del sistema"""
+        paths = [
+            f"/usr/share/icons/Papirus/{size}x{size}/apps/{name}.png",
+            f"/usr/share/icons/hicolor/{size}x{size}/apps/{name}.png",
+            f"/usr/share/pixmaps/{name}.png"
+        ]
+        for p in paths:
+            if os.path.exists(p):
+                try:
+                    return tk.PhotoImage(file=p)
+                except: pass
+        return None
 
     def show_welcome(self):
         for w in self.main_content.winfo_children(): w.destroy()
         
-        # Header
-        tk.Label(self.main_content, text="🚀", font=("Sans", 48), bg=BG_COLOR).pack(pady=(20, 5))
-        tk.Label(self.main_content, text="Bienvenido a AstroOrange", font=("Sans", 22, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=5)
-        tk.Label(self.main_content, text="Panel de Configuración Integral", font=("Sans", 12), bg=BG_COLOR, fg="white").pack(pady=5)
+        # --- HEADER ---
+        # Icono principal (Logo AstroOrange simulado con KStars si existe)
+        logo = self.load_icon("kstars", 64)
+        if logo:
+            lbl_logo = tk.Label(self.main_content, image=logo, bg=BG_COLOR)
+            lbl_logo.image = logo
+            lbl_logo.pack(pady=(10, 5))
         
-        # --- SECCIÓN PRINCIPAL: MODO GUIADO ---
-        frm_guide = tk.Frame(self.main_content, bg=BG_COLOR)
-        frm_guide.pack(pady=15, fill="x", padx=40)
+        tk.Label(self.main_content, text="AstroOrange", font=("Sans", 26, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack()
+        tk.Label(self.main_content, text="Panel de Configuración", font=("Sans", 14), bg=BG_COLOR, fg="#94a3b8").pack(pady=(0, 20))
         
-        tk.Button(frm_guide, text="📚 COMENZAR TUTORIAL GUIADO", command=self.run_tutorial, 
-                  bg=ACCENT_COLOR, fg="black", font=("Sans", 12, "bold"), relief="flat", padx=20, pady=12, cursor="hand2").pack(fill="x")
-        tk.Label(frm_guide, text="(Usuario → Red Wifi → Software)", font=("Sans", 9), bg=BG_COLOR, fg="#94a3b8").pack(pady=2)
+        # --- SECCIÓN GUIADA ---
+        frm_guide = tk.Frame(self.main_content, bg=BG_COLOR, bd=1, relief="solid")
+        frm_guide.pack(fill="x", pady=10)
+        
+        tk.Label(frm_guide, text="Recomendado para empezar:", font=("Sans", 10), bg=BG_COLOR, fg="white").pack(anchor="w", padx=10, pady=5)
+        
+        btn_guide = tk.Button(frm_guide, text="INICIAR TUTORIAL COMPLETO", command=self.run_tutorial, 
+                              bg=ACCENT_COLOR, fg="#0f172a", font=("Sans", 12, "bold"), relief="flat", padx=20, pady=15, cursor="hand2")
+        btn_guide.pack(fill="x", padx=10, pady=(0, 10))
 
-        # Separador visual
-        tk.Frame(self.main_content, height=2, bg="#334155").pack(fill="x", padx=40, pady=10)
+        # --- SECCIÓN HERRAMIENTAS ---
+        tk.Label(self.main_content, text="Herramientas Individuales:", font=("Sans", 10, "bold"), bg=BG_COLOR, fg="white").pack(anchor="w", pady=(20, 5))
         
-        # --- SECCIÓN HERRAMIENTAS DIRECTAS ---
-        tk.Label(self.main_content, text="Acceso Directo a Herramientas:", font=("Sans", 10, "bold"), bg=BG_COLOR, fg="white").pack(pady=(5,10))
+        # Cargar iconos para botones
+        self.icons['user'] = self.load_icon("system-users", 24)
+        self.icons['wifi'] = self.load_icon("network-wireless", 24)
+        self.icons['soft'] = self.load_icon("applications-science", 24) # O kstars
         
+        # Grid de botones
         frm_tools = tk.Frame(self.main_content, bg=BG_COLOR)
-        frm_tools.pack(pady=5)
+        frm_tools.pack(fill="x")
         
-        # Botones individuales
-        btn_style = {"bg": "#334155", "fg": "white", "font": ("Sans", 10), "relief": "flat", "width": 25, "pady": 8, "cursor": "hand2"}
-        
-        tk.Button(frm_tools, text="👤 Configurar Usuario", command=self.open_user_tool, **btn_style).grid(row=0, column=0, padx=5, pady=5)
-        tk.Button(frm_tools, text="📡 Configurar Red WiFi", command=self.open_net_tool, **btn_style).grid(row=1, column=0, padx=5, pady=5)
-        tk.Button(frm_tools, text="🔭 Instalar Software", command=self.open_soft_tool, **btn_style).grid(row=2, column=0, padx=5, pady=5)
+        self.create_tool_btn(frm_tools, "Configurar Usuario", self.icons.get('user'), self.open_user_tool)
+        self.create_tool_btn(frm_tools, "Configurar Red WiFi", self.icons.get('wifi'), self.open_net_tool)
+        self.create_tool_btn(frm_tools, "Instalar Software", self.icons.get('soft'), self.open_soft_tool)
 
-        # Footer con checkbox
+        # --- FOOTER CHECKBOX ---
+        # Frame separador para empujar el checkbox abajo
+        tk.Frame(self.main_content, bg=BG_COLOR).pack(expand=True)
+        
         self.chk_nomore = tk.BooleanVar(value=False)
-        tk.Checkbutton(self.main_content, text="No volver a mostrar al inicio", variable=self.chk_nomore, command=self.toggle_autostart,
-                       bg=BG_COLOR, fg="#cbd5e1", selectcolor=BG_COLOR, font=("Sans", 10), activebackground=BG_COLOR).pack(side="bottom", pady=20)
+        chk = tk.Checkbutton(self.main_content, text="No mostrar este panel al iniciar sesión", variable=self.chk_nomore, command=self.toggle_autostart,
+                       bg=BG_COLOR, fg="#cbd5e1", selectcolor=BG_COLOR, font=("Sans", 10), activebackground=BG_COLOR, cursor="hand2")
+        chk.pack(side="bottom", pady=20)
+
+    def create_tool_btn(self, parent, text, icon, command):
+        """Crea un botón estilizado con icono opcional"""
+        btn = tk.Button(parent, text=f"  {text}", command=command, compound="left",
+                        bg=BTN_BG, fg=BTN_FG, font=("Sans", 11), relief="flat", 
+                        width=30, padx=20, pady=10, anchor="w", cursor="hand2")
+        if icon:
+            btn.config(image=icon)
+            btn.image = icon # Mantener referencia
+        
+        btn.pack(fill="x", pady=4)
+        
+        # Efecto hover simple
+        btn.bind("<Enter>", lambda e: btn.config(bg="#334155"))
+        btn.bind("<Leave>", lambda e: btn.config(bg=BTN_BG))
 
     # --- ACCIONES ---
     def toggle_autostart(self):
         flag_file = "/etc/astro-wizard-done"
         if self.chk_nomore.get():
              subprocess.run(f"sudo touch {flag_file}", shell=True)
-             messagebox.showinfo("Setup", "El asistente ya no se mostrará automáticamente al inicio.")
+             messagebox.showinfo("Setup", "El asistente ya no se mostrará automáticamente.")
         else:
              subprocess.run(f"sudo rm -f {flag_file}", shell=True)
 
     def run_tutorial(self):
-        # Flujo paso a paso original
         subprocess.run([sys.executable, f"{self.wizard_dir}/astro-user-gui.py"])
-        self.ask_next_step("Paso 2: Red", "¿Deseas configurar una red WiFi ahora?", self.open_net_tool)
-        self.ask_next_step("Paso 3: Software", "¿Deseas instalar software astronómico?", self.open_soft_tool)
-        messagebox.showinfo("✅ Finalizado", "¡Configuración completada!\nDisfruta de AstroOrange.")
+        self.ask_next_step("Setup", "¿Deseas configurar WiFi?", self.open_net_tool)
+        self.ask_next_step("Setup", "¿Deseas instalar software?", self.open_soft_tool)
+        messagebox.showinfo("AstroOrange", "¡Configuración completada!")
         self.root.destroy()
         sys.exit(0)
 
     def ask_next_step(self, title, question, func):
-        response = messagebox.askquestion(title, question, icon='question')
-        if response == 'yes':
+        if messagebox.askyesno(title, question):
             func(wait=True)
 
     def open_tool(self, script_name, wait=True):
@@ -92,7 +135,6 @@ class SetupOrchestrator:
             subprocess.Popen([sys.executable, path])
         self.root.deiconify()
 
-    # Wrappers para cada herramienta
     def open_user_tool(self, wait=True): self.open_tool("astro-user-gui.py", wait)
     def open_net_tool(self, wait=True): self.open_tool("astro-network-gui.py", wait)
     def open_soft_tool(self, wait=True): self.open_tool("astro-software-gui.py", wait)
@@ -105,7 +147,6 @@ class SetupOrchestrator:
         self.root.geometry(f"+{x}+{y}")
 
 if __name__ == "__main__":
-    # Autocheck para inicio automático
     is_autostart = "--autostart" in sys.argv
     if is_autostart and os.path.exists("/etc/astro-wizard-done"):
         sys.exit(0)
@@ -113,13 +154,11 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SetupOrchestrator(root)
     
-    # Iconos
-    icon_paths = [
-        "/usr/share/icons/Papirus/48x48/apps/system-installer.png",
-        "/usr/share/pixmaps/gdebi.png"
-    ]
-    for p in icon_paths:
-        if os.path.exists(p):
-            try: root.iconphoto(False, tk.PhotoImage(file=p)); break
-            except: pass
+    # Icono ventana
+    try:
+        icon_path = "/usr/share/icons/Papirus/48x48/apps/system-installer.png"
+        if os.path.exists(icon_path):
+            root.iconphoto(False, tk.PhotoImage(file=icon_path))
+    except: pass
+    
     root.mainloop()
