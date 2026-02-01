@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox, scrolledtext
 import subprocess, os, threading, shutil, sys
 from PIL import Image, ImageTk
+import urllib.request
+import json
 
 # --- CONFIGURACIÓN ESTÉTICA PREMIUM ---
 BG_COLOR, SECONDARY_BG, FG_COLOR = "#0f172a", "#1e293b", "#e2e8f0"
@@ -29,8 +31,9 @@ def check_ping():
 
 class SoftWizard:
     def __init__(self, root):
+        print("[DEBUG] Iniciando SoftWizard V6.8...")
         self.root = root
-        self.root.title("AstroOrange Software Installer V6.6")
+        self.root.title("AstroOrange Software Installer V6.8")
         self.root.geometry("900x750")
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
@@ -97,9 +100,43 @@ class SoftWizard:
                 if messagebox.askyesno("Reinstalar", f"¿Reinstalar {name}?"): self.reinstall_list.append(name)
                 else: self.sw_vars[name].set(False)
 
+    def safe_resize(self, img, size):
+        """Redimensiona imagen de forma compatible con Pillow viejo y nuevo"""
+        try:
+            # Pillow >= 10.0.0
+            return img.resize(size, Image.Resampling.LANCZOS)
+        except AttributeError:
+            # Pillow < 10.0.0
+            return img.resize(size, Image.ANTIALIAS)
+
     def load_local_images(self):
-        """Carga imágenes desde el directorio gallery"""
+        """Carga imágenes desde gallery/ + intenta descargar 1 de NASA"""
+        print(f"[DEBUG] Buscando imágenes en: {self.gallery_dir}")
+        self.carousel_images = [] # Reset
+
+        # 1. Intentar descargar imagen de NASA APOD si hay internet
+        if check_ping():
+            try:
+                print("[DEBUG] Descargando imagen del día de NASA APOD...")
+                url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY"
+                with urllib.request.urlopen(url, timeout=3) as response:
+                    data = json.loads(response.read().decode())
+                    if data.get('media_type') == 'image':
+                        img_url = data.get('url')
+                        nasa_path = "/tmp/nasa_apod.jpg"
+                        urllib.request.urlretrieve(img_url, nasa_path)
+                        
+                        img = Image.open(nasa_path)
+                        img = self.safe_resize(img, (350, 200)) # Usando función segura
+                        photo = ImageTk.PhotoImage(img)
+                        self.carousel_images.append(photo)
+                        print("[DEBUG] ✅ Imagen NASA APOD descargada!")
+            except Exception as e:
+                print(f"[DEBUG] No se pudo descargar NASA: {e}")
+        
+        # 2. Cargar imágenes locales
         if not os.path.exists(self.gallery_dir):
+            print(f"[DEBUG] No existe {self.gallery_dir}, usando emojis")
             return
         
         image_files = ["andromeda.png", "spiral_galaxy.png", "carina_nebula.png", 
@@ -109,12 +146,14 @@ class SoftWizard:
             img_path = os.path.join(self.gallery_dir, img_file)
             if os.path.exists(img_path):
                 try:
+                    print(f"[DEBUG] Cargando: {img_file}")
                     img = Image.open(img_path)
-                    img.thumbnail((350, 200), Image.Resampling.LANCZOS)
+                    img = self.safe_resize(img, (350, 200)) # Usando función segura
                     photo = ImageTk.PhotoImage(img)
                     self.carousel_images.append(photo)
+                    print(f"[DEBUG] ✅ {img_file} cargada")
                 except Exception as e:
-                    print(f"[GALLERY] Error cargando {img_file}: {e}")
+                    print(f"[DEBUG] ❌ Error con {img_file}: {e}")
         
         if self.carousel_images:
             self.carousel_mode = "images"
@@ -137,7 +176,7 @@ class SoftWizard:
     def start_install(self):
         self.clean(); self.head("Procesando...", "Instalando paquetes seleccionados")
         
-        # V6.6: Cargar imágenes del gallery
+        # V6.8: Cargar imágenes
         self.load_local_images()
         
         # Carrusel (inicia con emoji si no hay imágenes)
@@ -166,6 +205,28 @@ class SoftWizard:
         if self.console.winfo_exists():
             self.console.config(state="normal"); self.console.insert(tk.END, t + "\n"); self.console.see(tk.END); self.console.config(state="disabled"); self.root.update_idletasks()
 
+    def create_shortcut(self, name, bin_name):
+        try:
+            desktop_dir = "/home/orangepi/Desktop"
+            if not os.path.exists(desktop_dir): return
+            
+            filename = f"{bin_name}.desktop"
+            path = os.path.join(desktop_dir, filename)
+            
+            with open(path, "w") as f:
+                f.write("[Desktop Entry]\n")
+                f.write("Type=Application\n")
+                f.write(f"Name={name}\n")
+                f.write(f"Exec={bin_name}\n")
+                f.write(f"Icon={bin_name}\n")
+                f.write("Terminal=false\n")
+            
+            os.chmod(path, 0o755)
+            shutil.chown(path, user="orangepi", group="orangepi")
+            self.log(f"✨ Icono creado en escritorio: {name}")
+        except Exception as e:
+            self.log(f"⚠️ No se pudo crear icono: {str(e)}")
+
     def stop_install(self):
         if self.proc and self.proc.poll() is None:
             if messagebox.askyesno("Confirmar", "¿Deseas interrumpir?"):
@@ -188,7 +249,11 @@ class SoftWizard:
                 self.proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                 for line in self.proc.stdout: self.log(line.strip())
                 self.proc.wait()
-                if self.proc.returncode == 0: count += 1; self.log(f"OK: {n}")
+                if self.proc.returncode == 0: 
+                    count += 1
+                    self.log(f"OK: {n}")
+                    # CREAR ACCESO DIRECTO
+                    self.create_shortcut(n, info['bin'])
                 else: self.log(f"ERROR: {n}")
             except Exception as e: self.log(f"EXCEPCIÓN: {str(e)}")
         
