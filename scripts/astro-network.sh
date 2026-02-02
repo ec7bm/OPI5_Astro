@@ -1,91 +1,113 @@
 #!/bin/bash
-# AstroOrange Network Watchdog Service V7.6
+# AstroOrange Network Watchdog Service V8.0 ("The Nuclear Option")
 # Monitors connection state to prevent Router Saturation (DHCP conflicts)
-# V7.6 Fix: "Stop-to-Connect". If 'Astro-WIFI' profile exists, we KILL the hotspot temporarily
-# to allow the radio to switch modes. Simultaneous AP+Client often fails on Rockchip drivers.
+# V8.0 Fix: switched to 'nmcli' device polling instead of 'ip route' for reliability.
+# includes "Conflict Resolution" to ensure Router safety.
 
-echo "---[ AstroOrange Network Watchdog V7.6 ]---"
+echo "---[ AstroOrange Network Watchdog V8.0 ]---"
 
-# Helper function
+# --- HELPER FUNCTIONS ---
+
+check_ethernet() {
+    # Returns 0 (true) if ANY ethernet device is connected
+    nmcli -t -f TYPE,STATE device | grep "^ethernet:connected" >/dev/null 2>&1
+    return $?
+}
+
+check_wifi_client() {
+    # Returns 0 (true) if wlan0 is connected to something that is NOT our hotspot
+    nmcli -t -f DEVICE,NAME,TYPE con show --active | grep "wlan0" | grep -v "astroorange-ap" >/dev/null 2>&1
+    return $?
+}
+
 kill_hotspot() {
-    sudo nmcli con down "astroorange-ap" 2>/dev/null
+    # Aggressively remove the hotspot
+    if nmcli con show "astroorange-ap" >/dev/null 2>&1; then
+        echo "🔪 Killing Hotspot..."
+        sudo nmcli con down "astroorange-ap" >/dev/null 2>&1
+        sudo nmcli con delete "astroorange-ap" >/dev/null 2>&1
+    fi
 }
 
 start_hotspot() {
     echo "⚠️ Starting Rescue Hotspot..."
+    
+    # 1. Clean slate
+    kill_hotspot
+
+    # 2. Identify Interface
     IFACE=$(nmcli -t -f DEVICE,TYPE device | grep wifi | cut -d: -f1 | head -n1)
     [ -z "$IFACE" ] && IFACE="wlan0"
     
-    # Clean previous
-    sudo nmcli con delete "astroorange-ap" 2>/dev/null || true
-
-    # Create & Start
-    sudo nmcli con add type wifi ifname "$IFACE" con-name "astroorange-ap" autoconnect no ssid "AstroOrange-Setup" mode ap connection.interface-name "$IFACE"
+    # 3. Create (Manual only, no autoconnect)
+    sudo nmcli con add type wifi ifname "$IFACE" con-name "astroorange-ap" autoconnect no ssid "AstroOrange-Setup" mode ap connection.interface-name "$IFACE" >/dev/null
     sudo nmcli con modify "astroorange-ap" ipv4.method shared ipv4.addresses 10.42.0.1/24
     sudo nmcli con modify "astroorange-ap" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "astrosetup"
     sudo nmcli con modify "astroorange-ap" 802-11-wireless.band bg
+
+    # 4. Launch
     sudo nmcli con up "astroorange-ap"
     echo "🔥 Hotspot 'AstroOrange-Setup' is ACTIVE on $IFACE"
 }
 
-# 1. Initial Check (Have we got Ethernet?)
-echo "Checking Initial Connectivity..."
-if ip route | grep "default" | grep -v "wlan" >/dev/null 2>&1; then
-    echo "✅ Ethernet detected. Service exiting."
+# --- MAIN LOGIC ---
+
+# 0. Immediate Cleanup on Launch
+# If Ethernet is already there, kill everything immediately.
+if check_ethernet; then
+    echo "✅ Ethernet Detected on Start. Cleaning up..."
+    kill_hotspot
     exit 0
 fi
 
-# 2. V7.6 LOGIC: Do we have a User WiFi Configured?
-# If so, we must KILL any hotspot and TRY to connect.
+# 1. Try to Connect to User WiFi (if configured)
 if nmcli con show "Astro-WIFI" >/dev/null 2>&1; then
-    echo "🔄 Found 'Astro-WIFI' profile. Switching to Client Mode..."
+    echo "🔄 Found 'Astro-WIFI' profile."
     
-    # Kill Hotspot to free radio
+    # Ensure radio is free
     kill_hotspot
-    sleep 2
     
-    # Try Connect
-    echo "Trying to connect to Astro-WIFI..."
+    echo "🙏 Attempting connection to 'Astro-WIFI'..."
     sudo nmcli con up "Astro-WIFI"
     
-    # Wait and Verify
+    # Wait for results (gives NM time to DHCP)
     sleep 10
     
-    # Check if connected
-    if nmcli -t -f DEVICE,NAME,TYPE con show --active | grep "wlan0" | grep "Astro-WIFI" >/dev/null 2>&1; then
-        echo "✅ SUCCESS: Connected to Astro-WIFI."
+    # Check Result
+    if check_wifi_client; then
+        echo "✅ SUCCESS: Connected to home WiFi."
         exit 0
     else
-        echo "❌ Connection Failed. Falling back to Hotspot."
+        echo "❌ User WiFi Failed. Falling back."
     fi
 fi
 
-# 3. Fallback: Start Hotspot (If no internet, and no working WiFi profile)
-if ping -c 1 -W 1 8.8.8.8 >/dev/null 2>&1; then
-     echo "✅ Internet detected. Service exiting."
-     exit 0
-fi
-
+# 2. Fallback: If no Ethernet and no User WiFi -> Hotspot
+echo "⚠️ No connectivity. Launching Setup Mode."
 start_hotspot
 
-# 4. WATCHDOG LOOP
+# 3. WATCHDOG LOOP (Persistent Monitor)
 echo "👀 Entering Watchdog Mode..."
 
 while true; do
     sleep 5
-    # If Ethernet is plugged in...
-    if ip route | grep "default" | grep -v "wlan" >/dev/null 2>&1; then
-        echo "🚨 ETHERNET DETECTED! Killing Hotspot..."
+    
+    # A. Ethernet Plugged In? -> KILL HOTSPOT
+    if check_ethernet; then
+        echo "🚨 ETHERNET DETECTED! Killing Hotspot immediately to save Router..."
         kill_hotspot
-        sudo nmcli con delete "astroorange-ap" 2>/dev/null
-        exit 0
+        # We exit, because we don't need to monitor anymore (systemd will restart us on reboot)
+        # OR we can stay alive to kill it again if it spawns. Let's stay alive but silent.
+        # Check every 10s just to be sure it stays dead.
+        continue
     fi
     
-    # If user connects to WiFi manually...
-    if nmcli -t -f DEVICE,NAME,TYPE con show --active | grep "wlan0" | grep -v "astroorange-ap" >/dev/null 2>&1; then
-        echo "🚨 CLIENT WIFI CONNECTED! Killing Hotspot..."
-        kill_hotspot
-        sudo nmcli con delete "astroorange-ap" 2>/dev/null
-        exit 0
+    # B. Wifi Client Connected? -> KILL HOTSPOT
+    if check_wifi_client; then
+         # Only kill if hotspot is ALSO active (ghost presence)
+         if nmcli con show --active | grep "astroorange-ap" >/dev/null 2>&1; then
+             echo "🚨 GHOST HOTSPOT DETECTED! Killing..."
+             kill_hotspot
+         fi
     fi
 done
