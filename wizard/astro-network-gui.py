@@ -199,14 +199,25 @@ class NetWizard:
         # Thread tiene COPIAS de los valores, no referencias a widgets
         def run():
             try:
+                log("1. Configurando Hostname...")
                 subprocess.run(["sudo", "hostnamectl", "set-hostname", hname])
                 subprocess.run(f"sudo sed -i 's/127.0.1.1.*/127.0.1.1\\t{hname}/' /etc/hosts", shell=True)
-                subprocess.run(["sudo", "systemctl", "disable", "astro-network.service"])
+                
+                log("2. Verificando Guardián de Red...")
+                # ELIMINADO: No desactivamos el servicio para que el Watchdog gestione la red
+                # subprocess.run(["sudo", "systemctl", "disable", "astro-network.service"])
+                
+                log("3. Limpiando perfiles antiguos...")
                 subprocess.run(["sudo", "nmcli", "con", "delete", con_name], stderr=subprocess.DEVNULL)
                 
-                cmd = ["sudo", "nmcli", "con", "add", "type", "wifi", "ifname", "wlan0", 
+                # Detectar interfaz wifi dinámicamente
+                iface_out = subprocess.check_output("nmcli -t -f DEVICE,TYPE device | grep wifi | cut -d: -f1 | head -n1", shell=True, text=True).strip()
+                iface = iface_out if iface_out else "wlan0"
+
+                log(f"4. Creando perfil WiFi en {iface}: {self.ssid}...")
+                cmd = ["sudo", "nmcli", "con", "add", "type", "wifi", "ifname", iface, 
                        "con-name", con_name, "ssid", self.ssid, 
-                       "connection.interface-name", "wlan0", "connection.autoconnect", "yes"]
+                       "connection.interface-name", iface, "connection.autoconnect", "yes"]
                 subprocess.run(cmd, check=True)
                 
                 if pw:
