@@ -82,9 +82,13 @@ OPT_DIR="/opt/astroorange"
 mkdir -p "$OPT_DIR/bin" "$OPT_DIR/wizard" "$OPT_DIR/assets"
 
 # --- 0. ASSETS (Wallpaper/Logo/Gallery) ---
+# --- 0. ASSETS (Wallpaper/Logo/Gallery) ---
 mkdir -p /usr/share/backgrounds
-if [ -f "/tmp/userpatches/astro-wallpaper.jpg" ]; then
-    cp "/tmp/userpatches/astro-wallpaper.jpg" "/usr/share/backgrounds/astro-wallpaper.jpg"
+# V10.0: Flexible Wallpaper Logic (handles jpg, png, or no extension)
+WP_FOUND=$(find /tmp/userpatches -maxdepth 1 -name "astro-wallpaper*" | head -n1)
+if [ -n "$WP_FOUND" ]; then
+    echo "   🖼️  Found wallpaper: $(basename "$WP_FOUND")"
+    cp "$WP_FOUND" "/usr/share/backgrounds/astro-wallpaper.png"
 fi
 
 # Copy NASA gallery images for carousel
@@ -172,7 +176,11 @@ rm -f /etc/X11/xorg.conf.d/20-modesetting.conf || true
 # --- E. Visuals & Themes ---
 echo -e "${GREEN}[5/5] Deploying AstroOrange Style...${NC}"
 mkdir -p /usr/share/backgrounds
-cp "$UP_SRC/astro-wallpaper.png" /usr/share/backgrounds/ || true
+
+# Fallback: SI no se ha copiado nada aún (no había astro-wallpaper* en userpatches), usar el default
+if [ ! -f "/usr/share/backgrounds/astro-wallpaper.png" ] && [ -f "$UP_SRC/astro-wallpaper.png" ]; then
+    cp "$UP_SRC/astro-wallpaper.png" "/usr/share/backgrounds/astro-wallpaper.png"
+fi
 
 # System-wide XFCE Defaults (for any new user)
 mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
