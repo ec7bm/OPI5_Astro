@@ -212,15 +212,29 @@ class SoftWizard:
 
     def create_shortcut(self, name, bin_name):
         try:
-            desktop_dir = "/home/orangepi/Desktop"
-            if not os.path.exists(desktop_dir): return
+            # Detect real user behind sudo
+            real_user = os.environ.get('SUDO_USER') or os.environ.get('USER')
+            if real_user == 'root':
+                # Try to guess if root (shouldn't happen with normal sudo usage)
+                return
+
+            desktop_dir = f"/home/{real_user}/Desktop"
+            if not os.path.exists(desktop_dir): 
+                os.makedirs(desktop_dir, exist_ok=True)
+                shutil.chown(desktop_dir, user=real_user, group=real_user)
+
             filename = f"{bin_name}.desktop"
             path = os.path.join(desktop_dir, filename)
+            
+            icon_name = bin_name
+            # Map specific icons if needed, otherwise default to bin_name
+            
             with open(path, "w") as f:
-                f.write(f"[Desktop Entry]\nType=Application\nName={name}\nExec={bin_name}\nIcon={bin_name}\nTerminal=false\n")
+                f.write(f"[Desktop Entry]\nType=Application\nName={name}\nExec={bin_name}\nIcon={icon_name}\nTerminal=false\n")
+            
             os.chmod(path, 0o755)
-            shutil.chown(path, user="orangepi", group="orangepi")
-            self.log(f"✨ Icono creado en escritorio: {name}")
+            shutil.chown(path, user=real_user, group=real_user)
+            self.log(f"✨ Icono creado en escritorio ({real_user}): {name}")
         except Exception as e:
             self.log(f"⚠️ No se pudo crear icono: {str(e)}")
 
