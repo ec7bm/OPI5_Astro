@@ -1,6 +1,7 @@
 # 🍊 AstroOrange V2
 
-**Sistema operativo especializado para astrofotografía en Orange Pi 5 Pro**
+**Specialized OS for Astrophotography on Orange Pi 5 Pro**  
+*(Versión en español más abajo)*
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/Platform-Orange%20Pi%205%20Pro-orange)](https://github.com/ec7bm/OPI5_Astro)
@@ -8,88 +9,95 @@
 
 ---
 
-AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server** optimizada para astrofotografía. Diseñada para funcionar en **Orange Pi 5 Pro**, proporciona un entorno completo y listo para usar.
+## 🇬🇧 English Version
 
-## 🌟 Características Principales (V10.5)
+AstroOrange V2 is a Linux distribution based on **Ubuntu 22.04 Jammy Server** optimized for astrophotography. Designed for **Orange Pi 5 Pro**, it provides a ready-to-use environment with:
 
-- 🛰️ **Hotspot de rescate automático (V9.2)** - Acceso garantizado sin WiFi (`AstroOrange-Setup` / `astrosetup`).
+- 🛰️ **Automatic Rescue Hotspot** - Always accessible without WiFi.
+- 🖥️ **VNC Remote Desktop** - Control via web browser (noVNC).
+- 🧙 **Configuration Wizard V8.4** - Guided setup with premium UI.
+- 🔭 **Modular Astronomy Software** - KStars, INDI, PHD2, ASTAP, Stellarium, CCDciel, Syncthing.
+
+### 🚀 Installation
+
+#### Option A: Flash Image (Recommended)
+1. **Download Image**: 👉 **[DOWNLOAD V10.5 IMAGE](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link)**
+2. Flash to microSD using [balenaEtcher](https://www.balena.io/etcher/).
+3. Boot and connect to WiFi: `AstroOrange-Setup` (Pass: `astrosetup`).
+
+#### Option B: Universal Script
+Run on existing Armbian/Ubuntu system:
+```bash
+git clone https://github.com/ec7bm/OPI5_Astro.git
+cd OPI5_Astro
+sudo ./install.sh
+```
+
+📖 **[READ FULL USER MANUAL (ENGLISH)](MANUAL_USER.md)**
+
+---
+
+## 🇪🇸 Versión en Español
+
+AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server** optimizada para astrofotografía. Diseñada para funcionar en **Orange Pi 5 Pro**.
+
+### Características Principales
+- 🛰️ **Hotspot de rescate automático** - Acceso garantizado sin WiFi (`AstroOrange-Setup` / `astrosetup`).
 - 🖥️ **Escritorio remoto VNC** - Control desde navegador web (noVNC).
 - 🧙 **Wizard de configuración V8.4** - Setup guiado en español con UI premium.
   - **Nuevo**: Conexión manual a redes ocultas y soporte de IP estática seguro.
 - 🔭 **Software astronómico modular** - Instalador gráfico para KStars, INDI, PHD2, ASTAP, Stellarium, CCDciel, Syncthing.
   - **Nuevo**: Creación automática de iconos en el escritorio.
-- 🎨 **Interfaz moderna** - Tema Arc-Dark, iconos Papirus y wallpaper astronómico universal (V10.0).
+- 🎨 **Interfaz moderna** - Tema Arc-Dark, iconos Papirus y wallpaper astronómico universal.
 
----
+### 🚀 Instalación y Descarga
 
-## 🚀 Instalación y Descarga
-
-Tienes **dos opciones** para disfrutar de AstroOrange V2:
-
-### 📀 Opción A: Imagen Completa (Recomendada)
+#### 📀 Opción A: Imagen Completa (Recomendada)
 **Ideal para empezar de cero.** Flashea la imagen y tendrás el sistema listo.
 
 1. **Descarga la imagen** (.img.xz):
    👉 **[DESCARGAR IMAGEN V10.5 AQUÍ](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link)**
 
-2. **Flashea** en tu microSD con [balenaEtcher](https://www.balena.io/etcher/) o `dd`.
+2. **Flashea** en tu microSD con [balenaEtcher](https://www.balena.io/etcher/).
 3. **Arranca** tu Orange Pi 5 Pro y conéctate al WiFi `AstroOrange-Setup` (Clave: `astrosetup`).
 
----
+#### 🛠️ Opción B: Script Universal
+**Para sistemas existentes (Armbian/Ubuntu).**
 
-### 🛠️ Opción B: Script Universal (Para sistemas existentes)
-**Ideal si ya tienes Armbian o Ubuntu instalado** y quieres añadir nuestras herramientas.
-
-1. Abre una terminal en tu Orange Pi.
-2. Clona y ejecuta el instalador:
-   ```bash
-   git clone https://github.com/ec7bm/OPI5_Astro.git
-   cd OPI5_Astro
-   sudo ./install.sh
-   ```
-3. Reinicia y disfruta de los wizards de AstroOrange.
-
----
-
-## 📁 Estructura del Proyecto
-
-```
-OPI5_Astro/
-├── build.sh                    # Script de construcción de imágenes
-├── install.sh                  # Script de instalación universal
-├── scripts/                    # Scripts del sistema (Hotspot, VNC)
-├── systemd/                    # Servicios systemd
-├── userpatches/               # Customización y Assets
-├── wizard/                    # Código fuente de los Wizards (Python/Tkinter)
-└── RELEASE_NOTES.md           # Notas de la versión
+```bash
+git clone https://github.com/ec7bm/OPI5_Astro.git
+cd OPI5_Astro
+sudo ./install.sh
 ```
 
----
-
-## 🔧 Primeros Pasos
-
-### 1. Conexión Inicial
-- **WiFi Hotspot**: `AstroOrange-Setup` (Password: `astrosetup`)
-- **IP**: `10.42.0.1`
-
-### 2. Acceso
-- **VNC (Navegador)**: `http://10.42.0.1:6080/vnc.html` (Password: `astroorange`)
-- **SSH**: Usuario `astro-setup` / Password `setup`
-
-### 3. Configuración
-Al arrancar, verás el **Setup Wizard** en el escritorio. Úsalo para:
-- Crear tu usuario definitivo.
-- Conectar a tu WiFi de casa (con opción de IP fija).
-- Instalar el software que necesites (KStars, PHD2, etc).
+📖 **[LEER MANUAL DE USUARIO (ESPAÑOL)](MANUAL_USUARIO.md)**
 
 ---
 
-## 📝 Licencia y Créditos
+## ☕ Support / Donaciones
 
-Este proyecto está licenciado bajo **GPL v3**.
-Basado en el trabajo de **Armbian**, **INDI Library**, **KStars** y la comunidad Open Source.
+If AstroOrange helps you in your astrophotography nights, consider buying me a coffee. Your support keeps development alive!
 
-- **Autor**: EC7BM
-- **Proyecto**: [GitHub](https://github.com/ec7bm/OPI5_Astro)
+Si AstroOrange te ha ayudado en tus noches de astrofotografía y quieres agradecer el trabajo, puedes invitarme a un café.
 
-Si este proyecto te resulta útil para tus sesiones de astrofotografía, ¡considera darle una ⭐ estrella en GitHub!
+<div align="center">
+  <a href="https://paypal.me/astroopi5">
+    <img src="assets/donation/paypal-donate.gif" alt="Donate with PayPal" width="200" />
+  </a>
+  <br>
+  <a href="https://paypal.me/astroopi5">
+    <b>Click here to Donate / Clic aquí para Donar</b>
+  </a>
+</div>
+
+---
+
+## 📝 License & Credits
+
+Licensed under **GPL v3**.
+Based on **Armbian**, **INDI Library**, **KStars**, and the Open Source community.
+
+- **Author**: EC7BM
+- **GitHub**: [@ec7bm](https://github.com/ec7bm)
+
+⭐ **Star this project on GitHub!**
