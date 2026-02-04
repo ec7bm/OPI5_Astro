@@ -50,7 +50,8 @@ class UserWizard:
         tk.Checkbutton(f, text="Iniciar sesión automáticamente", variable=self.chk_autologin,
                        bg=SECONDARY_BG, fg="white", selectcolor=BG_COLOR, font=("Sans", 10)).pack(anchor="w", pady=20)
         
-        nav = tk.Frame(self.main_content, bg=BG_COLOR); nav.pack(side="bottom", pady=40)
+        # Updated Layout V5.2: Buttons flow naturally below form
+        nav = tk.Frame(self.main_content, bg=BG_COLOR); nav.pack(pady=40)
         self.btn(nav, "CANCELAR", self.root.destroy, DANGER_COLOR, width=12).pack(side="left", padx=25)
         self.btn(nav, "CREAR USUARIO", self.create, ACCENT_COLOR, width=18).pack(side="left", padx=25)
 
