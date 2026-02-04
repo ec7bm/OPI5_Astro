@@ -11,7 +11,7 @@ class UserWizard:
     def __init__(self, root):
         self.root = root
         self.root.title("AstroOrange User Manager")
-        self.root.geometry("700x600")
+        self.root.geometry("800x600")
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
         
@@ -33,27 +33,41 @@ class UserWizard:
                          activebackground=ACCENT_COLOR, cursor="hand2", width=width)
 
     def draw_main(self):
-        self.clean(); self.head("Nuevo Usuario", "Configura los datos del nuevo operador")
+        self.clean()
         
-        f = tk.Frame(self.main_content, bg=SECONDARY_BG, padx=50, pady=50, bd=0); f.pack(pady=10)
+        # --- CONTAINER CENTRADO (SOLUCIÓN V10.8) ---
+        # Usamos place() para centrar matemáticamente un frame contenedor
+        # Esto asegura que NUNCA se pierdan los botones por resolución
+        container = tk.Frame(self.main_content, bg=BG_COLOR)
+        container.place(relx=0.5, rely=0.5, anchor="center")
+        
+        # 1. Cabecera (Dentro del container)
+        tk.Label(container, text="👤 Nuevo Usuario", font=("Sans", 32, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(0, 10))
+        tk.Label(container, text="Configura los datos del nuevo operador", font=("Sans", 14), bg=BG_COLOR, fg=FG_COLOR).pack(pady=(0, 30))
+        
+        # 2. Formulario (Dentro del container)
+        f = tk.Frame(container, bg=SECONDARY_BG, padx=40, pady=40)
+        f.pack(pady=10)
         
         tk.Label(f, text="NOMBRE DE USUARIO", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
-        self.eu = tk.Entry(f, width=35, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
-        self.eu.pack(pady=(10, 30), ipady=10)
+        self.eu = tk.Entry(f, width=30, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
+        self.eu.pack(pady=(5, 20), ipady=8)
         
         tk.Label(f, text="CONTRASEÑA", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
-        self.ep = tk.Entry(f, show="*", width=35, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
-        self.ep.pack(pady=(10, 0), ipady=10)
+        self.ep = tk.Entry(f, show="*", width=30, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
+        self.ep.pack(pady=(5, 5), ipady=8)
 
-        # Auto-login Toggle
+        # Auto-login
         self.chk_autologin = tk.BooleanVar(value=True)
         tk.Checkbutton(f, text="Iniciar sesión automáticamente", variable=self.chk_autologin,
-                       bg=SECONDARY_BG, fg="white", selectcolor=BG_COLOR, font=("Sans", 10)).pack(anchor="w", pady=20)
+                       bg=SECONDARY_BG, fg="white", selectcolor=BG_COLOR, font=("Sans", 10)).pack(anchor="w", pady=15)
         
-        # Updated Layout V5.2: Buttons flow naturally below form
-        nav = tk.Frame(self.main_content, bg=BG_COLOR); nav.pack(pady=40)
-        self.btn(nav, "CANCELAR", self.root.destroy, DANGER_COLOR, width=12).pack(side="left", padx=25)
-        self.btn(nav, "CREAR USUARIO", self.create, ACCENT_COLOR, width=18).pack(side="left", padx=25)
+        # 3. Botones (Dentro del container, SIEMPRE VISIBLES)
+        nav = tk.Frame(container, bg=BG_COLOR)
+        nav.pack(pady=30)
+        
+        self.btn(nav, "CANCELAR", self.root.destroy, DANGER_COLOR, width=15).pack(side="left", padx=15)
+        self.btn(nav, "GUARDAR", self.create, ACCENT_COLOR, width=15).pack(side="left", padx=15)
 
     def create(self):
         u, p = self.eu.get().strip(), self.ep.get().strip()
