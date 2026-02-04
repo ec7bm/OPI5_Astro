@@ -11,13 +11,13 @@ ACCENT_COLOR, SUCCESS_COLOR, DANGER_COLOR = "#38bdf8", "#22c55e", "#ef4444"
 BUTTON_COLOR = "#334155"
 
 SOFTWARE = {
-    "KStars / INDI": {"bin": "kstars", "pkg": "kstars-bleeding indi-full gsc", "ppa": "ppa:mutlaqja/ppa"},
-    "PHD2 Guiding": {"bin": "phd2", "pkg": "phd2", "ppa": "ppa:pch/phd2"},
-    "ASTAP (Solver)": {"bin": "astap", "pkg": "astap", "url": "https://www.hnsky.org/astap_arm64.deb"},
-    "Stellarium": {"bin": "stellarium", "pkg": "stellarium"},
-    "AstroDMX Capture": {"bin": "astrodmx", "pkg": "astrodmxcapture", "url": "https://www.astrodmx.com/download/astrodmxcapture-release.deb"},
-    "CCDciel": {"bin": "ccdciel", "pkg": "ccdciel", "ppa": "ppa:jandecaluwe/ccdciel"},
-    "Syncthing": {"bin": "syncthing", "pkg": "syncthing"}
+    "KStars / INDI": {"bin": "kstars", "pkg": "kstars-bleeding indi-full gsc", "ppa": "ppa:mutlaqja/ppa", "icon": "kstars"},
+    "PHD2 Guiding": {"bin": "phd2", "pkg": "phd2", "ppa": "ppa:pch/phd2", "icon": "phd2"},
+    "ASTAP (Solver)": {"bin": "astap", "pkg": "astap", "url": "https://www.hnsky.org/astap_arm64.deb", "icon": "astap"},
+    "Stellarium": {"bin": "stellarium", "pkg": "stellarium", "icon": "stellarium"},
+    "AstroDMX Capture": {"bin": "astrodmx", "pkg": "astrodmxcapture", "url": "https://www.astrodmx.com/download/astrodmxcapture-release.deb", "icon": "astrodmx"},
+    "CCDciel": {"bin": "ccdciel", "pkg": "ccdciel", "ppa": "ppa:jandecaluwe/ccdciel", "icon": "ccdciel"},
+    "Syncthing": {"bin": "usr/bin/syncthing", "pkg": "syncthing", "icon": "syncthing"}
 }
 
 CAROUSEL_EMOJIS = ["🔭", "🌌", "⭐", "🪐", "🌠"]
@@ -226,8 +226,8 @@ class SoftWizard:
             filename = f"{bin_name}.desktop"
             path = os.path.join(desktop_dir, filename)
             
-            icon_name = bin_name
-            # Map specific icons if needed, otherwise default to bin_name
+            # V10.9: Use explicit icon if available, otherwise default to bin_name
+            icon_name = SOFTWARE.get(name, {}).get("icon", bin_name)
             
             with open(path, "w") as f:
                 f.write(f"[Desktop Entry]\nType=Application\nName={name}\nExec={bin_name}\nIcon={icon_name}\nTerminal=false\n")

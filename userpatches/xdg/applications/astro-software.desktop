@@ -3,6 +3,6 @@ Type=Application
 Name=Instalador Software
 Comment=Instalar software astronómico
 Exec=sudo python3 /opt/astroorange/wizard/astro-software-gui.py
-Icon=kstars
+Icon=system-software-install
 Categories=AstroOrange;Education;Science;
 Terminal=false
