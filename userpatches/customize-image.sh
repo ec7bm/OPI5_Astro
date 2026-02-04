@@ -20,6 +20,10 @@ echo -e "${GREEN}[1/5] Installing Base System...${NC}"
 export DEBIAN_FRONTEND=noninteractive
 APT_OPTS="-y --no-install-recommends -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
 
+# DEFINE SOURCE PATH EARLY (Fix for V10.9)
+UP_SRC="/tmp/remaster-source/userpatches"
+
+
 # Repositorios (Mozilla PPA para Firefox)
 apt-get update
 apt-get install $APT_OPTS software-properties-common
@@ -86,9 +90,11 @@ mkdir -p "$OPT_DIR/bin" "$OPT_DIR/wizard" "$OPT_DIR/assets"
 mkdir -p /usr/share/backgrounds
 # V10.8: Brute Force Wallpaper Logic (No find, just copy)
 # Try copying various extensions to the canonical path
-cp /tmp/userpatches/astro-wallpaper.png /usr/share/backgrounds/astro-wallpaper.png 2>/dev/null || true
-cp /tmp/userpatches/astro-wallpaper.jpg /usr/share/backgrounds/astro-wallpaper.png 2>/dev/null || true
-cp /tmp/userpatches/astro-wallpaper.jpeg /usr/share/backgrounds/astro-wallpaper.png 2>/dev/null || true
+# V11.0: Brute Force Wallpaper Logic (Using Correct Path)
+# Try copying various extensions to the canonical path
+cp "$UP_SRC/astro-wallpaper.png" /usr/share/backgrounds/astro-wallpaper.png 2>/dev/null || true
+cp "$UP_SRC/astro-wallpaper.jpg" /usr/share/backgrounds/astro-wallpaper.png 2>/dev/null || true
+cp "$UP_SRC/astro-wallpaper.jpeg" /usr/share/backgrounds/astro-wallpaper.png 2>/dev/null || true
 
 if [ -f "/usr/share/backgrounds/astro-wallpaper.png" ]; then
     echo "   🖼️  Wallpaper installed successfully to /usr/share/backgrounds/astro-wallpaper.png"
@@ -106,7 +112,8 @@ fi
 # Configurar tema para el usuario setup (se heredará al usuario final)
 SETUP_HOME="/home/$SETUP_USER"
 mkdir -p "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
-UP_SRC="/tmp/remaster-source/userpatches"
+# UP_SRC defined at top
+
 
 # Copiar configuraciones XFCE desde el repo
 cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
