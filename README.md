@@ -21,7 +21,7 @@ AstroOrange V2 is a Linux distribution based on **Ubuntu 22.04 Jammy Server** op
 ### 🚀 Installation
 
 #### Option A: Flash Image (Recommended)
-1. **Download Image**: 👉 **[DOWNLOAD V10.5 IMAGE](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link)**
+1. **Download Image**: 👉 **[DOWNLOAD V10.5 IMAGE](https://drive.google.com/file/d/1OJC6SG5Xz9yCOAx54TYCOTiOPzPo2YKY/view?usp=drive_link)**
 2. Flash to microSD using [balenaEtcher](https://www.balena.io/etcher/).
 3. Boot and connect to WiFi: `AstroOrange-Setup` (Pass: `astrosetup`).
 
@@ -56,7 +56,7 @@ AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server*
 **Ideal para empezar de cero.** Flashea la imagen y tendrás el sistema listo.
 
 1. **Descarga la imagen** (.img.xz):
-   👉 **[DESCARGAR IMAGEN V10.5 AQUÍ](https://drive.google.com/file/d/1VjZFMH9JVxtrqRX7U5BXZ6T1KtZ6QjN6/view?usp=drive_link)**
+   👉 **[DESCARGAR IMAGEN V10.5 AQUÍ](https://drive.google.com/file/d/1OJC6SG5Xz9yCOAx54TYCOTiOPzPo2YKY/view?usp=drive_link)**
 
 2. **Flashea** en tu microSD con [balenaEtcher](https://www.balena.io/etcher/).
 3. **Arranca** tu Orange Pi 5 Pro y conéctate al WiFi `AstroOrange-Setup` (Clave: `astrosetup`).
