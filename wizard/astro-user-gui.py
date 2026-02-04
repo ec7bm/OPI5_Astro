@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-import subprocess
+import subprocess, time
 
 # Estilo Premium AstroOrange
 BG_COLOR, SECONDARY_BG, FG_COLOR = "#0f172a", "#1e293b", "#e2e8f0"
@@ -56,6 +56,11 @@ class UserWizard:
         tk.Label(f, text="CONTRASEÑA", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
         self.ep = tk.Entry(f, show="*", width=30, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
         self.ep.pack(pady=(5, 5), ipady=8)
+        
+        # Show Password Toggle
+        self.show_pass = tk.BooleanVar(value=False)
+        tk.Checkbutton(f, text="Mostrar contraseña", variable=self.show_pass, command=self.toggle_password,
+                       bg=SECONDARY_BG, fg="white", selectcolor=BG_COLOR, font=("Sans", 9)).pack(anchor="w", pady=0)
 
         # Auto-login
         self.chk_autologin = tk.BooleanVar(value=True)
@@ -68,6 +73,9 @@ class UserWizard:
         
         self.btn(nav, "CANCELAR", self.root.destroy, DANGER_COLOR, width=15).pack(side="left", padx=15)
         self.btn(nav, "GUARDAR", self.create, ACCENT_COLOR, width=15).pack(side="left", padx=15)
+
+    def toggle_password(self):
+        self.ep.config(show="" if self.show_pass.get() else "*")
 
     def create(self):
         u, p = self.eu.get().strip(), self.ep.get().strip()
@@ -84,6 +92,10 @@ class UserWizard:
             cfg = f"[Seat:*]\nautologin-user={u}\nautologin-session=xfce\n"
             with open("/tmp/50-astro.conf", "w") as f: f.write(cfg)
             subprocess.run("sudo mv /tmp/50-astro.conf /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+        
+        # V11.1: Esperar sincronización fs
+        time.sleep(2)
+
         
         messagebox.showinfo("Éxito", f"Usuario '{u}' creado correctamente.")
         self.root.destroy()

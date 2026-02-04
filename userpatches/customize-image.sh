@@ -102,6 +102,22 @@ else
     echo "   ⚠️  No custom wallpaper found in userpatches!"
 fi
 
+# V11.1 NUCLEAR OPTION: Overwrite System Defaults
+# XFCE likes to revert to 'xfce-blue.jpg' or 'xfce-stripes.png'. We replace them.
+echo "   ☢️  Enforcing Wallpaper (Nuclear Option)..."
+TARGET_WP="/usr/share/backgrounds/astro-wallpaper.png"
+if [ -f "$TARGET_WP" ]; then
+    # Overwrite remote/default XFCE backgrounds
+    find /usr/share/backgrounds/xfce -name "*.jpg" -exec cp "$TARGET_WP" {} \; 2>/dev/null || true
+    find /usr/share/backgrounds/xfce -name "*.png" -exec cp "$TARGET_WP" {} \; 2>/dev/null || true
+    
+    # Ensure standard paths exist
+    mkdir -p /usr/share/backgrounds/xfce
+    cp "$TARGET_WP" /usr/share/backgrounds/xfce/xfce-blue.jpg
+    cp "$TARGET_WP" /usr/share/backgrounds/xfce/xfce-stripes.png
+    cp "$TARGET_WP" /usr/share/backgrounds/xfce/xfce-teal.jpg
+fi
+
 # Copy NASA gallery images for carousel
 mkdir -p "$OPT_DIR/assets/gallery"
 if [ -d "/tmp/userpatches/gallery" ]; then

@@ -27,8 +27,16 @@ def check_ping():
         subprocess.check_output(["ping", "-c", "1", "-W", "1", "8.8.8.8"])
         return True
     except: return False
+    except: return False
 
-class SoftWizard:
+def kill_apt_locks():
+    try:
+        subprocess.run("sudo killall apt apt-get dpkg", shell=True, stderr=subprocess.DEVNULL)
+        subprocess.run("sudo rm /var/lib/apt/lists/lock", shell=True, stderr=subprocess.DEVNULL)
+        subprocess.run("sudo rm /var/cache/apt/archives/lock", shell=True, stderr=subprocess.DEVNULL)
+        subprocess.run("sudo rm /var/lib/dpkg/lock*", shell=True, stderr=subprocess.DEVNULL)
+        subprocess.run("sudo dpkg --configure -a", shell=True, stderr=subprocess.DEVNULL)
+    except: pass
     def __init__(self, root):
         print("[DEBUG] Iniciando SoftWizard V7.0...")
         self.root = root
@@ -245,7 +253,19 @@ class SoftWizard:
         else: self.on_close()
 
     def run_install(self):
-        subprocess.run("sudo apt-get update", shell=True)
+        self.log("--- PREPARANDO SISTEMA (V11.1) ---")
+        self.log("1. Liberando bloqueos de APT...")
+        kill_apt_locks()
+        
+        self.log("2. Actualizando repositorios y sistema (Puede tardar)...")
+        try:
+            subprocess.run("sudo apt-get update", shell=True, check=True)
+            # Evitamos prompts interactivos en upgrade
+            env = os.environ.copy(); env['DEBIAN_FRONTEND'] = 'noninteractive'
+            subprocess.run("sudo apt-get upgrade -y", shell=True, env=env, check=True)
+        except Exception as e:
+            self.log(f"⚠️ Error actualizando (continuaremos): {e}")
+
         count = 0; total = sum(1 for v in self.sw_vars.values() if v.get())
         for n, info in SOFTWARE.items():
             if not self.sw_vars[n].get(): continue
