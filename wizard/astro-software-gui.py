@@ -253,18 +253,25 @@ def kill_apt_locks():
         else: self.on_close()
 
     def run_install(self):
-        self.log("--- PREPARANDO SISTEMA (V11.1) ---")
-        self.log("1. Liberando bloqueos de APT...")
-        kill_apt_locks()
+        self.log("--- PREPARANDO SISTEMA (V11.2) ---")
         
-        self.log("2. Actualizando repositorios y sistema (Puede tardar)...")
+        # Bucle de reintento para limpieza y actualización
+        for attempt in range(1, 4):
+            self.log(f"Intento {attempt}/3: Liberando bloqueos y actualizando...")
+            kill_apt_locks()
+            try:
+                subprocess.run("sudo apt-get update", shell=True, check=True, timeout=120)
+                break # Éxito
+            except Exception as e:
+                if attempt == 3: self.log(f"❌ Fallo persistente en update: {e}"); break
+                self.log("   Reintentando en 5 segundos..."); time.sleep(5)
+        
+        self.log("Actualizando sistema (Upgrade parcial)...")
         try:
-            subprocess.run("sudo apt-get update", shell=True, check=True)
-            # Evitamos prompts interactivos en upgrade
             env = os.environ.copy(); env['DEBIAN_FRONTEND'] = 'noninteractive'
-            subprocess.run("sudo apt-get upgrade -y", shell=True, env=env, check=True)
+            subprocess.run("sudo apt-get upgrade -y --no-install-recommends", shell=True, env=env, check=True)
         except Exception as e:
-            self.log(f"⚠️ Error actualizando (continuaremos): {e}")
+            self.log(f"⚠️ Nota de upgrade: {e}")
 
         count = 0; total = sum(1 for v in self.sw_vars.values() if v.get())
         for n, info in SOFTWARE.items():

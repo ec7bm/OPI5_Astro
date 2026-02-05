@@ -89,12 +89,16 @@ class UserWizard:
         subprocess.run(f"echo '{u}:{p}' | sudo chpasswd", shell=True)
         
         if self.chk_autologin.get():
-            cfg = f"[Seat:*]\nautologin-user={u}\nautologin-session=xfce\n"
-            with open("/tmp/50-astro.conf", "w") as f: f.write(cfg)
-            subprocess.run("sudo mv /tmp/50-astro.conf /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+            cfg = f"[Seat:*]\nautologin-user={u}\nautologin-session=xfce\nautologin-user-timeout=0\n"
+            with open("/tmp/60-astro-user.conf", "w") as f: f.write(cfg)
+            # V11.2: Limpiar rastro de setup y asegurar persistencia del nuevo usuario
+            subprocess.run("sudo rm -f /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+            subprocess.run("sudo mv /tmp/60-astro-user.conf /etc/lightdm/lightdm.conf.d/60-astro-user.conf", shell=True)
+            subprocess.run(["sync"])
         
         # V11.1: Esperar sincronización fs
         time.sleep(2)
+        subprocess.run(["sync"])
 
         
         messagebox.showinfo("Éxito", f"Usuario '{u}' creado correctamente.")

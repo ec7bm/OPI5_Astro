@@ -238,6 +238,12 @@ class NetWizard:
 
     def show_final_actions(self):
         f = tk.Frame(self.main_content, bg=BG_COLOR); f.pack(pady=20)
+        tk.Label(f, text="✅ CONFIGURACIÓN GUARDADA", bg=BG_COLOR, fg=SUCCESS_COLOR, font=("Sans", 14, "bold")).pack(pady=5)
+        
+        # V11.2 RECOMMENDATION
+        tk.Label(f, text="💡 RECOMENDACIÓN:\nUsa ETHERNET para la primera descarga de software.\n(Es más estable para archivos grandes)", 
+                 bg=SECONDARY_BG, fg="white", font=("Sans", 10, "italic"), padx=20, pady=10).pack(pady=15)
+        
         tk.Label(f, text="⚠️ REINICIO REQUERIDO", bg=BG_COLOR, fg="yellow", font=("Sans", 12, "bold")).pack(pady=5)
         self.btn(f, "REINICIAR AHORA", self.reboot_now, SUCCESS_COLOR, width=20).pack(pady=10)
         self.btn(f, "Cerrar", self.root.destroy, BUTTON_COLOR, width=10).pack()
