@@ -26,8 +26,9 @@ SOFTWARE = {
     "Stellarium": {"bin": "stellarium", "pkg": "stellarium", "icon": "stellarium"},
     "AstroDMX Capture": {"bin": "astrodmx", "pkg": "astrodmxcapture", "url": "https://www.astrodmx.com/download/astrodmxcapture-release.deb", "icon": "astrodmx"},
     "CCDciel": {"bin": "ccdciel", "pkg": "ccdciel", "ppa": "ppa:jandecaluwe/ccdciel", "icon": "ccdciel"},
-    "Syncthing": {"bin": "usr/bin/syncthing", "pkg": "syncthing", "icon": "syncthing"}
+    "Syncthing": {"bin": "syncthing", "pkg": "syncthing", "icon": "syncthing"}
 }
+
 
 CAROUSEL_EMOJIS = ["🔭", "🌌", "⭐", "🪐", "🌠"]
 
@@ -87,9 +88,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
-        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 12.0 (BULLETPROOF) <<<")
+        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 12.2 (DETECT-PRO) <<<")
         self.root = root
-        self.root.title("AstroOrange Software Installer V12.0 (MASTER)")
+        self.root.title("AstroOrange Software Installer V12.2 (STABLE)")
+
 
 
 
@@ -150,10 +152,10 @@ class SoftWizard:
         grid = tk.Frame(self.main_content, bg=BG_COLOR); grid.pack(pady=10)
         for i, (n, info) in enumerate(SOFTWARE.items()):
             bin_name = info["bin"]
-            # Búsqueda más agresiva de binarios
-            is_bin_in_path = shutil.which(bin_name) is not None
-            is_bin_in_usr = os.path.exists(f"/usr/bin/{bin_name}") or os.path.exists(f"/usr/local/bin/{bin_name}")
-            inst = bool(is_bin_in_path or is_bin_in_usr)
+            # Búsqueda ultra-agresiva de binarios (PATH, usr, opt, etc.)
+            paths_to_check = [f"/usr/bin/{bin_name}", f"/usr/local/bin/{bin_name}", f"/opt/{bin_name}", f"/usr/sbin/{bin_name}"]
+            inst = bool(shutil.which(bin_name) or any(os.path.exists(p) for p in paths_to_check))
+
 
             
             self.sw_vars[n] = tk.BooleanVar(value=not inst and n in ["KStars / INDI", "PHD2 Guiding"])
