@@ -1,7 +1,9 @@
-# [ASTRO-UNIQUE-ID: ASTR-1124-PURE-STABLE]
-# VERSION PURE 11.24 - REMOVIDO SWAP (V8)
-# FECHA: 06-02-2026 20:50
+# [ASTRO-ATOMIC-ID: 555-ABC-888-ZZZ-1125]
+# VERSION ATOMIC 11.25 - MODO PURO (NO SWAP)
+# HASH FORCER: X7Y2Z9W1Q8P4L5M3N2B1V0C9X8Z7Y6W5V4U3T2S1
+# FECHA: 06-02-2026 20:55
 import tkinter as tk
+
 
 
 from tkinter import messagebox, scrolledtext
@@ -84,9 +86,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
-        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 11.24 (PURE-INSTALL) <<<")
+        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 11.25 (ATOMIC-PURE) <<<")
         self.root = root
-        self.root.title("AstroOrange Software Installer V11.24 (PURE)")
+        self.root.title("AstroOrange Software Installer V11.25 (ATOMIC)")
+
 
 
 
@@ -318,7 +321,8 @@ class SoftWizard:
         try: subprocess.run(f"sudo touch {LOG_FILE} && sudo chmod 666 {LOG_FILE}", shell=True)
         except: pass
         
-        self.log("--- INICIANDO PROCESO PURE V11.24 ---")
+        self.log("--- INICIANDO PROCESO ATOMIC V11.25 ---")
+
         
         # V11.24: Removido SWAP por petición de usuario (Causaba cuelgues)
 
