@@ -58,6 +58,11 @@ systemctl stop dnsmasq || true
 systemctl disable dnsmasq || true
 systemctl mask dnsmasq
 
+# V11.5: Create mandatory groups for the wizard
+groupadd vnc || true
+groupadd novnc || true
+
+
 # ==================== 2. USUARIO SETUP (TEMPORAL) ====================
 echo -e "${GREEN}[2/5] Creating Setup User...${NC}"
 SETUP_USER="astro-setup"
@@ -203,8 +208,13 @@ plugins=ifupdown,keyfile
 managed=true
 
 [device]
+type=ethernet
+managed=true
+
+[device-mac-randomization]
 wifi.scan-rand-mac-address=no
 EOF
+
 
 
 # V11.3: CLEAN NETWORK INTERFACES (Full NM control)

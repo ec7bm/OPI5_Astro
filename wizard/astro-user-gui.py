@@ -92,7 +92,10 @@ class UserWizard:
         # Includes VNC groups per user request
         target_groups = ["sudo", "dialout", "video", "input", "plugdev", "audio", "vnc", "novnc"]
         for g in target_groups:
+            # V11.5: Build-time group creation insurance
+            subprocess.run(f"sudo groupadd {g} 2>/dev/null", shell=True)
             subprocess.run(f"sudo usermod -aG {g} {u} 2>/dev/null", shell=True)
+
         
         # V11.4: Provision Desktop Icons for the new user
         desktop_dir = f"/home/{u}/Desktop"
