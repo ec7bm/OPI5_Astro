@@ -211,9 +211,13 @@ managed=true
 type=ethernet
 managed=true
 
+[keyfile]
+unmanaged-devices=none
+
 [device-mac-randomization]
 wifi.scan-rand-mac-address=no
 EOF
+
 
 
 
