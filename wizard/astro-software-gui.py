@@ -1,8 +1,10 @@
-# [ASTRO-ATOMIC-ID: 555-ABC-888-ZZZ-1125]
-# VERSION ATOMIC 11.25 - MODO PURO (NO SWAP)
-# HASH FORCER: X7Y2Z9W1Q8P4L5M3N2B1V0C9X8Z7Y6W5V4U3T2S1
-# FECHA: 06-02-2026 20:55
+# [ASTRO-ARMOR-BLOCK-V12-START]
+# ******************************************************************************
+# * ASTROORANGE BULLETPROOF WIZARD V12.0                                      *
+# * ESTA VERSION INCLUYE PROTECCIÓN DE HILOS ATÓMICA Y BYPASS DE CACHE TOTAL  *
+# ******************************************************************************
 import tkinter as tk
+
 
 
 
@@ -86,9 +88,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
-        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 11.25 (ATOMIC-PURE) <<<")
+        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 12.0 (BULLETPROOF) <<<")
         self.root = root
-        self.root.title("AstroOrange Software Installer V11.25 (ATOMIC)")
+        self.root.title("AstroOrange Software Installer V12.0 (MASTER)")
+
 
 
 
@@ -264,19 +267,26 @@ class SoftWizard:
         threading.Thread(target=self.run_install, daemon=True).start()
 
     def log(self, t):
-        # Escribir a archivo persistente con FLUSH forzado (V11.20)
+        # El log a archivo es seguro desde hilos
+        timestamp = time.strftime('%H:%M:%S')
         try:
             with open(LOG_FILE, "a") as f:
-                f.write(f"{time.strftime('%H:%M:%S')} - {t}\n")
+                f.write(f"{timestamp} - {t}\n")
                 f.flush()
                 os.fsync(f.fileno())
         except: pass
         
+        # La actualización de la UI DEBE ser en el hilo principal
+        # Usamos after para programar el cambio de forma segura
+        self.root.after(0, lambda: self._safe_ui_log(t))
+
+    def _safe_ui_log(self, t):
         if hasattr(self, 'console') and self.console.winfo_exists():
             self.console.config(state="normal")
             self.console.insert(tk.END, t + "\n")
             self.console.see(tk.END)
             self.console.config(state="disabled")
+
 
 
 
@@ -312,16 +322,16 @@ class SoftWizard:
             self._do_install()
         except Exception as e:
             self.log(f"\nCRITICAL ERROR: {str(e)}")
-            # Intentar mostrar popup incluso en hilo
-            try: messagebox.showerror("Error Fatal", f"El instalador ha fallado:\n{str(e)}\n\nRevisa {LOG_FILE}")
-            except: pass
+            # Los popups también deben ser lanzados en el hilo principal
+            self.root.after(0, lambda: messagebox.showerror("Error Fatal", f"El instalador ha fallado:\n{str(e)}\n\nRevisa {LOG_FILE}"))
 
     def _do_install(self):
-        # Limpiar log previo
+        # Crear log si no existe
         try: subprocess.run(f"sudo touch {LOG_FILE} && sudo chmod 666 {LOG_FILE}", shell=True)
         except: pass
         
-        self.log("--- INICIANDO PROCESO ATOMIC V11.25 ---")
+        self.log("--- INICIANDO PROCESO V12.0 (PRO-CLEAN) ---")
+
 
         
         # V11.24: Removido SWAP por petición de usuario (Causaba cuelgues)
