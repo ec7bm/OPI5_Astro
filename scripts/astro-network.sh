@@ -3,16 +3,25 @@
 # V9.2.1 Fix: Clean bash syntax (no escaping)
 
 LOGFILE="/tmp/astro-network.log"
-echo "---[ AstroOrange Network Watchdog V9.2.1 LOG $(date) ]---" > "$LOGFILE"
+echo "---[ AstroOrange Network Watchdog V9.3 LOG $(date) ]---" > "$LOGFILE"
+
+# V11.3 Fix: Startup delay for hardware detection
+sleep 15
+nmcli dev status >> "$LOGFILE" 2>&1
+
 
 log() {
     echo "$(date '+%H:%M:%S') > $1" | tee -a "$LOGFILE"
 }
 
 get_wifi_iface() {
-    IFACE=$(nmcli -t -f DEVICE,TYPE device | grep wifi | cut -d: -f1 | head -n1)
-    [ -z "$IFACE" ] && IFACE="wlan0"
-    echo "$IFACE"
+    # Try multiple times if not found
+    for i in {1..5}; do
+        IFACE=$(nmcli -t -f DEVICE,TYPE device | grep wifi | cut -d: -f1 | head -n1)
+        [ -n "$IFACE" ] && echo "$IFACE" && return 0
+        sleep 2
+    done
+    echo "wlan0"
 }
 
 WIFI_IFACE=$(get_wifi_iface)
@@ -59,8 +68,8 @@ if nmcli con show "Astro-WIFI" >/dev/null 2>&1; then
     kill_hotspot
     log "🙏 Attempt 1/2: sudo nmcli con up Astro-WIFI..."
     sudo nmcli con up "Astro-WIFI" >> "$LOGFILE" 2>&1 &
-    log "⏳ Waiting 30s..."
-    sleep 30
+    log "⏳ Waiting 15s..."
+    sleep 15
     if check_wifi_client; then
         log "✅ SUCCESS: WiFi connected."
         exit 0
@@ -69,8 +78,8 @@ if nmcli con show "Astro-WIFI" >/dev/null 2>&1; then
     sudo nmcli con down "Astro-WIFI" >> "$LOGFILE" 2>&1
     sleep 2
     sudo nmcli con up "Astro-WIFI" >> "$LOGFILE" 2>&1 &
-    log "⏳ Waiting 30s..."
-    sleep 30
+    log "⏳ Waiting 15s..."
+    sleep 15
     if check_wifi_client; then
         log "✅ SUCCESS: WiFi connected (Attempt 2)."
         exit 0

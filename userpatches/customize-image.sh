@@ -197,6 +197,17 @@ cp "$UP_SRC/overlay/etc/X11/xorg.conf.d/99-dummy-display.conf" /etc/X11/xorg.con
 # Ensure NetworkManager manages everything
 sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf || true
 
+# V11.3: CLEAN NETWORK INTERFACES (Full NM control)
+# Static definitions in /etc/network/interfaces can block NM from managing eth/wifi
+cat <<EOF > /etc/network/interfaces
+auto lo
+iface lo inet loopback
+EOF
+
+# Kill any netplan config that might interfere
+rm -f /etc/netplan/*.yaml || true
+
+
 # --- D. Fixes for Headless / Resolution ---
 echo "   🖥️  Hardening Headless Resolution..."
 rm -f /etc/X11/xorg.conf.d/20-modesetting.conf || true
