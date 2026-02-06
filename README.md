@@ -15,8 +15,10 @@ AstroOrange V2 is a Linux distribution based on **Ubuntu 22.04 Jammy Server** op
 
 - 🛰️ **Automatic Rescue Hotspot** - Always accessible without WiFi.
 - 🖥️ **VNC Remote Desktop** - Control via web browser (noVNC).
-- 🧙 **Configuration Wizard V8.4** - Guided setup with premium UI.
+- 🧙 **Configuration Wizard V13.0 (MASTER)** - Guided setup with multi-language support.
 - 🔭 **Modular Astronomy Software** - KStars, INDI, PHD2, ASTAP, Stellarium, CCDciel, Syncthing.
+- 🌍 **Full Multi-language (i18n)** - Interface in Spanish and English with easy switching.
+
 
 ### 🚀 Installation
 
@@ -33,6 +35,18 @@ cd OPI5_Astro
 sudo ./install.sh
 ```
 
+#### Option C: Standalone Wizards
+If you only want to use the wizards on your own Linux system (Ubuntu/Debian):
+```bash
+# 1. Install dependencies
+sudo apt install python3-tk python3-pil.imagetk
+
+# 2. Run the Setup Panel
+cd OPI5_Astro/wizard
+python3 astro-setup-wizard.py
+```
+
+
 📖 **[READ FULL USER MANUAL (ENGLISH)](MANUAL_USER.md)**
 
 ---
@@ -44,10 +58,13 @@ AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server*
 ### Características Principales
 - 🛰️ **Hotspot de rescate automático** - Acceso garantizado sin WiFi (`AstroOrange-Setup` / `astrosetup`).
 - 🖥️ **Escritorio remoto VNC** - Control desde navegador web (noVNC).
-- 🧙 **Wizard de configuración V8.4** - Setup guiado en español con UI premium.
+- 🧙 **Wizard de configuración V13.0 (MASTER)** - Setup guiado multilingüe con UI premium.
+  - **Nuevo**: Soporte completo para **Español e Inglés**.
   - **Nuevo**: Conexión manual a redes ocultas y soporte de IP estática seguro.
 - 🔭 **Software astronómico modular** - Instalador gráfico para KStars, INDI, PHD2, ASTAP, Stellarium, CCDciel, Syncthing.
   - **Nuevo**: Creación automática de iconos en el escritorio.
+- 🌍 **Internacionalización (i18n)** - Cambia de idioma en segundos desde el selector integrado.
+
 - 🎨 **Interfaz moderna** - Tema Arc-Dark, iconos Papirus y wallpaper astronómico universal.
 
 ### 🚀 Instalación y Descarga
@@ -69,6 +86,18 @@ git clone https://github.com/ec7bm/OPI5_Astro.git
 cd OPI5_Astro
 sudo ./install.sh
 ```
+
+#### 🐍 Opción C: Ejecución Manual de Wizards
+Si solo quieres usar las herramientas gráficas en tu propio Linux:
+```bash
+# 1. Instalar dependencias
+sudo apt install python3-tk python3-pil.imagetk
+
+# 2. Lanzar el panel maestros
+cd OPI5_Astro/wizard
+python3 astro-setup-wizard.py
+```
+
 
 📖 **[LEER MANUAL DE USUARIO (ESPAÑOL)](MANUAL_USUARIO.md)**
 

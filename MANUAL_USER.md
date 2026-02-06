@@ -22,7 +22,8 @@ AstroOrange V2 is an operating system based on **Ubuntu 22.04 Jammy Server**, sp
 
 - ✅ **Automatic Rescue Hotspot** - Always accessible without WiFi.
 - ✅ **VNC Remote Desktop (noVNC)** - Control from any browser.
-- ✅ **Configuration Wizard V8.4** - Guided setup with premium interface.
+- ✅ **Configuration Wizard V13.0 (MASTER)** - Guided multi-language setup.
+
   - **Step 1**: User creation with password validation.
   - **Step 2**: WiFi manager with auto-scan and Static IP recommendation.
   - **Step 3**: Astronomy software installer with visual carousel.
@@ -69,7 +70,8 @@ If no cable is available, the system activates its own Hotspot:
 
 ## 4. Initial Setup
 
-On first access, you will see **AstroSetup** on the desktop. It guides you through three modular tools:
+On first access, you will see **AstroSetup** on the desktop. It guides you through three modular tools. The system will detect if it is the first run and prompt you to select **English** or **Español**.
+
 
 ### 👤 1. AstroUser (User Management)
 - Create your main username and password.
@@ -102,7 +104,26 @@ Thanks to **V5.0 Architecture**, you have 4 independent desktop icons:
 1.  ⚡ **AstroSetup**: Launches full setup (ideal for first run).
 2.  📶 **Network (WiFi)**: Open network manager anytime.
 3.  👤 **Users**: Manage or add operator accounts.
-4.  🔭 **Software Installer V7.0**: Add/Repair astronomy apps.
+4.  🔭 **Software Installer V12.3**: Add/Repair astronomy apps.
+5.  🌍 **Language**: Change the language of the wizards at any time.
+
+---
+
+## 🐍 Standalone Execution (Ubuntu/Debian)
+
+If you are not using the AstroOrange image but want to use these tools on your own Linux installation:
+
+1. **Install dependencies**:
+   ```bash
+   sudo apt update && sudo apt install -y python3-tk python3-pil.imagetk
+   ```
+
+2. **Run the Wizards**:
+   ```bash
+   cd /opt/astroorange/wizard  # Or where you cloned the repo
+   python3 astro-setup-wizard.py
+   ```
+
 
 ---
 
@@ -166,6 +187,7 @@ sudo nmcli con up "AstroOrange-Setup"
 
 ---
 
-**Manual Version**: 2.0 (EN)
+**Manual Version**: 3.0 (EN)
 **Last Updated**: Feb 2026
-**Compatible with**: Orange Pi 5 Pro
+**Compatible with**: Orange Pi 5 Pro / Ubuntu Standalone
+

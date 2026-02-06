@@ -1,14 +1,16 @@
-# AstroOrange V12.0 Release Notes
+# AstroOrange V13.0 MASTER - Release Notes
 
 ## 🚀 Highlights
-This build (V12.0 MASTER) brings critical stabilization to the software installer and centralized UI management.
+This build (V13.0 MASTER "Global") introduces full internationalization and multi-language support.
 
-- **Software Wizard V12.0**:
-    - **Thread-Safety**: Atomic UI updates using `root.after` to prevent random crashes.
-    - **Persistence**: Real-time logging to `/var/log/astro_wiz.log` that survives system reboots.
-    - **Safety**: Removed `dist-upgrade` to protect kernel/module integrity on SBCs.
-    - **Hardened Apt**: Aggressive lock cleaning and dependency resolution (libgcc/gcc-11 force).
-- **UI Centering**: All wizard windows (Network, User, Software) are now perfectly centered for better user experience.
+- **Multi-language Support (i18n)**:
+    - **V13.0 Engine**: Centralized translation module `i18n.py`.
+    - **Language Selector**: New tool to toggle between **English** and **Spanish** at any time.
+    - **Universal Wizards**: All 4 wizards (Setup, User, Network, Software) are now 100% bilingual.
+- **Software Installer V12.3**:
+    - **Refreshed Detection**: Improved logic to detect installed packages and shortcuts.
+    - **Restart Mechanism**: New "Restart Wizard" button to see changes immediately.
+
 
 
 - **Network Watchdog V9.2.1**: Rock-solid WiFi connection logic, dynamic interface detection, and intelligent Hotspot fallback.

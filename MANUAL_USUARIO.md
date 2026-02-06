@@ -20,7 +20,8 @@ AstroOrange V2 es un sistema operativo basado en **Ubuntu 22.04 Jammy Server** d
 
 - ✅ **Hotspot de rescate automático** - Siempre accesible sin WiFi
 - ✅ **Escritorio remoto VNC (noVNC)** - Control desde cualquier navegador
-- ✅ **Wizard de configuración V6.5** - Setup guiado en español con interfaz premium
+- ✅ **Wizard de configuración V13.0 (MASTER)** - Setup guiado multilingüe con interfaz premium
+
   - **Paso 1**: Creación de usuario con validación de contraseña
   - **Paso 2**: Gestor de red WiFi con escaneo automático y recomendación de IP fija
   - **Paso 3**: Instalador de software astronómico con carrusel visual
@@ -64,8 +65,9 @@ Si no tienes cable a mano, el sistema activará un Hotspot propio:
 - 🌐 **Acceso VNC:** `http://10.42.0.1:6080/vnc.html`
 
 ---
+ 
+ Al acceder por primera vez, verás el **AstroSetup** (Asistente Inicial) que te guiará por las tres herramientas modulares. El sistema detectará si es el primer arranque y te pedirá seleccionar **Español** o **English**.
 
-Al acceder por primera vez, verás el **AstroSetup** (Asistente Inicial) que te guiará por las tres herramientas modulares:
 
 ### 👤 1. AstroUser (Gestión de Usuarios)
 - Crea tu nombre de usuario y contraseña principal.
@@ -98,7 +100,26 @@ Gracias a la **Arquitectura V5.0**, tienes 4 iconos independientes en tu escrito
 1.  ⚡ **AstroSetup**: Lanza la configuración completa (ideal para el primer uso).
 2.  📶 **Red (WiFi)**: Abre el gestor de redes en cualquier momento con recomendación de IP fija para uso astronómico.
 3.  👤 **Usuarios**: Gestiona o añade cuentas de operador.
-4.  🔭 **Instalador Software V6.5**: Añade o repara tus programas de astronomía con carrusel visual y terminal de progreso compacto.
+4.  🔭 **Instalador Software V12.3**: Añade o repara tus programas de astronomía con carrusel visual y terminal de progreso compacto.
+5.  🌍 **Idioma**: Cambia el idioma de los asistentes en cualquier momento.
+
+---
+
+## 🐍 Ejecución Standalone (Ubuntu/Debian)
+
+Si no usas la imagen AstroOrange pero quieres usar estas herramientas en tu propia instalación de Linux:
+
+1. **Instala dependencias**:
+   ```bash
+   sudo apt update && sudo apt install -y python3-tk python3-pil.imagetk
+   ```
+
+2. **Ejecuta los Wizards**:
+   ```bash
+   cd /opt/astroorange/wizard  # O donde hayas clonado el repo
+   python3 astro-setup-wizard.py
+   ```
+
 
 ---
 
@@ -192,6 +213,7 @@ AstroOrange V2 es software libre basado en:
 
 ---
 
-**Versión del Manual**: 2.0  
-**Última actualización**: Enero 2026  
-**Compatible con**: Orange Pi 5 Pro
+**Versión del Manual**: 3.0  
+**Última actualización**: Febrero 2026  
+**Compatible con**: Orange Pi 5 Pro / Ubuntu Standalone
+
