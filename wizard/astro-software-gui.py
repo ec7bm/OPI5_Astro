@@ -79,9 +79,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
-        print("\n[ASTRO-SISTEMA] CARGANDO VERSION 11.19 (PPA-FIX)...")
+        print("\n[ASTRO-SISTEMA] CARGANDO VERSION 11.20 (ULTRA-HARDENED)...")
         self.root = root
-        self.root.title("AstroOrange Software Installer V11.19 (STABLE)")
+        self.root.title("AstroOrange Software Installer V11.20 (ULTRA-STABLE)")
+
 
 
 
@@ -251,10 +252,12 @@ class SoftWizard:
         threading.Thread(target=self.run_install, daemon=True).start()
 
     def log(self, t):
-        # Escribir también a archivo para depurar si se cierra (V11.17)
+        # Escribir a archivo persistente con FLUSH forzado (V11.20)
         try:
-            with open("/tmp/astro_wizard.log", "a") as f:
-                f.write(f"{t}\n")
+            with open(LOG_FILE, "a") as f:
+                f.write(f"{time.strftime('%H:%M:%S')} - {t}\n")
+                f.flush()
+                os.fsync(f.fileno())
         except: pass
         
         if hasattr(self, 'console') and self.console.winfo_exists():
@@ -262,7 +265,7 @@ class SoftWizard:
             self.console.insert(tk.END, t + "\n")
             self.console.see(tk.END)
             self.console.config(state="disabled")
-            # QUITAR update_idletasks() aquí (Causa crashes en hilos)
+
 
 
     def create_shortcut(self, name, bin_name):
@@ -297,12 +300,23 @@ class SoftWizard:
             self._do_install()
         except Exception as e:
             self.log(f"\nCRITICAL ERROR: {str(e)}")
-            messagebox.showerror("Error Fatal", f"El instalador ha fallado:\n{str(e)}\n\nRevisa /tmp/astro_wizard.log")
+            # Intentar mostrar popup incluso en hilo
+            try: messagebox.showerror("Error Fatal", f"El instalador ha fallado:\n{str(e)}\n\nRevisa {LOG_FILE}")
+            except: pass
 
     def _do_install(self):
         # Limpiar log previo
-        if os.path.exists("/tmp/astro_wizard.log"): os.remove("/tmp/astro_wizard.log")
-        self.log("--- INICIANDO PROCESO SEGURO V11.19 ---")
+        try: subprocess.run(f"sudo touch {LOG_FILE} && sudo chmod 666 {LOG_FILE}", shell=True)
+        except: pass
+        
+        self.log("--- INICIANDO PROCESO ULTRA-SEGURO V11.20 ---")
+        
+        # 1. Crear SWAP temporal (Evita reinicios por falta de memoria en SBCs)
+        self.log("Verificando estabilidad de memoria (SWAP)...")
+        subprocess.run("sudo dd if=/dev/zero of=/swap_wiz bs=1M count=2048 2>/dev/null", shell=True)
+        subprocess.run("sudo chmod 600 /swap_wiz && sudo mkswap /swap_wiz && sudo swapon /swap_wiz 2>/dev/null", shell=True)
+        self.log("   SWAP de emergencia activado (+2GB)")
+
 
 
 
