@@ -79,9 +79,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
-        print("\n[ASTRO] CARGANDO VERSION 11.16 (MEGA)...")
+        print("\n[ASTRO] CARGANDO VERSION 11.17 (ULTRA-STABLE)...")
         self.root = root
-        self.root.title("AstroOrange Software Installer V11.16 (MEGA)")
+        self.root.title("AstroOrange Software Installer V11.17 (SAFE)")
+
 
 
         self.root.geometry("900x800")
@@ -283,7 +284,17 @@ class SoftWizard:
             self.on_close()
 
     def run_install(self):
-        self.log("--- PREPARANDO SISTEMA ---")
+        try:
+            self._do_install()
+        except Exception as e:
+            self.log(f"\nCRITICAL ERROR: {str(e)}")
+            messagebox.showerror("Error Fatal", f"El instalador ha fallado:\n{str(e)}\n\nRevisa /tmp/astro_wizard.log")
+
+    def _do_install(self):
+        # Limpiar log previo
+        if os.path.exists("/tmp/astro_wizard.log"): os.remove("/tmp/astro_wizard.log")
+        self.log("--- INICIANDO PROCESO SEGURO V11.17 ---")
+
         for attempt in range(1, 4):
             self.log(f"Intento {attempt}/3: Liberando bloqueos...")
             kill_apt_locks()
@@ -308,11 +319,13 @@ class SoftWizard:
             subprocess.run("sudo apt-get update", shell=True, env=env)
             # El fix definitivo: forzar la versión de libgcc
             p = subprocess.Popen("sudo apt-get install -y --only-upgrade gcc-11-base libgcc-s1", shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            for line in p.stdout: self.log(f"      {line.strip()}"); self.root.update()
+            for line in p.stdout: self.log(f"      {line.strip()}")
+
             
             self.log("   Ejecutando dist-upgrade (Paciencia)...")
             p = subprocess.Popen("sudo apt-get dist-upgrade -y --no-install-recommends -o Dpkg::Options::='--force-confold'", shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            for line in p.stdout: self.log(f"      {line.strip()}"); self.root.update()
+            for line in p.stdout: self.log(f"      {line.strip()}")
+
         except Exception as e:
             self.log(f"⚠️ Nota de upgrade: {e}")
 
