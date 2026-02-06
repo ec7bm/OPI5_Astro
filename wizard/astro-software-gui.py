@@ -249,12 +249,19 @@ class SoftWizard:
         threading.Thread(target=self.run_install, daemon=True).start()
 
     def log(self, t):
+        # Escribir también a archivo para depurar si se cierra (V11.17)
+        try:
+            with open("/tmp/astro_wizard.log", "a") as f:
+                f.write(f"{t}\n")
+        except: pass
+        
         if hasattr(self, 'console') and self.console.winfo_exists():
             self.console.config(state="normal")
             self.console.insert(tk.END, t + "\n")
             self.console.see(tk.END)
             self.console.config(state="disabled")
-            self.root.update_idletasks()
+            # QUITAR update_idletasks() aquí (Causa crashes en hilos)
+
 
     def create_shortcut(self, name, bin_name):
         try:
