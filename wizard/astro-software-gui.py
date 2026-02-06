@@ -363,10 +363,9 @@ class SoftWizard:
             p = subprocess.Popen("sudo apt-get install -y --only-upgrade gcc-11-base libgcc-s1", shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             for line in p.stdout: self.log(f"      {line.strip()}")
 
-            
-            self.log("   Ejecutando dist-upgrade (Paciencia)...")
-            p = subprocess.Popen("sudo apt-get dist-upgrade -y --no-install-recommends -o Dpkg::Options::='--force-confold'", shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            for line in p.stdout: self.log(f"      {line.strip()}")
+            # V12.0: REMOVIDO dist-upgrade por sugerencia de usuario para evitar posibles roturas de kernel/modulos
+            self.log("   Omitiendo dist-upgrade (Modo Seguro V12.0)...")
+
 
         except Exception as e:
             self.log(f"⚠️ Nota de upgrade: {e}")
