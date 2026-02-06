@@ -216,7 +216,11 @@ unmanaged-devices=none
 
 [device-mac-randomization]
 wifi.scan-rand-mac-address=no
+
+[connectivity]
+uri=http://nmcheck.gnome.org/check_network_status.txt
 EOF
+
 
 
 
@@ -228,25 +232,21 @@ auto lo
 iface lo inet loopback
 EOF
 
-# Kill any netplan config that might interfere
+# V13.1 Fix: Force NetworkManager in Netplan
+echo "   🌐 Configuring Netplan for NetworkManager..."
 rm -f /etc/netplan/*.yaml || true
-
-# V11.4: Pre-create Ethernet profile to ensure it's not 'unmanaged'
-echo "   🌐 Pre-configuring Ethernet (eth0/enP4p6s0)..."
-mkdir -p /etc/NetworkManager/system-connections
-cat <<EOF > /etc/NetworkManager/system-connections/Wired.nmconnection
-[connection]
-id=Wired
-type=ethernet
-autoconnect=true
-
-[ipv4]
-method=auto
-
-[ipv6]
-method=ignore
+cat <<EOF > /etc/netplan/01-network-manager-all.yaml
+network:
+  version: 2
+  renderer: NetworkManager
 EOF
-chmod 600 /etc/NetworkManager/system-connections/Wired.nmconnection
+chmod 600 /etc/netplan/01-network-manager-all.yaml
+
+
+# V13.1 Update: Let NM handle Ethernet automatically (remove manual static profile)
+echo "   🌐 Allowing NM to control Ethernet automatically..."
+rm -f /etc/NetworkManager/system-connections/Wired.nmconnection
+
 
 
 

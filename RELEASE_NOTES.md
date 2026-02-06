@@ -1,15 +1,15 @@
-# AstroOrange V13.0 MASTER - Release Notes
+# AstroOrange V13.1 MASTER - Release Notes
 
 ## 🚀 Highlights
-This build (V13.0 MASTER "Global") introduces full internationalization and multi-language support.
+This build (V13.1 MASTER "Armor") provides critical fixes for ethernet activation and system user persistence.
 
-- **Multi-language Support (i18n)**:
-    - **V13.0 Engine**: Centralized translation module `i18n.py`.
-    - **Language Selector**: New tool to toggle between **English** and **Spanish** at any time.
-    - **Universal Wizards**: All 4 wizards (Setup, User, Network, Software) are now 100% bilingual.
-- **Software Installer V12.3**:
-    - **Refreshed Detection**: Improved logic to detect installed packages and shortcuts.
-    - **Restart Mechanism**: New "Restart Wizard" button to see changes immediately.
+- **Ethernet Fix**: 
+    - **Netplan Armor**: Forced NetworkManager as the renderer to ensure automatic ethernet activation on Ubuntu 22.04.
+    - **Aggressive Watchdog**: Increased retries for hardware detection at boot.
+- **User Persistence**:
+    - **Hardened Wizard**: `UserWizard` now performs atomic command verification for `useradd`.
+    - **Nuclear Sync**: Multi-stage `sync` calls to guarantee disk write completion on SD cards.
+
 
 
 

@@ -95,48 +95,55 @@ class UserWizard:
         except: pass
         
         # Create User
-        # V11.4: Universal safe creation
-        subprocess.run(f"sudo useradd -m -s /bin/bash {u}", shell=True)
-        subprocess.run(f"echo '{u}:{p}' | sudo chpasswd", shell=True)
-        
-        # V11.4.1: Add groups individually to avoid failure if one is missing
-        # Includes VNC groups per user request
-        target_groups = ["sudo", "dialout", "video", "input", "plugdev", "audio", "vnc", "novnc"]
-        for g in target_groups:
-            # V11.5: Build-time group creation insurance
-            subprocess.run(f"sudo groupadd {g} 2>/dev/null", shell=True)
-            subprocess.run(f"sudo usermod -aG {g} {u} 2>/dev/null", shell=True)
+        # V13.1: Hardened creation with explicit error checking
+        try:
+            self.log("   --- CREATING SYSTEM USER ---")
+            subprocess.check_call(f"sudo useradd -m -s /bin/bash {u}", shell=True)
+            subprocess.check_call(f"echo '{u}:{p}' | sudo chpasswd", shell=True)
+            
+            # V11.4.1: Add groups individually to avoid failure if one is missing
+            target_groups = ["sudo", "dialout", "video", "input", "plugdev", "audio", "vnc", "novnc"]
+            for g in target_groups:
+                subprocess.run(f"sudo groupadd {g} 2>/dev/null", shell=True)
+                subprocess.run(f"sudo usermod -aG {g} {u} 2>/dev/null", shell=True)
 
-        
-        # V11.4: Provision Desktop Icons for the new user
-        desktop_dir = f"/home/{u}/Desktop"
-        subprocess.run(f"sudo mkdir -p {desktop_dir}", shell=True)
-        # Copy from applications
-        app_src = "/usr/share/applications"
-        for app in ["astro-network.desktop", "astro-software.desktop", "astro-user.desktop"]:
-            if os.path.exists(f"{app_src}/{app}"):
-                subprocess.run(f"sudo cp {app_src}/{app} {desktop_dir}/", shell=True)
-        
-        subprocess.run(f"sudo chmod +x {desktop_dir}/*.desktop", shell=True)
-        subprocess.run(f"sudo chown -R {u}:{u} /home/{u}", shell=True)
+            # V11.4: Provision Desktop Icons for the new user
+            desktop_dir = f"/home/{u}/Desktop"
+            subprocess.run(f"sudo mkdir -p {desktop_dir}", shell=True)
+            app_src = "/usr/share/applications"
+            for app in ["astro-network.desktop", "astro-software.desktop", "astro-user.desktop"]:
+                if os.path.exists(f"{app_src}/{app}"):
+                    subprocess.run(f"sudo cp {app_src}/{app} {desktop_dir}/", shell=True)
+            
+            subprocess.run(f"sudo chmod +x {desktop_dir}/*.desktop", shell=True)
+            subprocess.run(f"sudo chown -R {u}:{u} /home/{u}", shell=True)
+            
+            if self.chk_autologin.get():
+                cfg = f"[Seat:*]\nautologin-user={u}\nautologin-session=xfce\nautologin-user-timeout=0\n"
+                with open("/tmp/60-astro-user.conf", "w") as f: f.write(cfg)
+                subprocess.run("sudo rm -f /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
+                subprocess.run("sudo mv /tmp/60-astro-user.conf /etc/lightdm/lightdm.conf.d/60-astro-user.conf", shell=True)
+                subprocess.run(["sync"])
+            
+            # V13.1 Nuclear Sync
+            self.log("   --- FLUSHING TO DISK ---")
+            for _ in range(3):
+                subprocess.run(["sync"])
+                time.sleep(1)
+            
+            messagebox.showinfo("Éxito", f"Usuario '{u}' creado correctamente.")
+            self.root.destroy()
+            
+        except Exception as e:
+            err_msg = f"ERROR CRÍTICO AL CREAR USUARIO:\n{str(e)}"
+            self.log(err_msg)
+            messagebox.showerror("Error de Sistema", err_msg)
 
-
-        
-        if self.chk_autologin.get():
-            cfg = f"[Seat:*]\nautologin-user={u}\nautologin-session=xfce\nautologin-user-timeout=0\n"
-            with open("/tmp/60-astro-user.conf", "w") as f: f.write(cfg)
-            # V11.2: Limpiar rastro de setup y asegurar persistencia del nuevo usuario
-            subprocess.run("sudo rm -f /etc/lightdm/lightdm.conf.d/50-setup.conf", shell=True)
-            subprocess.run("sudo mv /tmp/60-astro-user.conf /etc/lightdm/lightdm.conf.d/60-astro-user.conf", shell=True)
-            subprocess.run(["sync"])
-        
-        # V11.1: Esperar sincronización fs
-        time.sleep(2)
-        subprocess.run(["sync"])
-
-        
-        messagebox.showinfo("Éxito", f"Usuario '{u}' creado correctamente.")
-        self.root.destroy()
+    def log(self, msg):
+        print(f"[USER-WIZARD] {msg}")
 
 if __name__ == "__main__":
+    import tkinter as tk
+    from tkinter import messagebox
     root = tk.Tk(); app = UserWizard(root); root.mainloop()
+

@@ -57,11 +57,23 @@ start_hotspot() {
 }
 
 log "Starting Watchdog Logic..."
-if check_ethernet; then
-    log "✅ Ethernet Detected on Start. Exiting."
+# V13.1 Fix: Aggressive ethernet detection on start (3 attempts)
+ETH_FOUND=false
+for i in {1..3}; do
+    log "🔍 Checking Ethernet (Attempt $i/3)..."
+    if check_ethernet; then
+        ETH_FOUND=true
+        break
+    fi
+    sleep 5
+done
+
+if [ "$ETH_FOUND" = true ]; then
+    log "✅ Ethernet Detected. Exiting and disabling rescue AP."
     kill_hotspot
     exit 0
 fi
+
 
 if nmcli con show "Astro-WIFI" >/dev/null 2>&1; then
     log "🔄 Found 'Astro-WIFI' profile. Attempting connection..."
