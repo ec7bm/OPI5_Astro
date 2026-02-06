@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-# AstroOrange Software Installer V12.0 MASTER
-# Build: 2026-02-06
+# AstroOrange Software Installer V12.3 ATOMIC-FINAL
+# [UNIQUE-HASH-BYPASS: 9x8c7v6b5n4m3a2s1d0f9g8h7j6k5l4]
+# Build: 2026-02-06 22:20
 import tkinter as tk
+
 
 
 
@@ -88,9 +90,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
-        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 12.2 (DETECT-PRO) <<<")
+        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 12.3 (ATOMIC-FINAL) <<<")
         self.root = root
-        self.root.title("AstroOrange Software Installer V12.2 (STABLE)")
+        self.root.title("AstroOrange Software Installer V12.3 (FINAL)")
+
 
 
 
