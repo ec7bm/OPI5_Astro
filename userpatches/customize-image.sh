@@ -13,15 +13,11 @@ NC='\033[0m'
 
 echo -e "${BLUE}=== AstroOrange Distro Construction (2-Stage CLEAN) ===${NC}"
 
+# ==================== 0. GLOBAL PATHS (V13.2.3 MASTER) ====================
+REM_SRC="/tmp/remaster-source"
+UP_SRC="$REM_SRC/userpatches"
+
 # ==================== 1. DEPENDENCIAS BASE ====================
-echo -e "${GREEN}[1/5] Installing Base System...${NC}"
-
-# Forzar modo no interactivo y manejar conflictos de configuracion automaticamente
-export DEBIAN_FRONTEND=noninteractive
-APT_OPTS="-y --no-install-recommends -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
-
-# DEFINE SOURCE PATH EARLY (Fix for V10.9)
-UP_SRC="/tmp/remaster-source/userpatches"
 
 
 # Repositorios (Mozilla PPA para Firefox)
@@ -153,9 +149,8 @@ mkdir -p "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
 chown -R $SETUP_USER:$SETUP_USER "$SETUP_HOME/.config"
 
 # --- A. Master Scripts & Services (/opt/astroorange) ---
-REM_SRC="/tmp/remaster-source"
-
 echo "   📜 Installing scripts and services from repository..."
+
 
 # Scripts (V13.2.2 MASTER PATHS)
 cp "$REM_SRC/scripts/astro-network.sh" "$OPT_DIR/bin/"
