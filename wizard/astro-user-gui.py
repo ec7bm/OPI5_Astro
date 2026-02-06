@@ -84,9 +84,23 @@ class UserWizard:
         except: pass
         
         # Create User
-        groups = "sudo,dialout,video,input,plugdev,audio,bluetooth,lpadmin,scanner"
+        # V11.4: Use only guaranteed existing groups to prevent useradd failure
+        groups = "sudo,dialout,video,input,plugdev,audio"
         subprocess.run(f"sudo useradd -m -s /bin/bash -G {groups} {u}", shell=True)
         subprocess.run(f"echo '{u}:{p}' | sudo chpasswd", shell=True)
+        
+        # V11.4: Provision Desktop Icons for the new user
+        desktop_dir = f"/home/{u}/Desktop"
+        subprocess.run(f"sudo mkdir -p {desktop_dir}", shell=True)
+        # Copy from applications
+        app_src = "/usr/share/applications"
+        for app in ["astro-network.desktop", "astro-software.desktop", "astro-user.desktop"]:
+            if os.path.exists(f"{app_src}/{app}"):
+                subprocess.run(f"sudo cp {app_src}/{app} {desktop_dir}/", shell=True)
+        
+        subprocess.run(f"sudo chmod +x {desktop_dir}/*.desktop", shell=True)
+        subprocess.run(f"sudo chown -R {u}:{u} /home/{u}", shell=True)
+
         
         if self.chk_autologin.get():
             cfg = f"[Seat:*]\nautologin-user={u}\nautologin-session=xfce\nautologin-user-timeout=0\n"

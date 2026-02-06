@@ -195,7 +195,17 @@ mkdir -p /etc/X11/xorg.conf.d
 cp "$UP_SRC/overlay/etc/X11/xorg.conf.d/99-dummy-display.conf" /etc/X11/xorg.conf.d/
 
 # Ensure NetworkManager manages everything
-sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf || true
+cat <<EOF > /etc/NetworkManager/NetworkManager.conf
+[main]
+plugins=ifupdown,keyfile
+
+[ifupdown]
+managed=true
+
+[device]
+wifi.scan-rand-mac-address=no
+EOF
+
 
 # V11.3: CLEAN NETWORK INTERFACES (Full NM control)
 # Static definitions in /etc/network/interfaces can block NM from managing eth/wifi
@@ -206,6 +216,24 @@ EOF
 
 # Kill any netplan config that might interfere
 rm -f /etc/netplan/*.yaml || true
+
+# V11.4: Pre-create Ethernet profile to ensure it's not 'unmanaged'
+echo "   🌐 Pre-configuring Ethernet (eth0/enP4p6s0)..."
+mkdir -p /etc/NetworkManager/system-connections
+cat <<EOF > /etc/NetworkManager/system-connections/Wired.nmconnection
+[connection]
+id=Wired
+type=ethernet
+autoconnect=true
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=ignore
+EOF
+chmod 600 /etc/NetworkManager/system-connections/Wired.nmconnection
+
 
 
 # --- D. Fixes for Headless / Resolution ---
