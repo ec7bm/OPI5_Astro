@@ -79,9 +79,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
-        print("\n[ASTRO-SISTEMA] CARGANDO VERSION 11.18 (DEFINITIVA)...")
+        print("\n[ASTRO-SISTEMA] CARGANDO VERSION 11.19 (PPA-FIX)...")
         self.root = root
-        self.root.title("AstroOrange Software Installer V11.18 (PRO)")
+        self.root.title("AstroOrange Software Installer V11.19 (STABLE)")
+
 
 
 
@@ -301,7 +302,8 @@ class SoftWizard:
     def _do_install(self):
         # Limpiar log previo
         if os.path.exists("/tmp/astro_wizard.log"): os.remove("/tmp/astro_wizard.log")
-        self.log("--- INICIANDO PROCESO SEGURO V11.18 ---")
+        self.log("--- INICIANDO PROCESO SEGURO V11.19 ---")
+
 
 
         for attempt in range(1, 4):
@@ -352,15 +354,16 @@ class SoftWizard:
                 else:
                     if info.get('ppa'): 
                         self.log(f"   Configurando PPA {info['ppa']}...")
-                        # Forzar puerto 80 y volcar salida en vivo
-                        cmd_ppa = f"sudo add-apt-repository -y --keyserver hkp://keyserver.ubuntu.com:80 {info['ppa']}"
+                        # V11.19: Flag --keyserver no soportada, volviendo a estandar
+                        cmd_ppa = f"sudo add-apt-repository -y {info['ppa']}"
                         res = subprocess.Popen(cmd_ppa, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                         if res.stdout:
-                            for line in res.stdout: self.log(f"      {line.strip()}"); self.root.update()
-
+                            for line in res.stdout: 
+                                self.log(f"      {line.strip()}")
                         res.wait()
                         self.log("   Actualizando índices...")
                         subprocess.run("sudo apt-get update", shell=True)
+
                     
                     self.log("   Iniciando descarga e instalación...")
                     f = "--reinstall" if n in self.reinstall_list else ""
