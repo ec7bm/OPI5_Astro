@@ -280,14 +280,17 @@ class SoftWizard:
                 if attempt == 3: self.log("❌ Fallo persistente en update"); break
                 time.sleep(5)
         
-        self.log("Sincronizando librerías base (Dist-Upgrade)...")
+        self.log("Sincronizando librerías base (Alineación v11.11)...")
         try:
             env = os.environ.copy(); env['DEBIAN_FRONTEND'] = 'noninteractive'
-            # Forzar alineación de gcc-11-base que causa el bloqueo (V11.10)
-            subprocess.run("sudo apt-get install -y gcc-11-base", shell=True, env=env)
+            # Forzar actualización de paquetes base conflictivos de Jammy
+            self.log("   Corrigiendo gcc-11-base...")
+            subprocess.run("sudo apt-get install -y --only-upgrade gcc-11-base libgcc-s1", shell=True, env=env)
+            self.log("   Ejecutando dist-upgrade...")
             subprocess.run("sudo apt-get dist-upgrade -y --no-install-recommends", shell=True, env=env, check=True)
         except Exception as e:
             self.log(f"⚠️ Nota de upgrade: {e}")
+
 
 
         for n, info in SOFTWARE.items():
@@ -298,9 +301,15 @@ class SoftWizard:
                     subprocess.run(f"sudo wget -O /tmp/temp.deb {info['url']}", shell=True)
                     cmd = "sudo dpkg -i /tmp/temp.deb || sudo apt-get install -f -y"
                 else:
-                    if info.get('ppa'): subprocess.run(f"sudo add-apt-repository -y {info['ppa']}", shell=True)
+                    if info.get('ppa'): 
+                        self.log(f"   Añadiendo repositorio {info['ppa']}...")
+                        subprocess.run(f"sudo add-apt-repository -y {info['ppa']}", shell=True)
+                        self.log("   Actualizando lista de paquetes...")
+                        subprocess.run("sudo apt-get update", shell=True)
+                    
                     f = "--reinstall" if n in self.reinstall_list else ""
                     cmd = f"sudo apt-get install -y {f} {info['pkg']}"
+
                 self.proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                 for line in self.proc.stdout: self.log(line.strip())
                 self.proc.wait()
