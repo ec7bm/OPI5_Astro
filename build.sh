@@ -78,14 +78,17 @@ chmod +x "$MOUNT_DIR/usr/sbin/policy-rc.d"
 # ==================== INJECT FILES ====================
 echo -e "${GREEN}[5/7] Injecting AstroOrange components...${NC}"
 
-# Crear directorio temporal de inyección
-mkdir -p "$MOUNT_DIR/tmp/remaster-source"
+# V13.2.5 MASTER FIX: Atomic clean injection
+REM_SRC="$MOUNT_DIR/tmp/remaster-source"
+rm -rf "$REM_SRC"
+mkdir -p "$REM_SRC"
 
-# Copiar todo el árbol de scripts, systemd y wizard para que customize-image.sh los use
+# Copiar directorios uno a uno asegurando la ruta plana (sin anidamiento)
 for dir in scripts systemd wizard userpatches; do
     if [ -d "$BASE_DIR/$dir" ]; then
         echo "   📂 Injecting $dir..."
-        cp -r "$BASE_DIR/$dir" "$MOUNT_DIR/tmp/remaster-source/"
+        mkdir -p "$REM_SRC/$dir"
+        cp -af "$BASE_DIR/$dir/." "$REM_SRC/$dir/"
     fi
 done
 
@@ -103,7 +106,8 @@ fi
 # ==================== CLEANUP ====================
 echo -e "${GREEN}[7/7] Cleaning up...${NC}"
 rm -f "$MOUNT_DIR/usr/sbin/policy-rc.d"
-rm -rf "$MOUNT_DIR/tmp/userpatches"
+rm -rf "$REM_SRC"   # Clean temporary injection source
+
 
 # Unmount everything
 for i in sys proc dev; do

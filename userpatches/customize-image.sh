@@ -2,8 +2,14 @@
 # AstroOrange Distro Builder - 2-Stage Workflow (STRICT)
 # Stage 1: Temporary Setup User -> Stage 2: Real User & Install
 
-set -e
+# ==================== 0. AUTOMATION & PATHS (V13.2.5 MASTER) ====================
 export DEBIAN_FRONTEND=noninteractive
+APT_OPTS="-y --no-install-recommends -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
+
+REM_SRC="/tmp/remaster-source"
+UP_SRC="$REM_SRC/userpatches"
+
+set -e
 
 # Colores
 RED='\033[0;31m'
@@ -13,16 +19,9 @@ NC='\033[0m'
 
 echo -e "${BLUE}=== AstroOrange Distro Construction (2-Stage CLEAN) ===${NC}"
 
-# ==================== 0. GLOBAL PATHS (V13.2.3 MASTER) ====================
-REM_SRC="/tmp/remaster-source"
-UP_SRC="$REM_SRC/userpatches"
-
-# ==================== 0.1 AUTOMATION (V13.2.4) ====================
-export DEBIAN_FRONTEND=noninteractive
-APT_OPTS="-y --no-install-recommends -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
-
 # ==================== 1. DEPENDENCIAS BASE ====================
 echo -e "${GREEN}[1/5] Installing Base System...${NC}"
+
 
 
 # Repositorios (Mozilla PPA para Firefox)
