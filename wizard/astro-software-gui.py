@@ -280,11 +280,15 @@ class SoftWizard:
                 if attempt == 3: self.log("❌ Fallo persistente en update"); break
                 time.sleep(5)
         
+        self.log("Sincronizando librerías base (Dist-Upgrade)...")
         try:
-            env = os.environ.copy()
-            env['DEBIAN_FRONTEND'] = 'noninteractive'
-            subprocess.run("sudo apt-get upgrade -y --no-install-recommends", shell=True, env=env, check=True)
-        except: pass
+            env = os.environ.copy(); env['DEBIAN_FRONTEND'] = 'noninteractive'
+            # Forzar alineación de gcc-11-base que causa el bloqueo (V11.10)
+            subprocess.run("sudo apt-get install -y gcc-11-base", shell=True, env=env)
+            subprocess.run("sudo apt-get dist-upgrade -y --no-install-recommends", shell=True, env=env, check=True)
+        except Exception as e:
+            self.log(f"⚠️ Nota de upgrade: {e}")
+
 
         for n, info in SOFTWARE.items():
             if not self.sw_vars[n].get(): continue
