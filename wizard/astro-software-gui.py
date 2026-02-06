@@ -59,10 +59,16 @@ def kill_apt_locks():
         
         # 5. Reparar dependencias rotas y limpiar (V11.10 aggressive)
         subprocess.run("sudo apt-get install -y --fix-broken --fix-missing", shell=True, env=env, timeout=120)
+        
+        # 6. Asegurar repositorios estándar habilitados (V11.12)
+        subprocess.run("sudo add-apt-repository -y universe", shell=True, env=env)
+        subprocess.run("sudo add-apt-repository -y multiverse", shell=True, env=env)
+        
         subprocess.run("sudo apt-get autoremove -y", shell=True, env=env, timeout=60)
         subprocess.run("sudo apt-get clean", shell=True, env=env, timeout=30)
     except Exception as e:
         print(f"[DEBUG] kill_apt_locks error: {e}")
+
 
 
 
@@ -303,12 +309,16 @@ class SoftWizard:
                 else:
                     if info.get('ppa'): 
                         self.log(f"   Añadiendo repositorio {info['ppa']}...")
-                        subprocess.run(f"sudo add-apt-repository -y {info['ppa']}", shell=True)
+                        res = subprocess.Popen(f"sudo add-apt-repository -y {info['ppa']}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                        if res.stdout:
+                            for line in res.stdout: self.log(f"      {line.strip()}")
+                        res.wait()
                         self.log("   Actualizando lista de paquetes...")
                         subprocess.run("sudo apt-get update", shell=True)
                     
                     f = "--reinstall" if n in self.reinstall_list else ""
                     cmd = f"sudo apt-get install -y {f} {info['pkg']}"
+
 
                 self.proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                 for line in self.proc.stdout: self.log(line.strip())
