@@ -37,8 +37,11 @@ def kill_apt_locks():
         subprocess.run("sudo rm /var/lib/dpkg/lock*", shell=True, stderr=subprocess.DEVNULL)
         subprocess.run("sudo dpkg --configure -a", shell=True, stderr=subprocess.DEVNULL)
     except: pass
+
+class SoftWizard:
     def __init__(self, root):
-        print("[DEBUG] Iniciando SoftWizard V7.0...")
+        print("[DEBUG] Iniciando SoftWizard V11.6...")
+
         self.root = root
         self.root.title("AstroOrange Software Installer V7.0")
         self.root.geometry("900x800") # Un poco más alto para acomodar imagen grande + terminal

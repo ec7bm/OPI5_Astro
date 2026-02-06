@@ -135,11 +135,16 @@ class SetupOrchestrator:
             return
         
         self.root.withdraw()
-        if wait:
-            subprocess.run([sys.executable, path])
-        else:
-            subprocess.Popen([sys.executable, path])
+        try:
+            if wait:
+                subprocess.run([sys.executable, path], check=True)
+            else:
+                subprocess.Popen([sys.executable, path])
+        except Exception as e:
+            messagebox.showerror("Error", f"Fallo al ejecutar {script_name}:\n{e}")
+        
         self.root.deiconify()
+
 
     def open_user_tool(self, wait=True): self.open_tool("astro-user-gui.py", wait)
     def open_net_tool(self, wait=True): self.open_tool("astro-network-gui.py", wait)
