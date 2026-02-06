@@ -125,9 +125,10 @@ fi
 
 # Copy NASA gallery images for carousel
 mkdir -p "$OPT_DIR/assets/gallery"
-if [ -d "/tmp/userpatches/gallery" ]; then
-    cp /tmp/userpatches/gallery/*.png "$OPT_DIR/assets/gallery/" 2>/dev/null || true
+if [ -d "$REM_SRC/userpatches/gallery" ]; then
+    cp "$REM_SRC/userpatches/gallery/"*.png "$OPT_DIR/assets/gallery/" 2>/dev/null || true
 fi
+
 
 # --- 0.1 XFCE Theme Configuration (Arc + Papirus) ---
 # Configurar tema para el usuario setup (se heredará al usuario final)
@@ -176,28 +177,32 @@ cp -r "$REM_SRC/wizard/"* "$OPT_DIR/wizard/"
 
 # Autostart del setup inicial
 mkdir -p /etc/xdg/autostart
-cp "$UP_SRC/xdg/autostart/astro-wizard.desktop" /etc/xdg/autostart/
+cp "$REM_SRC/userpatches/xdg/autostart/astro-wizard.desktop" /etc/xdg/autostart/
+
 
 # Menu Entries (Modular Tools) -- ALL of them into System Menu
 mkdir -p /usr/share/applications
-cp "$UP_SRC/xdg/applications/astro-network.desktop" /usr/share/applications/
-cp "$UP_SRC/xdg/applications/astro-user.desktop" /usr/share/applications/
-cp "$UP_SRC/xdg/applications/astro-software.desktop" /usr/share/applications/
-cp "$UP_SRC/xdg/applications/astro-setup.desktop" /usr/share/applications/
+cp "$REM_SRC/userpatches/xdg/applications/astro-network.desktop" /usr/share/applications/
+cp "$REM_SRC/userpatches/xdg/applications/astro-user.desktop" /usr/share/applications/
+cp "$REM_SRC/userpatches/xdg/applications/astro-software.desktop" /usr/share/applications/
+cp "$REM_SRC/userpatches/xdg/applications/astro-setup.desktop" /usr/share/applications/
+
 
 # Desktop Shortcuts (Exclude Setup)
 # Setup is only for first run or menu access, keeping desktop clean
 mkdir -p /home/$SETUP_USER/Desktop
-cp "$UP_SRC/xdg/applications/astro-network.desktop" /home/$SETUP_USER/Desktop/
-cp "$UP_SRC/xdg/applications/astro-user.desktop" /home/$SETUP_USER/Desktop/
-cp "$UP_SRC/xdg/applications/astro-software.desktop" /home/$SETUP_USER/Desktop/
+cp "$REM_SRC/userpatches/xdg/applications/astro-network.desktop" /home/$SETUP_USER/Desktop/
+cp "$REM_SRC/userpatches/xdg/applications/astro-user.desktop" /home/$SETUP_USER/Desktop/
+cp "$REM_SRC/userpatches/xdg/applications/astro-software.desktop" /home/$SETUP_USER/Desktop/
+
 chmod +x /home/$SETUP_USER/Desktop/*.desktop
 chown -R $SETUP_USER:$SETUP_USER /home/$SETUP_USER/Desktop
 
 # --- C. Headless & Networking Fixes ---
 echo "   🖥️ Configuring Headless Support & Networking..."
 mkdir -p /etc/X11/xorg.conf.d
-cp "$UP_SRC/overlay/etc/X11/xorg.conf.d/99-dummy-display.conf" /etc/X11/xorg.conf.d/
+cp "$REM_SRC/userpatches/overlay/etc/X11/xorg.conf.d/99-dummy-display.conf" /etc/X11/xorg.conf.d/
+
 
 # Ensure NetworkManager manages everything
 cat <<EOF > /etc/NetworkManager/NetworkManager.conf
@@ -261,12 +266,14 @@ mkdir -p /usr/share/backgrounds
 # Fallback: Enforce standardized path again
 if [ ! -f "/usr/share/backgrounds/astro-wallpaper.png" ]; then
     echo "   ⚠️  CRITICAL: Wallpaper missing. Copying fallback if available."
-    cp "$UP_SRC/astro-wallpaper.png" "/usr/share/backgrounds/astro-wallpaper.png" 2>/dev/null || true
+    cp "$REM_SRC/userpatches/astro-wallpaper.png" "/usr/share/backgrounds/astro-wallpaper.png" 2>/dev/null || true
 fi
+
 
 # System-wide XFCE Defaults (for any new user)
 mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
-cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/
+cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/
+
 
 # LightDM Background
 if [ -f "/etc/lightdm/lightdm-gtk-greeter.conf" ]; then
