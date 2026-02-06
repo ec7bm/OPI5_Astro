@@ -1,7 +1,15 @@
-# AstroOrange V10.5 Release Notes
+# AstroOrange V12.0 Release Notes
 
 ## 🚀 Highlights
-This release brings significant improvements in stability, usability, and robustness.
+This build (V12.0 MASTER) brings critical stabilization to the software installer and centralized UI management.
+
+- **Software Wizard V12.0**:
+    - **Thread-Safety**: Atomic UI updates using `root.after` to prevent random crashes.
+    - **Persistence**: Real-time logging to `/var/log/astro_wiz.log` that survives system reboots.
+    - **Safety**: Removed `dist-upgrade` to protect kernel/module integrity on SBCs.
+    - **Hardened Apt**: Aggressive lock cleaning and dependency resolution (libgcc/gcc-11 force).
+- **UI Centering**: All wizard windows (Network, User, Software) are now perfectly centered for better user experience.
+
 
 - **Network Watchdog V9.2.1**: Rock-solid WiFi connection logic, dynamic interface detection, and intelligent Hotspot fallback.
 - **Wizards V8.4/V5.2**:
