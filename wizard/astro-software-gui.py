@@ -35,9 +35,13 @@ def kill_apt_locks():
         # 1. Detener servicios automáticos que suelen bloquear apt
         subprocess.run("sudo systemctl stop apt-daily.service apt-daily-upgrade.service 2>/dev/null", shell=True)
         
-        # 2. Matar procesos conflictivos (incluyendo packagekitd)
+        # 2. Sincronizar fecha (Crítico para GPG/SSL) - V11.13
+        subprocess.run("sudo date -s \"$(curl -s --head http://google.com | grep ^Date: | sed 's/Date: //g')\" 2>/dev/null", shell=True)
+        
+        # 3. Matar procesos conflictivos
         subprocess.run("sudo killall -9 apt apt-get dpkg packagekitd 2>/dev/null", shell=True)
         time.sleep(2)
+
         
         # 3. Forzar liberación de archivos de bloqueo con fuser (si existe) y rm
         lock_files = [
@@ -309,12 +313,19 @@ class SoftWizard:
                 else:
                     if info.get('ppa'): 
                         self.log(f"   Añadiendo repositorio {info['ppa']}...")
-                        res = subprocess.Popen(f"sudo add-apt-repository -y {info['ppa']}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                        # V11.13: Refuerzo GPG y timeout para evitar cuelgues infinitos
+                        cmd_ppa = f"sudo GNUPGHOME=/tmp/gpg_tmp add-apt-repository -y {info['ppa']}"
+                        subprocess.run("mkdir -p /tmp/gpg_tmp && chmod 700 /tmp/gpg_tmp", shell=True)
+                        
+                        res = subprocess.Popen(cmd_ppa, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                         if res.stdout:
-                            for line in res.stdout: self.log(f"      {line.strip()}")
-                        res.wait()
+                            for line in res.stdout: 
+                                self.log(f"      {line.strip()}")
+                                self.root.update() # Forzar dibujado de cada línea
+                        res.wait(timeout=180) # 3 minutos máximo para el PPA
                         self.log("   Actualizando lista de paquetes...")
                         subprocess.run("sudo apt-get update", shell=True)
+
                     
                     f = "--reinstall" if n in self.reinstall_list else ""
                     cmd = f"sudo apt-get install -y {f} {info['pkg']}"
