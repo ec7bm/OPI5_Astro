@@ -79,9 +79,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
-        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 11.21 (REPARACION DEFINITIVA) <<<")
+        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 11.22 (FAST-START) <<<")
         self.root = root
-        self.root.title("AstroOrange Software Installer V11.21 (FIX)")
+        self.root.title("AstroOrange Software Installer V11.22 (FAST)")
+
 
 
 
@@ -310,13 +311,18 @@ class SoftWizard:
         try: subprocess.run(f"sudo touch {LOG_FILE} && sudo chmod 666 {LOG_FILE}", shell=True)
         except: pass
         
-        self.log("--- INICIANDO PROCESO ULTRA-SEGURO V11.20 ---")
+        self.log("--- INICIANDO PROCESO ULTRA-SEGURO V11.22 ---")
         
-        # 1. Crear SWAP temporal (Evita reinicios por falta de memoria en SBCs)
-        self.log("Verificando estabilidad de memoria (SWAP)...")
-        subprocess.run("sudo dd if=/dev/zero of=/swap_wiz bs=1M count=2048 2>/dev/null", shell=True)
-        subprocess.run("sudo chmod 600 /swap_wiz && sudo mkswap /swap_wiz && sudo swapon /swap_wiz 2>/dev/null", shell=True)
-        self.log("   SWAP de emergencia activado (+2GB)")
+        # 1. Crear SWAP temporal (V11.22 Fast Start con fallocate)
+        if not os.path.exists("/swap_wiz"):
+            self.log("Preparando memoria extra (Rápido)...")
+            subprocess.run("sudo fallocate -l 2G /swap_wiz && sudo chmod 600 /swap_wiz && sudo mkswap /swap_wiz && sudo swapon /swap_wiz", shell=True)
+            self.log("   SWAP de emergencia activado (+2GB)")
+        else:
+            self.log("Memoria extra ya activa.")
+            # Asegurar que esté encendido
+            subprocess.run("sudo swapon /swap_wiz 2>/dev/null", shell=True)
+
 
 
 
