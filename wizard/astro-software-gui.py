@@ -324,30 +324,26 @@ class SoftWizard:
             try:
                 self.log(f"--- INSTALANDO: {n} ---")
                 if "url" in info:
+                    self.log(f"   Descargando DEB de {n}...")
                     subprocess.run(f"sudo wget -O /tmp/temp.deb {info['url']}", shell=True)
                     cmd = "sudo dpkg -i /tmp/temp.deb || sudo apt-get install -f -y"
                 else:
                     if info.get('ppa'): 
-                        self.log(f"   Añadiendo repositorio {info['ppa']}...")
-                        self.log("   (Esto puede tardar 2-3 min si el servidor de llaves está saturado)")
-                        
-                        # V11.14: Forzar puerto 80 para GPG por si el puerto 11371 está bloqueado
+                        self.log(f"   Configurando PPA {info['ppa']}...")
+                        # Forzar puerto 80 y volcar salida en vivo
                         cmd_ppa = f"sudo add-apt-repository -y --keyserver hkp://keyserver.ubuntu.com:80 {info['ppa']}"
-                        
                         res = subprocess.Popen(cmd_ppa, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                         if res.stdout:
-                            for line in res.stdout: 
-                                self.log(f"      {line.strip()}")
-                                self.root.update()
-                        res.wait(timeout=300) # 5 minutos para el PPA (GPG es lento)
-                        
-                        self.log("   Actualizando lista de paquetes...")
+                            for line in res.stdout: self.log(f"      {line.strip()}"); self.root.update()
+
+                        res.wait()
+                        self.log("   Actualizando índices...")
                         subprocess.run("sudo apt-get update", shell=True)
-
-
                     
+                    self.log("   Iniciando descarga e instalación...")
                     f = "--reinstall" if n in self.reinstall_list else ""
-                    cmd = f"sudo apt-get install -y {f} {info['pkg']}"
+                    cmd = f"sudo apt-get install -y {f} {info['pkg']} -o Dpkg::Options::='--force-confold' -o Dpkg::Options::='--force-confdef'"
+
 
 
                 self.proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
