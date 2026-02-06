@@ -23,27 +23,44 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # 1. Install Dependencies
-echo -e "${GREEN}[1/4] Installing system dependencies...${NC}"
+echo -e "${GREEN}[1/5] Installing system dependencies...${NC}"
 apt-get update
-apt-get install -y python3-tk python3-pil python3-pil.imagetk network-manager wget curl
+# V13.2 Upgrade: Full dependencies for Wizards + noVNC
+apt-get install -y \
+    python3-tk python3-pil python3-pil.imagetk \
+    network-manager wget curl git \
+    x11vnc novnc websockify xvfb \
+    dbus-x11 libglib2.0-bin
 
 # 2. Create System Directories
-echo -e "${GREEN}[2/4] Setting up directory structure...${NC}"
+echo -e "${GREEN}[2/5] Setting up directory structure...${NC}"
 mkdir -p /opt/astroorange/wizard
-mkdir -p /opt/astroorange/scripts
-mkdir -p /opt/astroorange/wizard/gallery
+mkdir -p /opt/astroorange/bin
+mkdir -p /opt/astroorange/assets/gallery
 
-# 3. Copy Files
-echo -e "${GREEN}[3/4] Copying files...${NC}"
-cp -r wizard/*.py /opt/astroorange/wizard/
-cp -r scripts/*.sh /opt/astroorange/scripts/ 2>/dev/null || true
+# 3. Copy Files (Wizards, Scripts, Services)
+echo -e "${GREEN}[3/5] Deploying AstroOrange modules...${NC}"
 
-# Set permissions
+# Wizards & i18n
+cp wizard/*.py /opt/astroorange/wizard/
 chmod +x /opt/astroorange/wizard/*.py
-chmod +x /opt/astroorange/scripts/*.sh
+
+# Master Scripts
+cp scripts/astro-network.sh /opt/astroorange/bin/
+cp scripts/astro-vnc.sh /opt/astroorange/bin/
+chmod +x /opt/astroorange/bin/*.sh
+
+# Systemd Services
+echo "   ⚙️ Configuring systemd services..."
+cp systemd/astro-network.service /etc/systemd/system/
+cp systemd/astro-vnc.service /etc/systemd/system/
+
+systemctl daemon-reload
+systemctl enable astro-network.service
+systemctl enable astro-vnc.service
 
 # 4. Create Desktop Shortcuts & Menu Entries
-echo -e "${GREEN}[4/4] Creating application shortcuts...${NC}"
+echo -e "${GREEN}[4/5] Creating application shortcuts...${NC}"
 
 # Helper function to create .desktop file
 create_shortcut() {
@@ -66,20 +83,35 @@ Categories=Science;Astronomy;Education;
 EOF
 }
 
-# Main Setup Wizard
+# Desktop Entries
 create_shortcut "AstroOrange Setup" "python3 /opt/astroorange/wizard/astro-setup-wizard.py" "telescope" "Configure your AstroOrange system" "astro-setup-wizard.desktop"
-
-# Individual Tools
 create_shortcut "Astro User" "python3 /opt/astroorange/wizard/astro-user-gui.py" "system-users" "Manage main user" "astro-user.desktop"
 create_shortcut "Astro Network" "python3 /opt/astroorange/wizard/astro-network-gui.py" "network-wireless" "Configure WiFi" "astro-network.desktop"
 create_shortcut "Astro Software" "python3 /opt/astroorange/wizard/astro-software-gui.py" "system-software-install" "Install Astronomy Software" "astro-software.desktop"
 
+# 5. Finalize & Guidance
+echo -e "${GREEN}[5/5] Finalizing installation...${NC}"
+IP_ADDR=$(hostname -I | awk '{print $1}')
+
 echo ""
-echo -e "${GREEN}✅ Installation Completed!${NC}"
-echo "You can now find 'AstroOrange Setup' in your Applications menu under Science or Education."
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}  ✅ ASTROORANGE INSTALLED SUCCESSFULLY!${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
+echo "  🌐 REMOTE DESKTOP (noVNC) is now active."
+echo -e "     Connect via: ${BLUE}http://$IP_ADDR:6080/vnc.html${NC}"
+echo ""
+echo "  🧙 WIZARDS are available in your Applications menu."
+echo "     (Science / Education -> AstroOrange Setup)"
+echo ""
+echo "  ⚠️ IMPORTANT: If you just installed this on a fresh Ubuntu,"
+echo "     reboot now to ensure all services start correctly."
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
 read -p "Do you want to run the Setup Wizard now? (y/n) " -n 1 -r
 echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     python3 /opt/astroorange/wizard/astro-setup-wizard.py &
 fi
+

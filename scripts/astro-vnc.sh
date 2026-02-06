@@ -6,15 +6,28 @@ export DISPLAY=:0
 export HOME=/root
 rm -f /tmp/.X0-lock
 
-# 1. Buscar Xauthority de LightDM
+# 1. Buscar Xauthority (LightDM fallback to User)
 echo "Searching for Xauthority..."
 XAUTH=""
-for i in {1..20}; do
+for i in {1..30}; do
+    # Try LightDM path (official image)
     XAUTH=$(find /var/run/lightdm /run/lightdm -name ":0*" 2>/dev/null | head -n 1)
+    
+    # Try current logged in user (Standalone Ubuntu)
+    if [ -z "$XAUTH" ]; then
+        LOGGED_USER=$(who | awk '{print $1}' | head -n 1)
+        if [ -n "$LOGGED_USER" ]; then
+            XAUTH="/home/$LOGGED_USER/.Xauthority"
+            [ ! -f "$XAUTH" ] && XAUTH=""
+        fi
+    fi
+    
     [ -n "$XAUTH" ] && break
     sleep 1
 done
 export XAUTHORITY=$XAUTH
+echo "Using XAUTHORITY=$XAUTHORITY"
+
 
 # 2. Esperar servidor X
 echo "Waiting for X server on :0..."

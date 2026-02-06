@@ -1,14 +1,17 @@
-# AstroOrange V13.1 MASTER - Release Notes
+# AstroOrange V13.2 MASTER - Release Notes
 
 ## 🚀 Highlights
-This build (V13.1 MASTER "Armor") provides critical fixes for ethernet activation and system user persistence.
+This build (V13.2 MASTER "Universal") introduces a heavy-duty standalone installer for any Ubuntu-based system.
 
-- **Ethernet Fix**: 
-    - **Netplan Armor**: Forced NetworkManager as the renderer to ensure automatic ethernet activation on Ubuntu 22.04.
-    - **Aggressive Watchdog**: Increased retries for hardware detection at boot.
+- **Universal Installer (`install.sh`)**:
+    - **One-Command Setup**: Now installs Wizards + Remote Desktop (noVNC) on any PC, Raspberry Pi, or MiniPC running Ubuntu/Armbian.
+    - **Remote Desktop Engine**: Automatically configures `x11vnc` and `noVNC` with systemd services.
+    - **Portable Wizards**: Full localization and modular icons for a professional "Distro" feel on stock OS.
+- **Ethernet Fix (V13.1 Recap)**: 
+    - Forced Netplan NetworkManager renderer for reliable boot-time activation.
 - **User Persistence**:
-    - **Hardened Wizard**: `UserWizard` now performs atomic command verification for `useradd`.
-    - **Nuclear Sync**: Multi-stage `sync` calls to guarantee disk write completion on SD cards.
+    - Hardened `UserWizard` with atomic verification for SD card reliability.
+
 
 
 
