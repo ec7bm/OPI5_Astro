@@ -79,8 +79,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
+        print("\n[ASTRO] CARGANDO VERSION 11.15 (ULTRA)...")
         self.root = root
-        self.root.title("AstroOrange Software Installer V11.14 (PRO)")
+        self.root.title("AstroOrange Software Installer V11.15 (ULTRA)")
+
         self.root.geometry("900x800")
 
         self.root.configure(bg=BG_COLOR)
