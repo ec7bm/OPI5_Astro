@@ -18,9 +18,18 @@ class UserWizard:
         self.main_content = tk.Frame(self.root, bg=BG_COLOR)
         self.main_content.pack(expand=True, fill="both")
         
+        self.center_window()
         self.draw_main()
 
+    def center_window(self):
+        self.root.update_idletasks()
+        w, h = self.root.winfo_width(), self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (w // 2)
+        y = (self.root.winfo_screenheight() // 2) - (h // 2)
+        self.root.geometry(f"+{x}+{y}")
+
     def clean(self):
+
         for w in self.main_content.winfo_children(): w.destroy()
 
     def head(self, t, s=""):

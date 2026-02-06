@@ -32,13 +32,25 @@ def check_ping():
 
 def kill_apt_locks():
     try:
-        subprocess.run("sudo killall apt apt-get dpkg", shell=True, stderr=subprocess.DEVNULL)
-        subprocess.run("sudo rm -f /var/lib/apt/lists/lock", shell=True, stderr=subprocess.DEVNULL)
-        subprocess.run("sudo rm -f /var/cache/apt/archives/lock", shell=True, stderr=subprocess.DEVNULL)
-        subprocess.run("sudo rm -f /var/lib/dpkg/lock*", shell=True, stderr=subprocess.DEVNULL)
-        subprocess.run("sudo dpkg --configure -a", shell=True, stderr=subprocess.DEVNULL)
+        # Forzar el cierre de procesos de apt/dpkg
+        subprocess.run("sudo killall -9 apt apt-get dpkg 2>/dev/null", shell=True)
+        time.sleep(2) # Esperar a que los procesos mueran
+        
+        # Eliminar archivos de bloqueo de forma agresiva
+        lock_files = [
+            "/var/lib/apt/lists/lock",
+            "/var/cache/apt/archives/lock",
+            "/var/lib/dpkg/lock",
+            "/var/lib/dpkg/lock-frontend"
+        ]
+        for f in lock_files:
+            subprocess.run(f"sudo rm -f {f}", shell=True)
+            
+        # Reparar el estado de dpkg
+        subprocess.run("sudo dpkg --configure -a", shell=True)
     except:
         pass
+
 
 class SoftWizard:
     def __init__(self, root):
@@ -63,7 +75,9 @@ class SoftWizard:
         self.main_content.pack(expand=True, fill="both")
         
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.center_window()
         self.draw_main()
+
 
     def clean(self):
         for w in self.main_content.winfo_children(): w.destroy()
