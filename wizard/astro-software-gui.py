@@ -32,27 +32,35 @@ def check_ping():
 
 def kill_apt_locks():
     try:
-        # Forzar el cierre de procesos de apt/dpkg
-        subprocess.run("sudo killall -9 apt apt-get dpkg 2>/dev/null", shell=True)
-        time.sleep(2) # Esperar a que los procesos mueran
+        # 1. Detener servicios automáticos que suelen bloquear apt
+        subprocess.run("sudo systemctl stop apt-daily.service apt-daily-upgrade.service 2>/dev/null", shell=True)
         
-        # Eliminar archivos de bloqueo de forma agresiva
+        # 2. Matar procesos conflictivos (incluyendo packagekitd)
+        subprocess.run("sudo killall -9 apt apt-get dpkg packagekitd 2>/dev/null", shell=True)
+        time.sleep(2)
+        
+        # 3. Forzar liberación de archivos de bloqueo con fuser (si existe) y rm
         lock_files = [
             "/var/lib/apt/lists/lock",
             "/var/cache/apt/archives/lock",
             "/var/lib/dpkg/lock",
-            "/var/lib/dpkg/lock-frontend"
+            "/var/lib/dpkg/lock-frontend",
+            "/var/lib/dpkg/lock-vnc"
         ]
         for f in lock_files:
-            subprocess.run(f"sudo rm -f {f}", shell=True)
+            if os.path.exists(f):
+                subprocess.run(f"sudo fuser -k {f} 2>/dev/null", shell=True)
+                subprocess.run(f"sudo rm -f {f}", shell=True)
             
-        # Reparar el estado de dpkg
-        subprocess.run("sudo dpkg --configure -a", shell=True)
-    except:
-        pass
-
+        # 4. Reparar dpkg de forma NO INTERACTIVA y con timeout
+        env = os.environ.copy()
+        env['DEBIAN_FRONTEND'] = 'noninteractive'
+        subprocess.run("sudo dpkg --configure -a", shell=True, env=env, timeout=60)
+    except Exception as e:
+        print(f"[DEBUG] kill_apt_locks error: {e}")
 
 class SoftWizard:
+
     def __init__(self, root):
         self.root = root
         self.root.title("AstroOrange Software Installer V11.6.2")
