@@ -150,7 +150,11 @@ class SoftWizard:
         grid = tk.Frame(self.main_content, bg=BG_COLOR); grid.pack(pady=10)
         for i, (n, info) in enumerate(SOFTWARE.items()):
             bin_name = info["bin"]
-            inst = bool(shutil.which(bin_name) or os.path.exists(f"/usr/bin/{bin_name}"))
+            # Búsqueda más agresiva de binarios
+            is_bin_in_path = shutil.which(bin_name) is not None
+            is_bin_in_usr = os.path.exists(f"/usr/bin/{bin_name}") or os.path.exists(f"/usr/local/bin/{bin_name}")
+            inst = bool(is_bin_in_path or is_bin_in_usr)
+
             
             self.sw_vars[n] = tk.BooleanVar(value=not inst and n in ["KStars / INDI", "PHD2 Guiding"])
             txt = n + (" (INSTALADO)" if inst else "")
@@ -291,9 +295,15 @@ class SoftWizard:
 
     def create_shortcut(self, name, bin_name):
         try:
+            # Obtener el usuario real (no root)
             real_user = os.environ.get('SUDO_USER') or os.environ.get('USER')
             if real_user == 'root': return
+            
+            # Intentar encontrar la ruta real del binario si bin_name es solo el nombre
+            full_bin_path = shutil.which(bin_name) or f"/usr/bin/{bin_name}"
+            
             desktop_dir = f"/home/{real_user}/Desktop"
+
             if not os.path.exists(desktop_dir): 
                 os.makedirs(desktop_dir, exist_ok=True)
                 shutil.chown(desktop_dir, user=real_user, group=real_user)
@@ -411,7 +421,13 @@ class SoftWizard:
             except Exception as e:
                 self.log(f"EXCEPCIÓN: {str(e)}")
         
-        self.cancel_btn.config(text="CERRAR Y FINALIZAR", bg=SUCCESS_COLOR, command=self.on_close)
+        self.cancel_btn.config(text="REINICIAR WIZARD PARA VER CAMBIOS", bg=SUCCESS_COLOR, command=self.restart_wizard)
+
+    def restart_wizard(self):
+        self.cleanup()
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
+
 
     def center_window(self):
         self.root.update_idletasks()
