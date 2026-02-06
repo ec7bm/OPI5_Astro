@@ -294,16 +294,28 @@ class SoftWizard:
                 if attempt == 3: self.log("❌ Fallo persistente en update"); break
                 time.sleep(5)
         
-        self.log("Sincronizando librerías base (Alineación v11.11)...")
+        self.log("Sincronizando librerías base (Mega-Alineación v11.16)...")
         try:
             env = os.environ.copy(); env['DEBIAN_FRONTEND'] = 'noninteractive'
-            # Forzar actualización de paquetes base conflictivos de Jammy
+            # Forzar habilitación de repositorios de actualizaciones oficiales
+            self.log("   Activando repositorios jammy-updates/security...")
+            subprocess.run("sudo add-apt-repository -y universe", shell=True, env=env)
+            subprocess.run("sudo add-apt-repository -y multiverse", shell=True, env=env)
+            # Asegurar que los updates están en sources.list
+            subprocess.run("echo 'deb http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse' | sudo tee /etc/apt/sources.list.d/jammy-updates.list", shell=True)
+            
             self.log("   Corrigiendo gcc-11-base...")
-            subprocess.run("sudo apt-get install -y --only-upgrade gcc-11-base libgcc-s1", shell=True, env=env)
-            self.log("   Ejecutando dist-upgrade...")
-            subprocess.run("sudo apt-get dist-upgrade -y --no-install-recommends", shell=True, env=env, check=True)
+            subprocess.run("sudo apt-get update", shell=True, env=env)
+            # El fix definitivo: forzar la versión de libgcc
+            p = subprocess.Popen("sudo apt-get install -y --only-upgrade gcc-11-base libgcc-s1", shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            for line in p.stdout: self.log(f"      {line.strip()}"); self.root.update()
+            
+            self.log("   Ejecutando dist-upgrade (Paciencia)...")
+            p = subprocess.Popen("sudo apt-get dist-upgrade -y --no-install-recommends -o Dpkg::Options::='--force-confold'", shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            for line in p.stdout: self.log(f"      {line.strip()}"); self.root.update()
         except Exception as e:
             self.log(f"⚠️ Nota de upgrade: {e}")
+
 
 
 
