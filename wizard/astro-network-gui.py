@@ -1,6 +1,6 @@
-import tkinter as tk
-from tkinter import messagebox
 import subprocess, threading, os, time
+import i18n
+
 
 # --- CONFIGURACIÓN V8.4: MANUAL WIFI & GUI FIXES ---
 BG_COLOR, SECONDARY_BG, FG_COLOR = "#0f172a", "#1e293b", "#e2e8f0"
@@ -10,7 +10,8 @@ BUTTON_COLOR = "#334155"
 class NetWizard:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange Network Manager (V8.4)")
+        self.root.title(f"{i18n.t('network_manager')} (V8.4)")
+
         self.root.geometry("800x850")
         self.root.configure(bg=BG_COLOR)
         self.ssid = ""
@@ -40,7 +41,8 @@ class NetWizard:
             ip = subprocess.check_output("hostname -I", shell=True, text=True).strip()
             state = subprocess.check_output("nmcli -t -f STATE general", shell=True, text=True).strip()
             return f"{state} | IP: {ip}"
-        except: return "Desconectado"
+        except: return i18n.t("exit").capitalize() # Placeholder if disconnected
+
 
     def head(self, t, s=""):
         status_frm = tk.Frame(self.main_content, bg="#0f172a", height=30)
@@ -68,7 +70,8 @@ class NetWizard:
 
     # --- PASO 1: LISTADO ---
     def step_list(self):
-        self.clean(); self.head("Configuración WiFi", "Busca y selecciona una red")
+        self.clean(); self.head(i18n.t("config_wifi"), i18n.t("select_network"))
+
         f = tk.Frame(self.main_content, bg=BG_COLOR); f.pack(fill="x", padx=120)
         sb = tk.Scrollbar(f); sb.pack(side="right", fill="y")
         self.lb = tk.Listbox(f, width=40, height=8, bg=SECONDARY_BG, fg="white", font=("Sans", 12), 
@@ -76,15 +79,17 @@ class NetWizard:
         self.lb.pack(pady=10, fill="x"); sb.config(command=self.lb.yview)
         
         btn_frame = tk.Frame(self.main_content, bg=BG_COLOR); btn_frame.pack(pady=10)
-        self.btn_scan = tk.Button(btn_frame, text="🔄 ACTUALIZAR LISTA", command=self.scan_thread, bg=BUTTON_COLOR, fg="white", font=("Sans",10), relief="flat", padx=20, pady=8)
+        self.btn_scan = tk.Button(btn_frame, text="🔄 " + i18n.t("refresh_list"), command=self.scan_thread, bg=BUTTON_COLOR, fg="white", font=("Sans",10), relief="flat", padx=20, pady=8)
         self.btn_scan.pack(side="left", padx=5)
         
         # New Manual Button
-        tk.Button(btn_frame, text="✍️ MANUAL / OCULTA", command=self.step_manual, bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans",10, "bold"), relief="flat", padx=20, pady=8).pack(side="left", padx=5)
+        tk.Button(btn_frame, text="✍️ " + i18n.t("manual_entry"), command=self.step_manual, bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans",10, "bold"), relief="flat", padx=20, pady=8).pack(side="left", padx=5)
+
         
         nav = tk.Frame(self.main_content, bg=BG_COLOR); nav.pack(side="bottom", pady=40)
-        self.btn(nav, "SALIR", self.root.destroy, DANGER_COLOR, width=12).pack(side="left", padx=25)
-        self.btn(nav, "SIGUIENTE", self.step_pass, ACCENT_COLOR, width=12).pack(side="left", padx=25)
+        self.btn(nav, i18n.t("exit").upper(), self.root.destroy, DANGER_COLOR, width=12).pack(side="left", padx=25)
+        self.btn(nav, i18n.t("next").upper(), self.step_pass, ACCENT_COLOR, width=12).pack(side="left", padx=25)
+
         self.scan_thread()
 
     def scan_thread(self):
@@ -108,10 +113,11 @@ class NetWizard:
 
     def _update_list(self):
         self.lb.delete(0, tk.END)
-        if not self.ssids: self.lb.insert(tk.END, "No se encontraron redes :(")
+        if not self.ssids: self.lb.insert(tk.END, " :( ")
         else:
             for s in self.ssids: self.lb.insert(tk.END, f"  📶  {s}")
-        self.btn_scan.config(text="🔄 ACTUALIZAR LISTA", state="normal"); self.scanning = False
+        self.btn_scan.config(text="🔄 " + i18n.t("refresh_list"), state="normal"); self.scanning = False
+
 
     def _update_list_error(self):
         self.lb.delete(0, tk.END); self.lb.insert(tk.END, "Error al escanear")
@@ -133,33 +139,36 @@ class NetWizard:
 
     # --- PASO 2: CONFIG ---
     def step_config(self):
-        title = f"Conectando a: {self.ssid}" if not self.manual_mode else "Conexión Manual"
+        title = f"{i18n.t('connect')}: {self.ssid}" if not self.manual_mode else i18n.t("manual_connect")
         self.clean(); self.head("Seguridad & Red", title)
+
         f = tk.Frame(self.main_content, bg=SECONDARY_BG, padx=40, pady=20); f.pack(pady=10)
         
         # Manual SSID input if needed
         if self.manual_mode:
-            tk.Label(f, text="NOMBRE DE LA RED (SSID)", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
+            tk.Label(f, text=i18n.t("ssid_name"), bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
             self.entry_ssid = tk.Entry(f, width=35, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white")
             self.entry_ssid.pack(pady=(5, 15), ipady=8)
         
-        tk.Label(f, text="CONTRASEÑA WIFI", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
+        tk.Label(f, text=i18n.t("wifi_password"), bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
         self.ep = tk.Entry(f, show="*", width=35, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
         self.ep.pack(pady=(5, 5), ipady=8)
         
         self.show_pw = tk.BooleanVar(value=False)
-        tk.Checkbutton(f, text="Mostrar contraseña", variable=self.show_pw, command=lambda: self.ep.config(show="" if self.show_pw.get() else "*"),
+        tk.Checkbutton(f, text=i18n.t("show_password"), variable=self.show_pw, command=lambda: self.ep.config(show="" if self.show_pw.get() else "*"),
                        bg=SECONDARY_BG, fg="white", selectcolor=BG_COLOR, activebackground=SECONDARY_BG, font=("Sans", 9)).pack(anchor="w", pady=(0, 15))
 
-        tk.Label(f, text="NOMBRE DEL EQUIPO (HOSTNAME)", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
+        tk.Label(f, text=i18n.t("hostname"), bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
+
         self.eh = tk.Entry(f, width=35, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
         try: cur_host = subprocess.check_output(["hostname"], text=True).strip()
         except: cur_host = "orangepi5pro"
         self.eh.insert(0, cur_host); self.eh.pack(pady=(5, 15), ipady=8)
 
         self.static_ip_var = tk.BooleanVar(value=False)
-        tk.Checkbutton(f, text="Configuración IP Manual (Avanzado)", variable=self.static_ip_var, command=self.toggle_ip,
+        tk.Checkbutton(f, text=i18n.t("manual_ip"), variable=self.static_ip_var, command=self.toggle_ip,
                        bg=SECONDARY_BG, fg="white", selectcolor=BG_COLOR, activebackground=SECONDARY_BG, font=("Sans", 10, "bold")).pack(anchor="w", pady=5)
+
         
         self.ip_frame = tk.Frame(f, bg=SECONDARY_BG)
         self.entries = {}
@@ -169,8 +178,9 @@ class NetWizard:
             self.entries[lbl] = e
         
         nav = tk.Frame(self.main_content, bg=BG_COLOR); nav.pack(side="bottom", pady=40)
-        self.btn(nav, "VOLVER", self.step_list, BUTTON_COLOR, width=10).pack(side="left", padx=20)
-        self.btn(nav, "GUARDAR", self.save_logic, ACCENT_COLOR, width=15).pack(side="left", padx=20)
+        self.btn(nav, i18n.t("back").upper(), self.step_list, BUTTON_COLOR, width=10).pack(side="left", padx=20)
+        self.btn(nav, i18n.t("save").upper(), self.save_logic, ACCENT_COLOR, width=15).pack(side="left", padx=20)
+
 
     def toggle_ip(self):
         if self.static_ip_var.get(): self.ip_frame.pack(fill="x", pady=10)

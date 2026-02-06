@@ -1,6 +1,6 @@
-import tkinter as tk
-from tkinter import messagebox
 import subprocess, sys, os
+import i18n
+
 
 # --- V6.9: SETUP UI PROFESIONAL (SIN EMOJIS ROTOS) ---
 BG_COLOR = "#0f172a"
@@ -11,7 +11,13 @@ BTN_FG = "#e2e8f0"      # Color de texto de botones secundarios
 class SetupOrchestrator:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange Setup V7.1")
+        
+        # V13.0: Verificación inicial de idioma
+        if not os.path.exists(i18n.LANG_FILE):
+             self.open_tool("astro-language-selector.py", wait=True)
+             
+        self.root.title(f"AstroOrange Setup V7.5 ({i18n.get_lang().upper()})")
+
         self.root.geometry("600x650") 
         self.root.configure(bg=BG_COLOR)
         self.wizard_dir = "/opt/astroorange/wizard"
@@ -79,18 +85,21 @@ class SetupOrchestrator:
         frm_tools = tk.Frame(self.main_content, bg=BG_COLOR)
         frm_tools.pack(fill="x")
         
-        self.create_tool_btn(frm_tools, "Configurar Usuario", self.icons.get('user'), self.open_user_tool)
-        self.create_tool_btn(frm_tools, "Configurar Red WiFi", self.icons.get('wifi'), self.open_net_tool)
-        self.create_tool_btn(frm_tools, "Instalar Software", self.icons.get('soft'), self.open_soft_tool)
+        self.create_tool_btn(frm_tools, i18n.t("config_user"), self.icons.get('user'), self.open_user_tool)
+        self.create_tool_btn(frm_tools, i18n.t("config_wifi"), self.icons.get('wifi'), self.open_net_tool)
+        self.create_tool_btn(frm_tools, i18n.t("install_soft"), self.icons.get('soft'), self.open_soft_tool)
+        self.create_tool_btn(frm_tools, i18n.t("select_language"), None, self.open_lang_tool)
+
 
         # --- FOOTER CHECKBOX ---
         # Frame separador para empujar el checkbox abajo
         tk.Frame(self.main_content, bg=BG_COLOR).pack(expand=True)
         
         self.chk_nomore = tk.BooleanVar(value=False)
-        chk = tk.Checkbutton(self.main_content, text="No mostrar este panel al iniciar sesión", variable=self.chk_nomore, command=self.toggle_autostart,
+        chk = tk.Checkbutton(self.main_content, text=i18n.t("no_more_show"), variable=self.chk_nomore, command=self.toggle_autostart,
                        bg=BG_COLOR, fg="#cbd5e1", selectcolor=BG_COLOR, font=("Sans", 10), activebackground=BG_COLOR, cursor="hand2")
         chk.pack(side="bottom", pady=20)
+
 
     def create_tool_btn(self, parent, text, icon, command):
         """Crea un botón estilizado con icono opcional"""
@@ -112,17 +121,19 @@ class SetupOrchestrator:
         flag_file = "/etc/astro-wizard-done"
         if self.chk_nomore.get():
              subprocess.run(f"sudo touch {flag_file}", shell=True)
-             messagebox.showinfo("Setup", "El asistente ya no se mostrará automáticamente.")
+             messagebox.showinfo("Setup", i18n.t("setup_done_msg"))
         else:
              subprocess.run(f"sudo rm -f {flag_file}", shell=True)
 
+
     def run_tutorial(self):
-        subprocess.run([sys.executable, f"{self.wizard_dir}/astro-user-gui.py"])
-        self.ask_next_step("Setup", "¿Deseas configurar WiFi?", self.open_net_tool)
-        self.ask_next_step("Setup", "¿Deseas instalar software?", self.open_soft_tool)
-        messagebox.showinfo("AstroOrange", "¡Configuración completada!")
+        self.open_user_tool(wait=True)
+        self.ask_next_step("Setup", i18n.t("ask_wifi"), self.open_net_tool)
+        self.ask_next_step("Setup", i18n.t("ask_software"), self.open_soft_tool)
+        messagebox.showinfo("AstroOrange", i18n.t("tutorial_complete"))
         self.root.destroy()
         sys.exit(0)
+
 
     def ask_next_step(self, title, question, func):
         if messagebox.askyesno(title, question):
@@ -146,9 +157,11 @@ class SetupOrchestrator:
         self.root.deiconify()
 
 
-    def open_user_tool(self, wait=True): self.open_tool("astro-user-gui.py", wait)
-    def open_net_tool(self, wait=True): self.open_tool("astro-network-gui.py", wait)
-    def open_soft_tool(self, wait=True): self.open_tool("astro-software-gui.py", wait)
+    def open_user_tool(self, wait=True): self.open_tool("astro-user-gui.py", wait); self.show_welcome()
+    def open_net_tool(self, wait=True): self.open_tool("astro-network-gui.py", wait); self.show_welcome()
+    def open_soft_tool(self, wait=True): self.open_tool("astro-software-gui.py", wait); self.show_welcome()
+    def open_lang_tool(self, wait=True): self.open_tool("astro-language-selector.py", wait); self.show_welcome()
+
 
     def center_window(self):
         self.root.update_idletasks()

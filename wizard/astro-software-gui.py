@@ -10,11 +10,10 @@ import tkinter as tk
 
 
 from tkinter import messagebox, scrolledtext
-import subprocess, os, threading, shutil, sys, time
-from PIL import Image, ImageTk
-import urllib.request
 import json
 import random
+import i18n
+
 
 # --- CONFIGURACIÓN ESTÉTICA PREMIUM ---
 BG_COLOR, SECONDARY_BG, FG_COLOR = "#0f172a", "#1e293b", "#e2e8f0"
@@ -92,7 +91,8 @@ class SoftWizard:
     def __init__(self, root):
         print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 12.3 (ATOMIC-FINAL) <<<")
         self.root = root
-        self.root.title("AstroOrange Software Installer V12.3 (FINAL)")
+        self.root.title(f"{i18n.t('astro_installer')} V12.3 (FINAL)")
+
 
 
 
@@ -146,7 +146,8 @@ class SoftWizard:
 
     def draw_main(self):
         self.clean()
-        self.head("Instalador Astro", "Selecciona las aplicaciones que deseas añadir")
+        self.head(i18n.t("astro_installer"), i18n.t("select_apps"))
+
         
         online = check_ping()
         if not online:
@@ -162,23 +163,25 @@ class SoftWizard:
 
             
             self.sw_vars[n] = tk.BooleanVar(value=not inst and n in ["KStars / INDI", "PHD2 Guiding"])
-            txt = n + (" (INSTALADO)" if inst else "")
+            txt = n + (f" ({i18n.t('installed')})" if inst else "")
             cb = tk.Checkbutton(grid, text=txt, variable=self.sw_vars[n], bg=SECONDARY_BG, fg="white", 
                                selectcolor=ACCENT_COLOR, font=("Sans", 11, "bold"), padx=25, pady=12, 
                                indicatoron=False, width=25, command=lambda name=n: self.on_sw_click(name))
             cb.grid(row=i//2, column=i%2, padx=12, pady=12, sticky="ew")
             
-        self.btn("🚀 INICIAR INSTALACIÓN", self.start_install, ACCENT_COLOR, width=40).pack(pady=30)
+        self.btn("🚀 " + i18n.t("start_install").upper(), self.start_install, ACCENT_COLOR, width=40).pack(pady=30)
         
         ctrl = tk.Frame(self.main_content, bg=BG_COLOR); ctrl.pack()
-        tk.Button(ctrl, text="SALIR", command=self.on_close, bg=BUTTON_COLOR, fg="white", font=("Sans",11), relief="flat", padx=30, pady=8).pack()
+        tk.Button(ctrl, text=i18n.t("exit").upper(), command=self.on_close, bg=BUTTON_COLOR, fg="white", font=("Sans",11), relief="flat", padx=30, pady=8).pack()
+
 
     def on_sw_click(self, name):
         bin_name = SOFTWARE[name]["bin"]
         if bool(shutil.which(bin_name) or os.path.exists(f"/usr/bin/{bin_name}")):
             if self.sw_vars[name].get():
-                if messagebox.askyesno("Reinstalar", f"¿Reinstalar {name}?"): self.reinstall_list.append(name)
+                if messagebox.askyesno(i18n.t("reinstall"), i18n.t("reinstall_ask").format(name=name)): self.reinstall_list.append(name)
                 else: self.sw_vars[name].set(False)
+
 
     def safe_resize(self, img, size):
         try:
@@ -251,8 +254,9 @@ class SoftWizard:
 
     def start_install(self):
         self.clean()
-        self.head("Procesando...", "Instalando paquetes seleccionados")
+        self.head(i18n.t("processing"), i18n.t("installing_pkgs"))
         self.load_local_images()
+
         
         carousel_frame = tk.Frame(self.main_content, bg=BG_COLOR, height=320)
         carousel_frame.pack(pady=10)
@@ -265,8 +269,9 @@ class SoftWizard:
         self.carousel_label.pack()
         self.update_carousel()
         
-        self.cancel_btn = tk.Button(self.main_content, text="ABORTAR INSTALACIÓN", command=self.stop_install, bg=DANGER_COLOR, fg="white", font=("Sans",11,"bold"), relief="flat", padx=25, pady=10)
+        self.cancel_btn = tk.Button(self.main_content, text=i18n.t("abort").upper(), command=self.stop_install, bg=DANGER_COLOR, fg="white", font=("Sans",11,"bold"), relief="flat", padx=25, pady=10)
         self.cancel_btn.pack(pady=10)
+
         
         t_frm = tk.Frame(self.main_content, bg="black", bd=2)
         t_frm.pack(fill="x", padx=50, pady=10)
@@ -325,9 +330,10 @@ class SoftWizard:
 
     def stop_install(self):
         if self.proc and self.proc.poll() is None:
-            if messagebox.askyesno("Confirmar", "¿Deseas interrumpir?"):
+            if messagebox.askyesno(i18n.t("abort"), i18n.t("abort_confirm")):
                 self.proc.terminate()
-                self.log("\n>>> INSTALACIÓN INTERRUMPIDA.")
+                self.log(f"\n>>> {i18n.t('interrupted')}.")
+
         else:
             self.on_close()
 
@@ -361,8 +367,9 @@ class SoftWizard:
                 if attempt == 3: self.log("❌ Fallo persistente en update"); break
                 time.sleep(5)
         
-        self.log("Sincronizando librerías base (Mega-Alineación v11.16)...")
+        self.log(f"{i18n.t('lib_sync')} (Mega-Align v11.16)...")
         try:
+
             env = os.environ.copy(); env['DEBIAN_FRONTEND'] = 'noninteractive'
             # Forzar habilitación de repositorios de actualizaciones oficiales
             self.log("   Activando repositorios jammy-updates/security...")
@@ -390,14 +397,15 @@ class SoftWizard:
         for n, info in SOFTWARE.items():
             if not self.sw_vars[n].get(): continue
             try:
-                self.log(f"--- INSTALANDO: {n} ---")
+                self.log(f"--- {i18n.t('installing')}: {n} ---")
                 if "url" in info:
-                    self.log(f"   Descargando DEB de {n}...")
+                    self.log(f"   {i18n.t('downloading_deb')} {n}...")
                     subprocess.run(f"sudo wget -O /tmp/temp.deb {info['url']}", shell=True)
                     cmd = "sudo dpkg -i /tmp/temp.deb || sudo apt-get install -f -y"
                 else:
                     if info.get('ppa'): 
-                        self.log(f"   Configurando PPA {info['ppa']}...")
+                        self.log(f"   {i18n.t('ppa_config')} {info['ppa']}...")
+
                         # V11.19: Flag --keyserver no soportada, volviendo a estandar
                         cmd_ppa = f"sudo add-apt-repository -y {info['ppa']}"
                         res = subprocess.Popen(cmd_ppa, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -420,13 +428,14 @@ class SoftWizard:
                 self.proc.wait()
                 if self.proc.returncode == 0: 
                     self.create_shortcut(n, info['bin'])
-                    self.log(f"OK: {n}")
+                    self.log(f"{i18n.t('ready').upper()}: {n}")
                 else:
                     self.log(f"ERROR: {n}")
             except Exception as e:
                 self.log(f"EXCEPCIÓN: {str(e)}")
         
-        self.cancel_btn.config(text="REINICIAR WIZARD PARA VER CAMBIOS", bg=SUCCESS_COLOR, command=self.restart_wizard)
+        self.cancel_btn.config(text=i18n.t("restart_wizard").upper(), bg=SUCCESS_COLOR, command=self.restart_wizard)
+
 
     def restart_wizard(self):
         self.cleanup()

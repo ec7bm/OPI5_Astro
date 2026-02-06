@@ -1,6 +1,6 @@
-import tkinter as tk
-from tkinter import messagebox
 import subprocess, time
+import i18n
+
 
 # Estilo Premium AstroOrange
 BG_COLOR, SECONDARY_BG, FG_COLOR = "#0f172a", "#1e293b", "#e2e8f0"
@@ -10,7 +10,8 @@ BUTTON_COLOR = "#334155"
 class UserWizard:
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange User Manager")
+        self.root.title(i18n.t("user_manager"))
+
         self.root.geometry("800x600")
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
@@ -51,18 +52,18 @@ class UserWizard:
         container.place(relx=0.5, rely=0.5, anchor="center")
         
         # 1. Cabecera (Dentro del container)
-        tk.Label(container, text="👤 Nuevo Usuario", font=("Sans", 32, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(0, 10))
+        tk.Label(container, text="👤 " + i18n.t("create_user"), font=("Sans", 32, "bold"), bg=BG_COLOR, fg=ACCENT_COLOR).pack(pady=(0, 10))
         tk.Label(container, text="Configura los datos del nuevo operador", font=("Sans", 14), bg=BG_COLOR, fg=FG_COLOR).pack(pady=(0, 30))
         
         # 2. Formulario (Dentro del container)
         f = tk.Frame(container, bg=SECONDARY_BG, padx=40, pady=40)
         f.pack(pady=10)
         
-        tk.Label(f, text="NOMBRE DE USUARIO", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
+        tk.Label(f, text=i18n.t("username").upper(), bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
         self.eu = tk.Entry(f, width=30, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
         self.eu.pack(pady=(5, 20), ipady=8)
         
-        tk.Label(f, text="CONTRASEÑA", bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
+        tk.Label(f, text=i18n.t("password").upper(), bg=SECONDARY_BG, fg=ACCENT_COLOR, font=("Sans", 10, "bold")).pack(anchor="w")
         self.ep = tk.Entry(f, show="*", width=30, font=("Sans", 14), bg=BG_COLOR, fg="white", bd=0, insertbackground="white", highlightthickness=1, highlightbackground=BUTTON_COLOR)
         self.ep.pack(pady=(5, 5), ipady=8)
         
@@ -73,7 +74,7 @@ class UserWizard:
 
         # Auto-login
         self.chk_autologin = tk.BooleanVar(value=True)
-        tk.Checkbutton(f, text="Iniciar sesión automáticamente", variable=self.chk_autologin,
+        tk.Checkbutton(f, text=i18n.t("autologin"), variable=self.chk_autologin,
                        bg=SECONDARY_BG, fg="white", selectcolor=BG_COLOR, font=("Sans", 10)).pack(anchor="w", pady=15)
         
         # 3. Botones (Dentro del container, SIEMPRE VISIBLES)
@@ -81,7 +82,8 @@ class UserWizard:
         nav.pack(pady=30)
         
         self.btn(nav, "CANCELAR", self.root.destroy, DANGER_COLOR, width=15).pack(side="left", padx=15)
-        self.btn(nav, "GUARDAR", self.create, ACCENT_COLOR, width=15).pack(side="left", padx=15)
+        self.btn(nav, i18n.t("save").upper(), self.create, ACCENT_COLOR, width=15).pack(side="left", padx=15)
+
 
     def toggle_password(self):
         self.ep.config(show="" if self.show_pass.get() else "*")
