@@ -84,10 +84,15 @@ class UserWizard:
         except: pass
         
         # Create User
-        # V11.4: Use only guaranteed existing groups to prevent useradd failure
-        groups = "sudo,dialout,video,input,plugdev,audio"
-        subprocess.run(f"sudo useradd -m -s /bin/bash -G {groups} {u}", shell=True)
+        # V11.4: Universal safe creation
+        subprocess.run(f"sudo useradd -m -s /bin/bash {u}", shell=True)
         subprocess.run(f"echo '{u}:{p}' | sudo chpasswd", shell=True)
+        
+        # V11.4.1: Add groups individually to avoid failure if one is missing
+        # Includes VNC groups per user request
+        target_groups = ["sudo", "dialout", "video", "input", "plugdev", "audio", "vnc", "novnc"]
+        for g in target_groups:
+            subprocess.run(f"sudo usermod -aG {g} {u} 2>/dev/null", shell=True)
         
         # V11.4: Provision Desktop Icons for the new user
         desktop_dir = f"/home/{u}/Desktop"
@@ -100,6 +105,7 @@ class UserWizard:
         
         subprocess.run(f"sudo chmod +x {desktop_dir}/*.desktop", shell=True)
         subprocess.run(f"sudo chown -R {u}:{u} /home/{u}", shell=True)
+
 
         
         if self.chk_autologin.get():
