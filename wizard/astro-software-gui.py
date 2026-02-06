@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
-import subprocess, os, threading, shutil, sys
+import subprocess, os, threading, shutil, sys, time
+
 from PIL import Image, ImageTk
 import urllib.request
 import json
@@ -27,7 +28,7 @@ def check_ping():
         subprocess.check_output(["ping", "-c", "1", "-W", "1", "8.8.8.8"])
         return True
     except: return False
-    except: return False
+
 
 def kill_apt_locks():
     try:
