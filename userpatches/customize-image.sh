@@ -17,7 +17,12 @@ echo -e "${BLUE}=== AstroOrange Distro Construction (2-Stage CLEAN) ===${NC}"
 REM_SRC="/tmp/remaster-source"
 UP_SRC="$REM_SRC/userpatches"
 
+# ==================== 0.1 AUTOMATION (V13.2.4) ====================
+export DEBIAN_FRONTEND=noninteractive
+APT_OPTS="-y --no-install-recommends -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
+
 # ==================== 1. DEPENDENCIAS BASE ====================
+echo -e "${GREEN}[1/5] Installing Base System...${NC}"
 
 
 # Repositorios (Mozilla PPA para Firefox)
