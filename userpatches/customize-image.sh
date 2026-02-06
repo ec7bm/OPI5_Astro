@@ -137,11 +137,12 @@ mkdir -p "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
 # UP_SRC defined at top
 
 
-# Copiar configuraciones XFCE desde el repo
-cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
-cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
-cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
-cp "$UP_SRC/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
+# Copiar configuraciones XFCE desde el repo (V13.2.2 Path Fix)
+cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
+cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
+cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
+cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
+
 
 # Fix wallpaper path (PNG instead of JPG)
 sed -i 's/astro-wallpaper.jpg/astro-wallpaper.png/g' "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
@@ -156,14 +157,16 @@ REM_SRC="/tmp/remaster-source"
 
 echo "   📜 Installing scripts and services from repository..."
 
-# Scripts
+# Scripts (V13.2.2 MASTER PATHS)
 cp "$REM_SRC/scripts/astro-network.sh" "$OPT_DIR/bin/"
 cp "$REM_SRC/scripts/astro-vnc.sh" "$OPT_DIR/bin/"
 chmod +x "$OPT_DIR/bin/"*.sh
 
-# Systemd Services
+
+# Systemd Services (V13.2.2 MASTER PATHS)
 cp "$REM_SRC/systemd/astro-network.service" /etc/systemd/system/
 cp "$REM_SRC/systemd/astro-vnc.service" /etc/systemd/system/
+
 
 # Habilitar servicios
 systemctl enable astro-network.service
