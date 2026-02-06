@@ -301,7 +301,8 @@ class SoftWizard:
     def _do_install(self):
         # Limpiar log previo
         if os.path.exists("/tmp/astro_wizard.log"): os.remove("/tmp/astro_wizard.log")
-        self.log("--- INICIANDO PROCESO SEGURO V11.17 ---")
+        self.log("--- INICIANDO PROCESO SEGURO V11.18 ---")
+
 
         for attempt in range(1, 4):
             self.log(f"Intento {attempt}/3: Liberando bloqueos...")
