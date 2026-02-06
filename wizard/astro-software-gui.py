@@ -1,9 +1,8 @@
-# [ASTRO-ARMOR-BLOCK-V12-START]
-# ******************************************************************************
-# * ASTROORANGE BULLETPROOF WIZARD V12.0                                      *
-# * ESTA VERSION INCLUYE PROTECCIÓN DE HILOS ATÓMICA Y BYPASS DE CACHE TOTAL  *
-# ******************************************************************************
+#!/usr/bin/env python3
+# AstroOrange Software Installer V12.0 MASTER
+# Build: 2026-02-06
 import tkinter as tk
+
 
 
 
