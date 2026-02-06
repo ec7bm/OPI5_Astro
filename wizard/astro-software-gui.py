@@ -57,10 +57,13 @@ def kill_apt_locks():
         env['DEBIAN_FRONTEND'] = 'noninteractive'
         subprocess.run("sudo dpkg --configure -a", shell=True, env=env, timeout=60)
         
-        # 5. Reparar dependencias rotas (V11.9)
-        subprocess.run("sudo apt-get install -f -y", shell=True, env=env, timeout=120)
+        # 5. Reparar dependencias rotas y limpiar (V11.10 aggressive)
+        subprocess.run("sudo apt-get install -y --fix-broken --fix-missing", shell=True, env=env, timeout=120)
+        subprocess.run("sudo apt-get autoremove -y", shell=True, env=env, timeout=60)
+        subprocess.run("sudo apt-get clean", shell=True, env=env, timeout=30)
     except Exception as e:
         print(f"[DEBUG] kill_apt_locks error: {e}")
+
 
 
 class SoftWizard:
