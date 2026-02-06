@@ -318,23 +318,12 @@ class SoftWizard:
         try: subprocess.run(f"sudo touch {LOG_FILE} && sudo chmod 666 {LOG_FILE}", shell=True)
         except: pass
         
-        self.log("--- INICIANDO PROCESO ULTRA-SEGURO V11.22 ---")
+        self.log("--- INICIANDO PROCESO PURE V11.24 ---")
         
-        # 1. Crear SWAP temporal (V11.22 Fast Start con fallocate)
-        if not os.path.exists("/swap_wiz"):
-            self.log("Preparando memoria extra (Rápido)...")
-            subprocess.run("sudo fallocate -l 2G /swap_wiz && sudo chmod 600 /swap_wiz && sudo mkswap /swap_wiz && sudo swapon /swap_wiz", shell=True)
-            self.log("   SWAP de emergencia activado (+2GB)")
-        else:
-            self.log("Memoria extra ya activa.")
-            # Asegurar que esté encendido
-            subprocess.run("sudo swapon /swap_wiz 2>/dev/null", shell=True)
-
-
-
-
+        # V11.24: Removido SWAP por petición de usuario (Causaba cuelgues)
 
         for attempt in range(1, 4):
+
             self.log(f"Intento {attempt}/3: Liberando bloqueos...")
             kill_apt_locks()
             try:
