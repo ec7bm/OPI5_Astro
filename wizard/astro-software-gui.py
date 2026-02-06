@@ -80,8 +80,9 @@ class SoftWizard:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("AstroOrange Software Installer V11.6.2")
+        self.root.title("AstroOrange Software Installer V11.14 (PRO)")
         self.root.geometry("900x800")
+
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
         
@@ -313,18 +314,21 @@ class SoftWizard:
                 else:
                     if info.get('ppa'): 
                         self.log(f"   Añadiendo repositorio {info['ppa']}...")
-                        # V11.13: Refuerzo GPG y timeout para evitar cuelgues infinitos
-                        cmd_ppa = f"sudo GNUPGHOME=/tmp/gpg_tmp add-apt-repository -y {info['ppa']}"
-                        subprocess.run("mkdir -p /tmp/gpg_tmp && chmod 700 /tmp/gpg_tmp", shell=True)
+                        self.log("   (Esto puede tardar 2-3 min si el servidor de llaves está saturado)")
+                        
+                        # V11.14: Forzar puerto 80 para GPG por si el puerto 11371 está bloqueado
+                        cmd_ppa = f"sudo add-apt-repository -y --keyserver hkp://keyserver.ubuntu.com:80 {info['ppa']}"
                         
                         res = subprocess.Popen(cmd_ppa, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                         if res.stdout:
                             for line in res.stdout: 
                                 self.log(f"      {line.strip()}")
-                                self.root.update() # Forzar dibujado de cada línea
-                        res.wait(timeout=180) # 3 minutos máximo para el PPA
+                                self.root.update()
+                        res.wait(timeout=300) # 5 minutos para el PPA (GPG es lento)
+                        
                         self.log("   Actualizando lista de paquetes...")
                         subprocess.run("sudo apt-get update", shell=True)
+
 
                     
                     f = "--reinstall" if n in self.reinstall_list else ""
