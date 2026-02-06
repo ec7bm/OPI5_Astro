@@ -1,7 +1,8 @@
-# [ASTRO-UNIQUE-ID: ASTR-999-XYZ-777]
-# VERSION DEFINITIVA 11.23 - EVITANDO CACHE DE GITHUB
-# FECHA: 06-02-2026 20:40
+# [ASTRO-UNIQUE-ID: ASTR-1124-PURE-STABLE]
+# VERSION PURE 11.24 - REMOVIDO SWAP (V8)
+# FECHA: 06-02-2026 20:50
 import tkinter as tk
+
 
 from tkinter import messagebox, scrolledtext
 import subprocess, os, threading, shutil, sys, time
@@ -83,9 +84,10 @@ def kill_apt_locks():
 class SoftWizard:
 
     def __init__(self, root):
-        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 11.23 (ULTRA-FINAL) <<<")
+        print("\n[ASTRO-SISTEMA] >>> CARGANDO VERSION 11.24 (PURE-INSTALL) <<<")
         self.root = root
-        self.root.title("AstroOrange Software Installer V11.23 (STABLE)")
+        self.root.title("AstroOrange Software Installer V11.24 (PURE)")
+
 
 
 
