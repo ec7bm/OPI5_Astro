@@ -1,4 +1,6 @@
 import subprocess, threading, os, time
+import tkinter as tk
+from tkinter import messagebox, ttk
 import i18n
 
 
