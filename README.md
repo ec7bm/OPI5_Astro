@@ -25,7 +25,7 @@ AstroOrange V2 is a Linux distribution based on **Ubuntu 22.04 Jammy Server** op
 #### Option A: Flash Image (Recommended)
 1. **Download Image**: 👉 **[DOWNLOAD V10.5 IMAGE](https://drive.google.com/file/d/1OJC6SG5Xz9yCOAx54TYCOTiOPzPo2YKY/view?usp=drive_link)**
 2. Flash to microSD using [balenaEtcher](https://www.balena.io/etcher/).
-3. Boot and connect to WiFi: `AstroOrange-Setup` (Pass: `astrosetup`).
+3. Boot and connect to WiFi: `AstroOrange-Autostart` (Pass: `astroorange`).
 
 #### Option B: Universal Script
 Run on existing Armbian/Ubuntu system:
@@ -56,7 +56,7 @@ python3 astro-setup-wizard.py
 AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server** optimizada para astrofotografía. Diseñada para funcionar en **Orange Pi 5 Pro**.
 
 ### Características Principales
-- 🛰️ **Hotspot de rescate automático** - Acceso garantizado sin WiFi (`AstroOrange-Setup` / `astrosetup`).
+- 🛰️ **Hotspot de rescate automático** - Acceso garantizado sin WiFi (`AstroOrange-Autostart` / `astroorange`).
 - 🖥️ **Escritorio remoto VNC** - Control desde navegador web (noVNC).
 - 🧙 **Wizard de configuración V13.0 (MASTER)** - Setup guiado multilingüe con UI premium.
   - **Nuevo**: Soporte completo para **Español e Inglés**.
@@ -76,7 +76,7 @@ AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server*
    👉 **[DESCARGAR IMAGEN V10.5 AQUÍ](https://drive.google.com/file/d/1OJC6SG5Xz9yCOAx54TYCOTiOPzPo2YKY/view?usp=drive_link)**
 
 2. **Flashea** en tu microSD con [balenaEtcher](https://www.balena.io/etcher/).
-3. **Arranca** tu Orange Pi 5 Pro y conéctate al WiFi `AstroOrange-Setup` (Clave: `astrosetup`).
+3. **Arranca** tu Orange Pi 5 Pro y conéctate al WiFi `AstroOrange-Autostart` (Clave: `astroorange`).
 
 #### 🛠️ Opción B: Script Universal
 **Para sistemas existentes (Armbian/Ubuntu).**

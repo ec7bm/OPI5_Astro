@@ -11,12 +11,18 @@ BTN_FG = "#e2e8f0"      # Color de texto de botones secundarios
 class SetupOrchestrator:
     def __init__(self, root):
         self.root = root
+        self.wizard_dir = "/opt/astroorange/wizard"
         
-        # V13.0: Verificación inicial de idioma
+        # V14.0: Absolute First Step - Language Selection
         if not os.path.exists(i18n.LANG_FILE):
-             self.open_tool("astro-language-selector.py", wait=True)
-             
-        self.root.title(f"AstroOrange Setup V7.5 ({i18n.get_lang().upper()})")
+             # Force window to be invisible while selector runs
+             self.root.withdraw()
+             lang_script = f"{self.wizard_dir}/astro-language-selector.py"
+             subprocess.run([sys.executable, lang_script], check=False)
+             # i18n get_lang() reads file dynamically, so labels will be correct now
+             self.root.deiconify()
+
+        self.root.title(f"AstroOrange Setup V14.0 ({i18n.get_lang().upper()})")
 
         self.root.geometry("600x650") 
         self.root.configure(bg=BG_COLOR)

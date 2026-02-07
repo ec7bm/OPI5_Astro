@@ -63,21 +63,22 @@ groupadd vnc || true
 groupadd novnc || true
 
 
-# ==================== 2. USUARIO SETUP (TEMPORAL) ====================
-echo -e "${GREEN}[2/5] Creating Setup User...${NC}"
-SETUP_USER="astro-setup"
-SETUP_PASS="setup"
+# ==================== 2. CONFIGURACIÓN USUARIO (V14.0) ====================
+echo -e "${GREEN}[2/5] Configuring primary user (orangepi)...${NC}"
+SETUP_USER="orangepi"
+SETUP_PASS="orangepi"
 
+# Asegurar que el usuario existe (Armbian suele traerlo, pero forzamos por seguridad)
 if ! id "$SETUP_USER" &>/dev/null; then
     useradd -m -s /bin/bash -G sudo,dialout,video,input "$SETUP_USER"
-    echo "$SETUP_USER:$SETUP_PASS" | chpasswd
 fi
+echo "$SETUP_USER:$SETUP_PASS" | chpasswd
 
-# NOPASSWD para el wizard
+# NOPASSWD para el wizard y herramientas administrativas
 echo "$SETUP_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/astro-setup
 chmod 0440 /etc/sudoers.d/astro-setup
 
-# Configurar LightDM para autologin en SETUP
+# Configurar LightDM para autologin en ORANGEPI
 mkdir -p /etc/lightdm/lightdm.conf.d
 cat <<EOF > /etc/lightdm/lightdm.conf.d/50-setup.conf
 [Seat:*]
@@ -128,6 +129,9 @@ mkdir -p "$OPT_DIR/assets/gallery"
 if [ -d "$REM_SRC/userpatches/gallery" ]; then
     cp "$REM_SRC/userpatches/gallery/"*.png "$OPT_DIR/assets/gallery/" 2>/dev/null || true
 fi
+
+# V14.0: Ensure orangepi is in vnc groups
+usermod -aG vnc,novnc $SETUP_USER || true
 
 
 # --- 0.1 XFCE Theme Configuration (Arc + Papirus) ---

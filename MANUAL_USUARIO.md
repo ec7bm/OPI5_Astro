@@ -60,8 +60,8 @@ AstroOrange V2 es un sistema operativo basado en **Ubuntu 22.04 Jammy Server** d
 ### Opción B: Sin Cable (Hotspot de Rescate)
 
 Si no tienes cable a mano, el sistema activará un Hotspot propio:
-- 📶 **Nombre (SSID):** `AstroOrange-Setup`
-- 🔐 **Contraseña:** `astrosetup`
+- 📶 **Nombre (SSID):** `AstroOrange-Autostart`
+- 🔐 **Contraseña:** `astroorange`
 - 🌐 **Acceso VNC:** `http://10.42.0.1:6080/vnc.html`
 
 ---
@@ -131,8 +131,8 @@ Si no usas la imagen AstroOrange pero quieres usar estas herramientas en tu prop
 
 1. **Lleva tu Orange Pi al campo** (sin cable Ethernet)
 2. **Enciende el sistema** - Espera 45 segundos
-3. **Busca la red** `AstroOrange-Setup` en tu móvil/tablet
-4. **Conéctate** con la contraseña `astrosetup`
+3. **Busca la red** `AstroOrange-Autostart` en tu móvil/tablet
+4. **Conéctate** con la contraseña `astroorange`
 5. **Abre el navegador** y accede a `http://10.42.0.1:6080/vnc.html`
 6. **Inicia KStars/INDI** y conecta tu telescopio
 

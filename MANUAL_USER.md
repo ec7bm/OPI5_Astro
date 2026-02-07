@@ -62,8 +62,8 @@ AstroOrange V2 is an operating system based on **Ubuntu 22.04 Jammy Server**, sp
 ### Option B: Wireless (Rescue Hotspot)
 
 If no cable is available, the system activates its own Hotspot:
-- 📶 **Name (SSID):** `AstroOrange-Setup`
-- 🔐 **Password:** `astrosetup`
+- 📶 **Name (SSID):** `AstroOrange-Autostart`
+- 🔐 **Password:** `astroorange`
 - 🌐 **VNC Access:** `http://10.42.0.1:6080/vnc.html`
 
 ---
@@ -133,8 +133,8 @@ If you are not using the AstroOrange image but want to use these tools on your o
 
 1. **Bring Orange Pi to the field** (no Ethernet).
 2. **Power on** - Wait 45 seconds.
-3. **Connect to WiFi** `AstroOrange-Setup` on your phone/tablet.
-4. **Password**: `astrosetup`
+3. **Connect to WiFi** `AstroOrange-Autostart` on your phone/tablet.
+4. **Password**: `astroorange`
 5. **Open Browser**: `http://10.42.0.1:6080/vnc.html`
 6. **Start KStars/INDI** and connect telescope.
 

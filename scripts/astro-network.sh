@@ -48,12 +48,12 @@ kill_hotspot() {
 start_hotspot() {
     log "⚠️ Starting Rescue Hotspot (Final Fallback)..."
     kill_hotspot
-    sudo nmcli con add type wifi ifname "$WIFI_IFACE" con-name "astroorange-ap" autoconnect no ssid "AstroOrange-Setup" mode ap connection.interface-name "$WIFI_IFACE" >> "$LOGFILE" 2>&1
+    sudo nmcli con add type wifi ifname "$WIFI_IFACE" con-name "astroorange-ap" autoconnect no ssid "AstroOrange-Autostart" mode ap connection.interface-name "$WIFI_IFACE" >> "$LOGFILE" 2>&1
     sudo nmcli con modify "astroorange-ap" ipv4.method shared ipv4.addresses 10.42.0.1/24 >> "$LOGFILE" 2>&1
-    sudo nmcli con modify "astroorange-ap" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "astrosetup" >> "$LOGFILE" 2>&1
+    sudo nmcli con modify "astroorange-ap" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "astroorange" >> "$LOGFILE" 2>&1
     sudo nmcli con modify "astroorange-ap" 802-11-wireless.band bg >> "$LOGFILE" 2>&1
     sudo nmcli con up "astroorange-ap" >> "$LOGFILE" 2>&1
-    log "🔥 Hotspot 'AstroOrange-Setup' is ACTIVE on $WIFI_IFACE"
+    log "🔥 Hotspot 'AstroOrange-Autostart' is ACTIVE on $WIFI_IFACE"
 }
 
 log "Starting Watchdog Logic..."

@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=AstroSetup Autostart
+Name=AstroOrange Wizard
 Exec=sudo python3 /opt/astroorange/wizard/astro-setup-wizard.py --autostart
 OnlyShowIn=XFCE;
 RunHook=0
