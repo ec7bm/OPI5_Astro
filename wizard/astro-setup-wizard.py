@@ -1,4 +1,6 @@
 import subprocess, sys, os
+import tkinter as tk
+from tkinter import messagebox, ttk
 import i18n
 
 
