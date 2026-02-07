@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # ==================== PATHS ====================
-BASE_DIR="$(pwd)"
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 WORK_DIR="$BASE_DIR/remaster-work"
 MOUNT_DIR="$WORK_DIR/mount"
 IMAGE_BASE_DIR="$BASE_DIR/image-base"
@@ -75,20 +75,23 @@ cp /etc/resolv.conf "$MOUNT_DIR/etc/resolv.conf"
 echo -e '#!/bin/sh\nexit 101' > "$MOUNT_DIR/usr/sbin/policy-rc.d"
 chmod +x "$MOUNT_DIR/usr/sbin/policy-rc.d"
 
-# ==================== INJECT FILES ====================
+# ==================== INJECT FILES (V14.1 HARDENED) ====================
 echo -e "${GREEN}[5/7] Injecting AstroOrange components...${NC}"
 
-# V13.2.5 MASTER FIX: Atomic clean injection
+# V13.2.5/V14.1 MASTER FIX: Atomic clean injection
 REM_SRC="$MOUNT_DIR/tmp/remaster-source"
 rm -rf "$REM_SRC"
 mkdir -p "$REM_SRC"
 
-# Copiar directorios uno a uno asegurando la ruta plana (sin anidamiento)
+# Copiar directorios uno a uno asegurando la ruta plana
+# Usamos -av para VER exactamente qué se copia en el log
 for dir in scripts systemd wizard userpatches; do
     if [ -d "$BASE_DIR/$dir" ]; then
         echo "   📂 Injecting $dir..."
-        mkdir -p "$REM_SRC/$dir"
-        cp -af "$BASE_DIR/$dir/." "$REM_SRC/$dir/"
+        cp -av "$BASE_DIR/$dir" "$REM_SRC/"
+    else
+        echo -e "${RED}   ❌ ERROR: Source directory $BASE_DIR/$dir not found!${NC}"
+        exit 1
     fi
 done
 

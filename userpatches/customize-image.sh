@@ -134,27 +134,25 @@ fi
 usermod -aG vnc,novnc $SETUP_USER || true
 
 
-# --- 0.1 XFCE Theme Configuration (Arc + Papirus) ---
-# Configurar tema para el usuario setup (se heredará al usuario final)
+# --- 0.1 XFCE Theme Configuration (V14.1 Inheritance) ---
+# Deploy to /etc/skel so ALL users (including orangepi) inherit these settings
+SKEL_CONF="/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml"
+mkdir -p "$SKEL_CONF"
+
+# Copiar configuraciones XFCE al Master Template (/etc/skel)
+cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml" "$SKEL_CONF/"
+cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml" "$SKEL_CONF/"
+cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" "$SKEL_CONF/"
+cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "$SKEL_CONF/"
+
+# Fix wallpaper path in template
+sed -i 's/astro-wallpaper.jpg/astro-wallpaper.png/g' "$SKEL_CONF/xfce4-desktop.xml"
+
+# También aplicar directamente al home de orangepi por si ya existe
 SETUP_HOME="/home/$SETUP_USER"
 mkdir -p "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
-# UP_SRC defined at top
-
-
-# Copiar configuraciones XFCE desde el repo (V13.2.2 Path Fix)
-cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
-cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
-cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
-cp "$REM_SRC/userpatches/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/"
-
-
-# Fix wallpaper path (PNG instead of JPG)
-sed -i 's/astro-wallpaper.jpg/astro-wallpaper.png/g' "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
-
-# Asegurar que las carpetas existen y tienen permisos
+cp -r /etc/skel/.config/xfce4 "$SETUP_HOME/.config/"
 chown -R $SETUP_USER:$SETUP_USER "$SETUP_HOME" || true
-mkdir -p "$SETUP_HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
-chown -R $SETUP_USER:$SETUP_USER "$SETUP_HOME/.config"
 
 # --- A. Master Scripts & Services (/opt/astroorange) ---
 echo "   📜 Installing scripts and services from repository..."

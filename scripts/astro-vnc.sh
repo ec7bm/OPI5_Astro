@@ -16,6 +16,8 @@ for i in {1..30}; do
     # Try current logged in user (Standalone Ubuntu)
     if [ -z "$XAUTH" ]; then
         LOGGED_USER=$(who | awk '{print $1}' | head -n 1)
+        [ -z "$LOGGED_USER" ] && LOGGED_USER="orangepi"
+        
         if [ -n "$LOGGED_USER" ]; then
             XAUTH="/home/$LOGGED_USER/.Xauthority"
             [ ! -f "$XAUTH" ] && XAUTH=""
