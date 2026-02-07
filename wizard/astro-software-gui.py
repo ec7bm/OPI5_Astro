@@ -2,6 +2,8 @@
 # AstroOrange Software Installer V12.3 ATOMIC-FINAL
 # [UNIQUE-HASH-BYPASS: 9x8c7v6b5n4m3a2s1d0f9g8h7j6k5l4]
 # Build: 2026-02-06 22:20
+import subprocess
+import os
 import tkinter as tk
 
 
