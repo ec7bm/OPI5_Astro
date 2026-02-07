@@ -203,24 +203,32 @@ class SoftWizard:
         self.temp_nasa_files = [] 
         TARGET_SIZE = (500, 300)
 
+        # Try to download NASA APOD images if we have internet
         if check_ping():
             try:
+                print("[DEBUG] Descargando imágenes de NASA APOD...")
                 url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=5"
-                with urllib.request.urlopen(url, timeout=5) as response:
+                with urllib.request.urlopen(url, timeout=10) as response:
                     data = json.loads(response.read().decode())
+                    print(f"[DEBUG] Recibidas {len(data)} imágenes de NASA")
                     for i, item in enumerate(data):
                         if item.get('media_type') == 'image':
                             img_url = item.get('url')
                             nasa_path = f"/tmp/nasa_apod_{i}.jpg"
+                            print(f"[DEBUG] Descargando imagen {i+1}/5...")
                             urllib.request.urlretrieve(img_url, nasa_path)
                             self.temp_nasa_files.append(nasa_path)
                             try:
                                 img = Image.open(nasa_path)
                                 img = self.safe_resize(img, TARGET_SIZE)
-                                photo = ImageTk.PhotoImage(img)
-                                self.carousel_images.append(photo)
-                            except: pass
-            except: pass
+                                if img:
+                                    photo = ImageTk.PhotoImage(img)
+                                    self.carousel_images.append(photo)
+                                    print(f"[DEBUG] ✓ Imagen NASA {i+1} cargada")
+                            except Exception as e:
+                                print(f"[DEBUG] Error procesando imagen NASA {i}: {e}")
+            except Exception as e:
+                print(f"[DEBUG] Error descargando NASA APOD: {e}")
         
         image_files = ["andromeda.png", "spiral_galaxy.png", "carina_nebula.png", "orion_nebula.png", "pillars.png"]
         if os.path.exists(self.gallery_dir):
