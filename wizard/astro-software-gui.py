@@ -217,7 +217,7 @@ class SoftWizard:
                             except: pass
             except: pass
         
-        image_files = ["01-pillars.png", "02-spiral.png", "03-orion.png", "04-andromeda.png", "05-carina.png"]
+        image_files = ["andromeda.png", "spiral_galaxy.png", "carina_nebula.png", "orion_nebula.png", "pillars.png"]
         if os.path.exists(self.gallery_dir):
             for img_file in image_files:
                 img_path = os.path.join(self.gallery_dir, img_file)
