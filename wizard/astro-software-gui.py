@@ -188,9 +188,13 @@ class SoftWizard:
 
 
     def safe_resize(self, img, size):
+        if Image is None:
+            return None
         try:
+            # Try new API (Pillow 9.1+)
             return img.resize(size, Image.Resampling.LANCZOS)
-        except AttributeError:
+        except (AttributeError, NameError):
+            # Fallback to old API (Pillow < 9.1)
             return img.resize(size, Image.ANTIALIAS)
 
     def load_local_images(self):
