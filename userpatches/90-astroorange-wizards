@@ -1,0 +1,28 @@
+# AstroOrange Wizard Sudoers Configuration
+# Permite a orangepi ejecutar comandos de administración sin contraseña
+# para los wizards de configuración
+
+# Comandos de red
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/nmcli
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart NetworkManager
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/systemctl start NetworkManager
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop NetworkManager
+
+# Comandos de gestión de paquetes
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/apt-get
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/dpkg
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/add-apt-repository
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/wget
+
+# Comandos de gestión de usuarios
+orangepi ALL=(ALL) NOPASSWD: /usr/sbin/useradd
+orangepi ALL=(ALL) NOPASSWD: /usr/sbin/usermod
+orangepi ALL=(ALL) NOPASSWD: /usr/sbin/userdel
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/passwd
+
+# Comandos de sistema
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/touch
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/chmod
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/chown
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/mkdir
+orangepi ALL=(ALL) NOPASSWD: /usr/bin/tee

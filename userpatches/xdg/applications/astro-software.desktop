@@ -2,7 +2,7 @@
 Type=Application
 Name=Instalador Software
 Comment=Instalar software astronómico
-Exec=python3 /opt/astroorange/wizard/astro-software-gui.py
+Exec=/opt/astroorange/scripts/astro-wizard-launcher.sh /opt/astroorange/wizard/astro-software-gui.py
 Icon=system-software-install
 Categories=AstroOrange;Education;Science;
 Terminal=false

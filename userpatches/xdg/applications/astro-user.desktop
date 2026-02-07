@@ -2,7 +2,7 @@
 Type=Application
 Name=Usuarios
 Comment=Gestionar cuentas de usuario
-Exec=python3 /opt/astroorange/wizard/astro-user-gui.py
+Exec=/opt/astroorange/scripts/astro-wizard-launcher.sh /opt/astroorange/wizard/astro-user-gui.py
 Icon=system-users
 Categories=AstroOrange;System;Settings;
 Terminal=false

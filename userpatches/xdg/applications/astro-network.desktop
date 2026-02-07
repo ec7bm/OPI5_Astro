@@ -2,7 +2,7 @@
 Type=Application
 Name=Red (WiFi)
 Comment=Gestionar redes inalámbricas
-Exec=python3 /opt/astroorange/wizard/astro-network-gui.py
+Exec=/opt/astroorange/scripts/astro-wizard-launcher.sh /opt/astroorange/wizard/astro-network-gui.py
 Icon=network-wireless-hotspot
 Categories=AstroOrange;System;Network;
 Terminal=false
