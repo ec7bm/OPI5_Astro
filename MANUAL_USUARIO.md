@@ -109,15 +109,41 @@ Gracias a la **Arquitectura V5.0**, tienes 4 iconos independientes en tu escrito
 
 Si no usas la imagen AstroOrange pero quieres usar estas herramientas en tu propia instalación de Linux:
 
-1. **Instala dependencias**:
+1. **Clona el repositorio**:
    ```bash
-   sudo apt update && sudo apt install -y python3-tk python3-pil.imagetk
+   git clone https://github.com/ec7bm/OPI5_Astro.git
+   cd OPI5_Astro
    ```
 
-2. **Ejecuta los Wizards**:
+2. **Instala dependencias**:
    ```bash
-   cd /opt/astroorange/wizard  # O donde hayas clonado el repo
-   python3 astro-setup-wizard.py
+   sudo apt update
+   sudo apt install -y python3-tk python3-pil python3-pil.imagetk
+   ```
+
+3. **Instala los scripts y wizards**:
+   ```bash
+   sudo mkdir -p /opt/astroorange/{scripts,wizard}
+   sudo cp -r scripts/* /opt/astroorange/scripts/
+   sudo cp -r wizard/* /opt/astroorange/wizard/
+   sudo chmod +x /opt/astroorange/scripts/*.sh
+   ```
+
+4. **Configura sudoers** (necesario para que los wizards funcionen correctamente):
+   ```bash
+   sudo cp userpatches/90-astroorange-wizards /etc/sudoers.d/
+   sudo chmod 440 /etc/sudoers.d/90-astroorange-wizards
+   ```
+
+5. **Ejecuta los Wizards**:
+   ```bash
+   # Wizard principal (recomendado para primera vez)
+   python3 /opt/astroorange/wizard/astro-setup-wizard.py
+   
+   # O ejecuta wizards individuales:
+   python3 /opt/astroorange/wizard/astro-software-gui.py  # Instalador de software
+   python3 /opt/astroorange/wizard/astro-network-gui.py   # Gestor de red
+   python3 /opt/astroorange/wizard/astro-user-gui.py      # Gestor de usuarios
    ```
 
 

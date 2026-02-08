@@ -38,12 +38,26 @@ sudo ./install.sh
 #### Option C: Standalone Wizards
 If you only want to use the wizards on your own Linux system (Ubuntu/Debian):
 ```bash
-# 1. Install dependencies
-sudo apt install python3-tk python3-pil.imagetk
+# 1. Clone the repository
+git clone https://github.com/ec7bm/OPI5_Astro.git
+cd OPI5_Astro
 
-# 2. Run the Setup Panel
-cd OPI5_Astro/wizard
-python3 astro-setup-wizard.py
+# 2. Install dependencies
+sudo apt update
+sudo apt install -y python3-tk python3-pil python3-pil.imagetk
+
+# 3. Install scripts and wizards
+sudo mkdir -p /opt/astroorange/{scripts,wizard}
+sudo cp -r scripts/* /opt/astroorange/scripts/
+sudo cp -r wizard/* /opt/astroorange/wizard/
+sudo chmod +x /opt/astroorange/scripts/*.sh
+
+# 4. Configure sudoers (required for wizards)
+sudo cp userpatches/90-astroorange-wizards /etc/sudoers.d/
+sudo chmod 440 /etc/sudoers.d/90-astroorange-wizards
+
+# 5. Run the Setup Wizard
+python3 /opt/astroorange/wizard/astro-setup-wizard.py
 ```
 
 
@@ -90,12 +104,26 @@ sudo ./install.sh
 #### 🐍 Opción C: Ejecución Manual de Wizards
 Si solo quieres usar las herramientas gráficas en tu propio Linux:
 ```bash
-# 1. Instalar dependencias
-sudo apt install python3-tk python3-pil.imagetk
+# 1. Clonar el repositorio
+git clone https://github.com/ec7bm/OPI5_Astro.git
+cd OPI5_Astro
 
-# 2. Lanzar el panel maestros
-cd OPI5_Astro/wizard
-python3 astro-setup-wizard.py
+# 2. Instalar dependencias
+sudo apt update
+sudo apt install -y python3-tk python3-pil python3-pil.imagetk
+
+# 3. Instalar scripts y wizards
+sudo mkdir -p /opt/astroorange/{scripts,wizard}
+sudo cp -r scripts/* /opt/astroorange/scripts/
+sudo cp -r wizard/* /opt/astroorange/wizard/
+sudo chmod +x /opt/astroorange/scripts/*.sh
+
+# 4. Configurar sudoers (necesario para los wizards)
+sudo cp userpatches/90-astroorange-wizards /etc/sudoers.d/
+sudo chmod 440 /etc/sudoers.d/90-astroorange-wizards
+
+# 5. Ejecutar el wizard de configuración
+python3 /opt/astroorange/wizard/astro-setup-wizard.py
 ```
 
 
