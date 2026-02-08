@@ -43,9 +43,17 @@ class LanguageSelector:
     def save_lang(self):
         lang = self.lang_var.get()
         try:
-            os.makedirs(os.path.dirname(i18n.LANG_FILE), exist_ok=True)
-            with open(i18n.LANG_FILE, "w") as f:
-                f.write(lang)
+            import subprocess
+            # Create directory with sudo
+            dir_path = os.path.dirname(i18n.LANG_FILE)
+            subprocess.run(f"sudo mkdir -p {dir_path}", shell=True, check=True)
+            
+            # Write language file with sudo
+            subprocess.run(f"echo '{lang}' | sudo tee {i18n.LANG_FILE} > /dev/null", shell=True, check=True)
+            
+            # Set proper permissions
+            subprocess.run(f"sudo chmod 644 {i18n.LANG_FILE}", shell=True, check=True)
+            
             messagebox.showinfo(i18n.t("select_language"), i18n.t("restart_msg"))
             self.root.destroy()
         except Exception as e:
