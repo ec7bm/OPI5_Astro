@@ -6,25 +6,30 @@ export DISPLAY=:0
 export HOME=/root
 rm -f /tmp/.X0-lock
 
-# 1. Buscar Xauthority (LightDM fallback to User)
+# 1. Buscar Xauthority (Robust detection for any user)
 echo "Searching for Xauthority..."
 XAUTH=""
 for i in {1..30}; do
-    # Try LightDM path (official image)
+    # Try LightDM path (official image/system sessions)
     XAUTH=$(find /var/run/lightdm /run/lightdm -name ":0*" 2>/dev/null | head -n 1)
     
-    # Try current logged in user (Standalone Ubuntu)
+    # Try to find the user actually logged into Display :0
     if [ -z "$XAUTH" ]; then
-        LOGGED_USER=$(who | awk '{print $1}' | head -n 1)
-        [ -z "$LOGGED_USER" ] && LOGGED_USER="orangepi"
+        # Look for the user in 'who' output associated with (:0)
+        LOGGED_USER=$(who | grep "(:0)" | awk '{print $1}' | head -n 1)
         
-        if [ -n "$LOGGED_USER" ]; then
+        # Fallback to any user folder containing .Xauthority if only one exists
+        if [ -z "$LOGGED_USER" ]; then
+            XAUTH=$(find /home -maxdepth 2 -name ".Xauthority" 2>/dev/null | head -n 1)
+        else
             XAUTH="/home/$LOGGED_USER/.Xauthority"
-            [ ! -f "$XAUTH" ] && XAUTH=""
         fi
+        
+        [ ! -f "$XAUTH" ] && XAUTH=""
     fi
     
     [ -n "$XAUTH" ] && break
+    echo "   ...waiting for session (:0) [$i/30]"
     sleep 1
 done
 export XAUTHORITY=$XAUTH

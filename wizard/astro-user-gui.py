@@ -104,7 +104,7 @@ class UserWizard:
             subprocess.check_call(f"echo '{u}:{p}' | sudo chpasswd", shell=True)
             
             # V11.4.1: Add groups individually to avoid failure if one is missing
-            target_groups = ["sudo", "dialout", "video", "input", "plugdev", "audio", "vnc", "novnc"]
+            target_groups = ["sudo", "dialout", "video", "render", "input", "plugdev", "audio", "vnc", "novnc"]
             for g in target_groups:
                 subprocess.run(f"sudo groupadd {g} 2>/dev/null", shell=True)
                 subprocess.run(f"sudo usermod -aG {g} {u} 2>/dev/null", shell=True)
