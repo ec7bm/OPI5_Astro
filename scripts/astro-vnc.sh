@@ -12,16 +12,16 @@ echo "AstroOrange VNC Diagnostic Start: $(date)"
 echo "--------------------------------------------------"
 
 XAUTH=""
-for i in {1..45}; do
+for i in {1..30}; do
     echo "Attempt $i: Searching for X session..."
     
-    # Method A: LightDM run directory (Fastest/Official)
-    XAUTH=$(find /var/run/lightdm /run/lightdm -name ":0*" 2>/dev/null | head -n 1)
-    
-    # Method B: Process discovery (Most reliable)
+    # Method A: Process discovery (Most reliable)
     # Search for the -auth flag in the running Xorg/X server process
+    XAUTH=$(ps aux | grep -w Xorg | grep -v grep | grep -oP '(?<=-auth )[^ ]+' | head -n 1)
+    
+    # Method B: LightDM run directory 
     if [ -z "$XAUTH" ]; then
-        XAUTH=$(ps aux | grep -w Xorg | grep -v grep | grep -oP '(?<=-auth )[^ ]+' | head -n 1)
+        XAUTH=$(find /var/run/lightdm /run/lightdm -name ":0*" 2>/dev/null | head -n 1)
     fi
 
     # Method C: Active Desktop User
@@ -32,13 +32,8 @@ for i in {1..45}; do
         fi
     fi
 
-    # Method D: Global fallback search
-    if [ -z "$XAUTH" ]; then
-        XAUTH=$(find /home -maxdepth 2 -name ".Xauthority" 2>/dev/null | head -n 1)
-    fi
-
     if [ -n "$XAUTH" ] && [ -f "$XAUTH" ]; then
-        echo "Found Xauthority: $XAUTH"
+        echo "LOG: Found Xauthority: $XAUTH"
         export XAUTHORITY=$XAUTH
         break
     fi
@@ -47,18 +42,13 @@ for i in {1..45}; do
     sleep 2
 done
 
-if [ -z "$XAUTHORITY" ]; then
-    echo "WARNING: No Xauthority found after 90s. VNC might fail."
-fi
-
-# 2. Esperar servidor X (with specific authority)
+# 2. Esperar servidor X (with specific authority if found)
 echo "Waiting for X server on :0..."
 for i in {1..20}; do
     if xset -display :0 q &>/dev/null; then
-        echo "X Server is READY."
+        echo "LOG: X Server is READY."
         break
     fi
-    echo "   ...waiting for X server (:0) [$i/20]"
     sleep 1
 done
 
@@ -71,25 +61,26 @@ fi
 
 echo "Starting x11vnc..."
 pkill x11vnc || true
+sleep 1
 
 # Common base flags
-X11VNC_FLAGS="-display :0 -forever -rfbauth $VNC_PASS -shared -bg -noxrecord -noxfixes -noxdamage"
+COMMON_FLAGS="-display :0 -forever -rfbauth $VNC_PASS -shared -bg -noxrecord -noxfixes -noxdamage"
 
 if [ -n "$XAUTHORITY" ]; then
-    echo "Launching x11vnc with explicit auth..."
-    x11vnc -auth "$XAUTHORITY" $X11VNC_FLAGS
+    echo "LOG: Launching x11vnc with explicit auth ($XAUTHORITY)"
+    x11vnc -auth "$XAUTHORITY" $COMMON_FLAGS
 else
-    echo "Launching x11vnc with auto-discovery fallback..."
-    x11vnc -find $X11VNC_FLAGS
+    echo "LOG: Launching x11vnc with AUTO-GUESS fallback"
+    x11vnc -findauth $COMMON_FLAGS
 fi
 
-# 4. Lanzar noVNC y BLOQUEAR el script para que systemd no lo reinicie
+# 4. Lanzar noVNC y BLOQUEAR para systemd
 echo "Starting noVNC proxy on port 6080..."
 if [ -f "/usr/share/novnc/utils/launch.sh" ]; then
     /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080
 elif [ -f "/usr/bin/novnc_proxy" ]; then
     /usr/bin/novnc_proxy --vnc localhost:5900 --listen 6080
 else
-    echo "ERROR: noVNC not found. Waiting indefinitely to avoid service loop..."
+    echo "ERROR: noVNC not found. Waiting indefinitely..."
     while true; do sleep 60; done
 fi
