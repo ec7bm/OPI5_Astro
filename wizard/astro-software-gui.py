@@ -39,11 +39,16 @@ SOFTWARE = {
 CAROUSEL_EMOJIS = ["🔭", "🌌", "⭐", "🪐", "🌠"]
 
 def check_ping():
-    try:
-        subprocess.check_output(["ping", "-c", "1", "-W", "1", "8.8.8.8"])
-        return True
-    except:
-        return False
+    # Improved check: Try multiple hosts and a longer timeout for robustness
+    hosts = ["8.8.8.8", "1.1.1.1", "google.com"]
+    for host in hosts:
+        try:
+            # -W 3 (Wait up to 3 seconds), -c 1 (1 packet)
+            subprocess.check_output(["ping", "-c", "1", "-W", "3", host], stderr=subprocess.STDOUT)
+            return True
+        except:
+            continue
+    return False
 
 def kill_apt_locks():
     try:
