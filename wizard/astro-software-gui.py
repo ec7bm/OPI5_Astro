@@ -327,28 +327,44 @@ class SoftWizard:
 
     def create_shortcut(self, name, bin_name):
         try:
-            # Obtener el usuario real (no root)
-            real_user = os.environ.get('SUDO_USER') or os.environ.get('USER')
-            if real_user == 'root': return
-            
-            # Intentar encontrar la ruta real del binario si bin_name es solo el nombre
+            # V14.4 Nuclear Icon Placement: Copy to all users AND skel
             full_bin_path = shutil.which(bin_name) or f"/usr/bin/{bin_name}"
-            
-            desktop_dir = f"/home/{real_user}/Desktop"
-
-            if not os.path.exists(desktop_dir): 
-                os.makedirs(desktop_dir, exist_ok=True)
-                shutil.chown(desktop_dir, user=real_user, group=real_user)
             filename = f"{bin_name}.desktop"
-            path = os.path.join(desktop_dir, filename)
             icon_name = SOFTWARE.get(name, {}).get("icon", bin_name)
-            with open(path, "w") as f:
-                f.write(f"[Desktop Entry]\nType=Application\nName={name}\nExec={bin_name}\nIcon={icon_name}\nTerminal=false\n")
-            os.chmod(path, 0o755)
-            shutil.chown(path, user=real_user, group=real_user)
-            self.log(f"✨ Icono creado: {name}")
+            
+            content = f"[Desktop Entry]\nType=Application\nName={name}\nExec={bin_name}\nIcon={icon_name}\nTerminal=false\n"
+            
+            # List of targets: all users in /home + /etc/skel
+            targets = []
+            if os.path.exists("/etc/skel"):
+                targets.append("/etc/skel/Desktop")
+            
+            if os.path.exists("/home"):
+                for u in os.listdir("/home"):
+                    u_path = os.path.join("/home", u)
+                    if os.path.isdir(u_path):
+                        targets.append(os.path.join(u_path, "Desktop"))
+
+            for desktop_dir in targets:
+                try:
+                    os.makedirs(desktop_dir, exist_ok=True)
+                    path = os.path.join(desktop_dir, filename)
+                    with open(path, "w") as f:
+                        f.write(content)
+                    
+                    os.chmod(path, 0o755)
+                    
+                    # Fix ownership if it's subfolder of /home/user
+                    if desktop_dir.startswith("/home/"):
+                        parts = desktop_dir.split("/")
+                        if len(parts) >= 3:
+                            username = parts[2]
+                            subprocess.run(f"sudo chown -R {username}:{username} {desktop_dir}", shell=True)
+                except: continue
+
+            self.log(f"✨ Iconos creados para todos los usuarios: {name}")
         except Exception as e:
-            self.log(f"⚠️ Error icono: {str(e)}")
+            self.log(f"⚠️ Error iconos: {str(e)}")
 
     def stop_install(self):
         if self.proc and self.proc.poll() is None:
