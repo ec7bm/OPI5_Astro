@@ -133,7 +133,8 @@ class UserWizard:
                 subprocess.run(["sync"])
                 time.sleep(1)
             
-            messagebox.showinfo("Éxito", f"Usuario '{u}' creado correctamente.")
+            messagebox.showinfo(i18n.t("reboot_required"), i18n.t("reboot_msg"))
+            subprocess.run("sudo reboot", shell=True)
             self.root.destroy()
             
         except Exception as e:

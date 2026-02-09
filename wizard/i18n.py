@@ -73,7 +73,9 @@ TRANSLATIONS = {
         "language_en": "English",
         "language_es": "Español",
         "save": "GUARDAR",
-        "restart_msg": "Reinicia los asistentes para aplicar el idioma."
+        "restart_msg": "Reinicia los asistentes para aplicar el idioma.",
+        "reboot_required": "REINICIO REQUERIDO",
+        "reboot_msg": "El usuario ha sido creado. El sistema se reiniciará ahora para aplicar todos los cambios de sesión. Por favor, vuelve a entrar con tu nuevo usuario."
     },
     "en": {
         "welcome": "Welcome to AstroOrange!",
@@ -145,7 +147,9 @@ TRANSLATIONS = {
         "language_en": "English",
         "language_es": "Español",
         "save": "SAVE",
-        "restart_msg": "Restart the wizards to apply the language."
+        "restart_msg": "Restart the wizards to apply the language.",
+        "reboot_required": "REBOOT REQUIRED",
+        "reboot_msg": "The user has been created. The system will reboot now to apply all session changes. Please log back in with your new user."
     }
 }
 
