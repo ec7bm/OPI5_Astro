@@ -1,4 +1,4 @@
-import subprocess, sys, os
+import subprocess, sys, os, getpass
 import tkinter as tk
 from tkinter import messagebox, ttk
 import i18n
@@ -93,7 +93,11 @@ class SetupOrchestrator:
         frm_tools = tk.Frame(self.main_content, bg=BG_COLOR)
         frm_tools.pack(fill="x")
         
-        self.create_tool_btn(frm_tools, i18n.t("config_user"), self.icons.get('user'), self.open_user_tool)
+        user_txt = i18n.t("config_user")
+        if self.is_custom_user():
+            user_txt += f" ({i18n.t('done')})"
+            
+        self.create_tool_btn(frm_tools, user_txt, self.icons.get('user'), self.open_user_tool)
         self.create_tool_btn(frm_tools, i18n.t("config_wifi"), self.icons.get('wifi'), self.open_net_tool)
         self.create_tool_btn(frm_tools, i18n.t("install_soft"), self.icons.get('soft'), self.open_soft_tool)
         self.create_tool_btn(frm_tools, i18n.t("select_language"), None, self.open_lang_tool)
@@ -134,8 +138,16 @@ class SetupOrchestrator:
              subprocess.run(f"sudo rm -f {flag_file}", shell=True)
 
 
+    def is_custom_user(self):
+        """Detecta si no somos el usuario por defecto 'orangepi'"""
+        return getpass.getuser() != "orangepi"
+
     def run_tutorial(self):
-        self.open_user_tool(wait=True)
+        # V14.4: Saltar creación de usuario si ya estamos en una sesión personalizada
+        if not self.is_custom_user():
+            self.open_user_tool(wait=True)
+            # Nota: Si se crea el usuario, el sistema se reinicia solo en astro-user-gui.py
+        
         self.ask_next_step("Setup", i18n.t("ask_wifi"), self.open_net_tool)
         self.ask_next_step("Setup", i18n.t("ask_software"), self.open_soft_tool)
         messagebox.showinfo("AstroOrange", i18n.t("tutorial_complete"))
