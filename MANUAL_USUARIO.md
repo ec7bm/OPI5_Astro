@@ -20,7 +20,7 @@ AstroOrange V2 es un sistema operativo basado en **Ubuntu 22.04 Jammy Server** d
 
 - ✅ **Hotspot de rescate automático** - Siempre accesible sin WiFi
 - ✅ **Escritorio remoto VNC (noVNC)** - Control desde cualquier navegador
-- ✅ **Wizard de configuración V13.0 (MASTER)** - Setup guiado multilingüe con interfaz premium
+- ✅ **Wizard de configuración V1.0 (OFICIAL)** - Setup guiado multilingüe con interfaz premium
 
   - **Paso 1**: Creación de usuario con validación de contraseña
   - **Paso 2**: Gestor de red WiFi con escaneo automático y recomendación de IP fija
@@ -100,7 +100,7 @@ Gracias a la **Arquitectura V5.0**, tienes 4 iconos independientes en tu escrito
 1.  ⚡ **AstroSetup**: Lanza la configuración completa (ideal para el primer uso).
 2.  📶 **Red (WiFi)**: Abre el gestor de redes en cualquier momento con recomendación de IP fija para uso astronómico.
 3.  👤 **Usuarios**: Gestiona o añade cuentas de operador.
-4.  🔭 **Instalador Software V12.3**: Añade o repara tus programas de astronomía con carrusel visual y terminal de progreso compacto.
+4.  🔭 **Instalador Software V1.0**: Añade o repara tus programas de astronomía con carrusel visual y terminal de progreso compacto.
 5.  🌍 **Idioma**: Cambia el idioma de los asistentes en cualquier momento.
 
 ---
@@ -239,7 +239,7 @@ AstroOrange V2 es software libre basado en:
 
 ---
 
-**Versión del Manual**: 3.0  
-**Última actualización**: Febrero 2026  
+**Versión del Manual**: 4.0  
+**Última actualización**: Febrero 2026 (V1.0 Official)
 **Compatible con**: Orange Pi 5 Pro / Ubuntu Standalone
 

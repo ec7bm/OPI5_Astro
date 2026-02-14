@@ -15,7 +15,7 @@ AstroOrange V2 is a Linux distribution based on **Ubuntu 22.04 Jammy Server** op
 
 - 🛰️ **Automatic Rescue Hotspot** - Always accessible without WiFi.
 - 🖥️ **VNC Remote Desktop** - Control via web browser (noVNC).
-- 🧙 **Configuration Wizard V13.0 (MASTER)** - Guided setup with multi-language support.
+- 🧙 **Configuration Wizard V1.0 (OFFICIAL)** - Guided setup with multi-language support.
 - 🔭 **Modular Astronomy Software** - KStars, INDI, PHD2, ASTAP, Stellarium, CCDciel, Syncthing.
 - 🌍 **Full Multi-language (i18n)** - Interface in Spanish and English with easy switching.
 
@@ -23,7 +23,7 @@ AstroOrange V2 is a Linux distribution based on **Ubuntu 22.04 Jammy Server** op
 ### 🚀 Installation
 
 #### Option A: Flash Image (Recommended)
-1. **Download Image**: 👉 **[DOWNLOAD V10.5 IMAGE](https://drive.google.com/file/d/1OJC6SG5Xz9yCOAx54TYCOTiOPzPo2YKY/view?usp=drive_link)**
+1. **Download Image**: 👉 **[DOWNLOAD V1.0 RELEASE](${MEGA_LINK_PLACEHOLDER})**
 2. Flash to microSD using [balenaEtcher](https://www.balena.io/etcher/).
 3. Boot and connect to WiFi: `AstroOrange-Autostart` (Pass: `astroorange`).
 
@@ -72,7 +72,7 @@ AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server*
 ### Características Principales
 - 🛰️ **Hotspot de rescate automático** - Acceso garantizado sin WiFi (`AstroOrange-Autostart` / `astroorange`).
 - 🖥️ **Escritorio remoto VNC** - Control desde navegador web (noVNC).
-- 🧙 **Wizard de configuración V13.0 (MASTER)** - Setup guiado multilingüe con UI premium.
+- 🧙 **Wizard de configuración V1.0 (OFICIAL)** - Setup guiado multilingüe con UI premium.
   - **Nuevo**: Soporte completo para **Español e Inglés**.
   - **Nuevo**: Conexión manual a redes ocultas y soporte de IP estática seguro.
 - 🔭 **Software astronómico modular** - Instalador gráfico para KStars, INDI, PHD2, ASTAP, Stellarium, CCDciel, Syncthing.
@@ -87,7 +87,7 @@ AstroOrange V2 es una distribución Linux basada en **Ubuntu 22.04 Jammy Server*
 **Ideal para empezar de cero.** Flashea la imagen y tendrás el sistema listo.
 
 1. **Descarga la imagen** (.img.xz):
-   👉 **[DESCARGAR IMAGEN V10.5 AQUÍ](https://drive.google.com/file/d/1OJC6SG5Xz9yCOAx54TYCOTiOPzPo2YKY/view?usp=drive_link)**
+   👉 **[DESCARGAR IMAGEN V1.0 AQUÍ](${MEGA_LINK_PLACEHOLDER})**
 
 2. **Flashea** en tu microSD con [balenaEtcher](https://www.balena.io/etcher/).
 3. **Arranca** tu Orange Pi 5 Pro y conéctate al WiFi `AstroOrange-Autostart` (Clave: `astroorange`).
